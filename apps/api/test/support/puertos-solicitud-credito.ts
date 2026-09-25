@@ -14,6 +14,7 @@ export function crearPuertosSolicitudYCredito() {
   };
   const creditos: jest.Mocked<CreditoRepository> = {
     crear: jest.fn().mockResolvedValue(undefined),
+    buscarPorSolicitud: jest.fn(),
   };
   const numeros: jest.Mocked<NumeroCreditoGenerator> = {
     generar: jest.fn().mockResolvedValue('CR-2026-000001'),
