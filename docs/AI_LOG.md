@@ -14,7 +14,7 @@ Registro de cada interacción con herramientas de IA durante el desarrollo, seg�
 | `feature/datos-modelo-prisma` | Modelo de datos Prisma, migración inicial y pruebas de integración | `develop` | [#4](https://github.com/nestordgt27/SimulacionCredito/pull/4) | Fusionada |
 | `chore/seed-usuario-admin` | Seed con usuario de prueba `admin` | `develop` | [#5](https://github.com/nestordgt27/SimulacionCredito/pull/5) | Fusionada |
 | `feature/auth-login` | Módulos de dominio y autenticación (login, refresh rotativo, logout, guard global) | `develop` | [#6](https://github.com/nestordgt27/SimulacionCredito/pull/6) | Fusionada |
-| `feature/solicitudes-crear-solicitud` | Registro y listado de solicitudes con cuota recalculada y regla de edad | `develop` | Pendiente | En curso |
+| `feature/solicitudes-crear-solicitud` | Registro y listado de solicitudes con cuota recalculada y regla de edad | `develop` | [#7](https://github.com/nestordgt27/SimulacionCredito/pull/7) | En revisión |
 
 ---
 
@@ -249,4 +249,5 @@ Registro de cada interacción con herramientas de IA durante el desarrollo, seg�
   - **Verificación final:**
     - typecheck, lint, Prettier y build en verde;
     - flujo manual con `curl` sobre `dev.db`: el `POST` con `cuotaNivelada: 1` guardó 2289,98, que coincide con la referencia independiente 2289,9766; un cliente de 86 años recibe 422 `EDAD_NO_PERMITIDA`; `GET ?estado=PENDIENTE` filtra correctamente.
-- **Commits:** `feat(shared): exponer edad máxima y validación de edad permitida`, `feat(core): agregar conversión de montos a centavos y tasas a puntos básicos`, `feat(solicitudes): crear y listar solicitudes con cuota recalculada en el servidor`, `docs: documentar el módulo de solicitudes y sus supuestos`
+- **Commits:** `feat(shared): exponer edad máxima y validación de edad permitida`, `feat(core): agregar conversión de montos a centavos y tasas a puntos básicos`, `feat(solicitudes): crear y listar solicitudes con cuota recalculada en el servidor`, `docs: documentar el módulo de solicitudes y sus supuestos`, `docs(ai-log): registrar pr de solicitudes`
+- **PR:** [#7](https://github.com/nestordgt27/SimulacionCredito/pull/7) → `develop`
