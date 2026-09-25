@@ -167,14 +167,39 @@ Secuencia (contador del número de crédito por año)
 
 ```
 apps/web/src/
-├── app/          # App, providers (TanStack Query), rutas, layout
-├── features/     # Una carpeta por feature (se agregan a medida que se implementan)
-├── shared/       # Cliente HTTP, UI reutilizable, utilidades
-└── test/         # Setup de Vitest + Testing Library
+├── app/                  # App, providers, QueryClient, rutas, RutaProtegida, layout
+├── features/
+│   └── auth/             # api/ hooks/ components/ pages/ schemas/ (login y logout)
+├── shared/
+│   ├── api/              # clienteHttp (Axios + interceptores) y mensajeDeError
+│   ├── auth/             # sesionStore y useSesion
+│   └── ui/               # Boton, Campo, Alerta, Tarjeta (Tailwind)
+└── test/                 # setup, servidor MSW con handlers y renderApp
 ```
 
 - **Proxy de desarrollo**: Vite redirige `/api` a `API_PROXY_TARGET` (por defecto `http://localhost:3000`). El frontend siempre llama a rutas relativas `/api/...`, igual que detrás de Nginx.
-- **Rutas**: `app/routes.tsx` define las rutas como datos (`RouteObject[]`). Así las pruebas las montan con `createMemoryRouter` sin duplicarlas.
+- **Rutas**: `app/routes.tsx` define las rutas como datos (`RouteObject[]`). Así las pruebas las montan con `createMemoryRouter` sin duplicarlas. `/login` es pública; el resto cuelga de `RutaProtegida`, que redirige al login recordando la ruta pedida (`state.desde`).
+- **Flujo por capas** (`CLAUDE.md` §2.5): componente → hook (`useMutation` / `useQuery`) → `api/` → `clienteHttp`. Las páginas componen, los formularios reciben callbacks y la lógica vive en hooks.
+
+### Sesión e interceptores
+
+- **`sesionStore`** (`shared/auth`) es un almacén fuera de React, porque lo usan el interceptor y los componentes (vía `useSesion`, con `useSyncExternalStore`).
+  - El access token vive solo en memoria.
+  - En `localStorage` se persisten el refresh token y el usuario (`restaurar()` al cargar).
+  - Si el almacenamiento no está disponible, la sesión dura lo que la pestaña.
+- **Interceptor de request:** agrega `Authorization: Bearer <accessToken>` si hay sesión.
+- **Interceptor de response:** ante un `401` llama a `/auth/refresh` y reintenta la petición **una vez** (marca `_reintentada`). No refresca en `/auth/login` ni en `/auth/refresh`, ni sin sesión.
+- **Single-flight:** las peticiones que reciben `401` a la vez comparten una sola promesa de refresh. Es imprescindible, porque el backend trata un refresh token ya rotado como reutilización y revocaría la sesión.
+- **Refresh fallido:** `sesionStore.cerrar()` y se propaga el `401` original. `RutaProtegida` se vuelve a renderizar y lleva al login.
+- **Recarga de la página:** la sesión se restaura sin access token. La primera petición recibe `401`, se refresca y se reintenta sin que el usuario lo note.
+- **`QueryClient`:** no reintenta errores 4xx; los 5xx y los errores de red se reintentan hasta 2 veces. Las mutaciones no se reintentan.
+
+### Pruebas del frontend
+
+- **HTTP mockeado con MSW** (`src/test/msw`), nunca los hooks ni Axios (`CLAUDE.md` §6.2). `onUnhandledRequest: 'error'` hace fallar cualquier petición sin handler.
+- **`renderApp(ruta)`** monta la app completa con las rutas reales.
+- **Limpieza:** entre pruebas se borran la sesión y `localStorage`.
+- **Consultas accesibles:** por rol y texto (`getByRole`, `getByLabelText`).
 
 ## Pruebas
 
@@ -182,4 +207,4 @@ apps/web/src/
 | -------- | ------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------- |
 | `shared` | Vitest                                           | —                                                                                                                                 |
 | `api`    | Jest (`src/**/*.spec.ts`), con puertos mockeados | Integración: Jest + SQLite real (`test/**/*.int-spec.ts`). E2E: Jest + Supertest (`test/**/*.e2e-spec.ts`). Ambas con `.env.test` |
-| `web`    | Vitest + Testing Library + jsdom                 | —                                                                                                                                 |
+| `web`    | Vitest + Testing Library + jsdom + MSW           | —                                                                                                                                 |

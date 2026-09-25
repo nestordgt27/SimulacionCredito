@@ -168,6 +168,7 @@ apps/web/src/
 | Consulta de créditos | `GET /creditos?cedula=` devuelve los créditos otorgados del cliente (más reciente primero) con su plan de pagos y el desembolso sin número de cuenta; lista vacía si no tiene. Cédula normalizada como al registrar |
 | Comité | Vista de solo lectura: cédula, nombre, edad, cuotas, periodicidad, plazo, monto |
 | Seguridad | Access token JWT de corta duración; refresh token rotativo, guardado hasheado, revocable |
+| Seguridad en el frontend | Access token solo en memoria; refresh token y usuario en `localStorage` para sobrevivir al recargo (compromiso frente a cookie HttpOnly). Interceptor Axios: un solo refresh compartido ante 401 concurrentes y un único reintento por petición; si el refresh falla se cierra la sesión |
 | Seguridad (detalle) | Access 15 min (HS256); refresh opaco de 7 días, guardado en SHA-256 y enviado en el cuerpo JSON. La reutilización de un token rotado revoca toda la familia. `refresh` es público; `logout` exige access token y revoca solo la familia del refresh token indicado. Todo lo demás exige JWT (`JwtAuthGuard` global + `@Public()`) |
 
 El backend **siempre recalcula** la cuota; nunca confía en la enviada por el frontend.

@@ -60,6 +60,31 @@ El seed crea un usuario para iniciar sesión en desarrollo:
 - **Ejecución automática:** `prisma migrate dev` ejecuta el seed cuando crea o reinicia la base de datos. Para una base existente, usa `npm run prisma:seed -w @simulacion-credito/api`.
 - **Código:** [`apps/api/src/prisma/seed.ts`](apps/api/src/prisma/seed.ts) (punto de entrada) y [`apps/api/src/prisma/seed/usuario-admin.seed.ts`](apps/api/src/prisma/seed/usuario-admin.seed.ts) (datos y lógica).
 
+## Frontend
+
+Aplicación React + Vite en `http://localhost:5173` (`npm run dev`). Inicia sesión con el [usuario de prueba](#usuario-de-prueba).
+
+| Pieza                 | Uso                                              |
+| --------------------- | ------------------------------------------------ |
+| React Router          | Rutas; las privadas pasan por `RutaProtegida`    |
+| TanStack Query        | Estado del servidor (consultas y mutaciones)     |
+| React Hook Form + Zod | Formularios y validación                         |
+| Axios                 | Cliente HTTP con interceptores (token y refresh) |
+| Tailwind CSS v4       | Estilos                                          |
+
+Pantallas disponibles:
+
+- **Login**, con validación de campos y el mensaje del backend ante credenciales inválidas.
+- **Inicio**, protegido, con el nombre del usuario y un botón para cerrar sesión.
+
+**Sesión:**
+
+- El access token se guarda **solo en memoria**.
+- En `localStorage` se guardan únicamente el refresh token y los datos del usuario, para mantener la sesión al recargar.
+- Todas las peticiones llevan `Authorization: Bearer`.
+- Ante un `401`, el interceptor llama a `/auth/refresh` **una sola vez**, aunque fallen varias peticiones a la vez, y las reintenta con el nuevo token.
+- Si el refresh falla, cierra la sesión y la app vuelve al login.
+
 ## Autenticación
 
 Todas las rutas de la API exigen `Authorization: Bearer <accessToken>`, salvo las marcadas como públicas.
@@ -351,6 +376,7 @@ Supuestos técnicos del entorno. Los supuestos de negocio se agregan a medida qu
 
 - **Versiones fijadas por compatibilidad con Node 22.13:** NestJS 11 (el CLI 12 falla en esta versión de Node), Prisma 6 (Prisma 8 exige Node ≥ 22.18), React Router 7 (la 8 exige Node ≥ 22.22) y TypeScript 5.9 (`ts-jest` aún no soporta TypeScript 7).
 - **SQLite local en `apps/api/data/`** solo para desarrollo, mientras no se dockeriza. La carpeta está en `.gitignore` (salvo `.gitkeep`).
+- **Sesión en el frontend:** el access token solo vive en memoria. El refresh token se guarda en `localStorage` para sobrevivir al recargo; es un compromiso frente a una cookie HttpOnly, que requeriría cambiar el backend (ver `CLAUDE.md` §4).
 - **Linter:** ESLint con reglas de tipos en la api; oxlint en la web (el que genera la plantilla de Vite).
 
 Supuestos de negocio (detalle en `CLAUDE.md` §4):
