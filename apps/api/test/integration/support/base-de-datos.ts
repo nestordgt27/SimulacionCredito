@@ -20,8 +20,17 @@ export async function abrirBaseDeDatosDePrueba(): Promise<BaseDeDatosDePrueba> {
   };
 }
 
+// Barrera de seguridad: las pruebas nunca deben borrar la base de desarrollo.
+function asegurarBaseDePrueba(): void {
+  const url = process.env.DATABASE_URL ?? '';
+  if (!url.endsWith('/test.db')) {
+    throw new Error(`Las pruebas solo pueden limpiar data/test.db, pero DATABASE_URL=${url}`);
+  }
+}
+
 // Orden inverso a las llaves foráneas: primero los hijos, después los padres.
 export async function limpiarBaseDeDatos(prisma: PrismaService): Promise<void> {
+  asegurarBaseDePrueba();
   await prisma.$transaction([
     prisma.desembolso.deleteMany(),
     prisma.cuotaPlan.deleteMany(),

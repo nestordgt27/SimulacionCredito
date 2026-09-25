@@ -82,6 +82,9 @@
     ],
     "coverageDirectory": "../coverage",
     "testEnvironment": "node",
-    "clearMocks": true
+    "clearMocks": true,
+    "setupFiles": [
+      "<rootDir>/../test/setup-env.ts"
+    ]
   }
 }
