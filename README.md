@@ -60,6 +60,49 @@ El seed crea un usuario para iniciar sesión en desarrollo:
 - **Ejecución automática:** `prisma migrate dev` ejecuta el seed cuando crea o reinicia la base de datos. Para una base existente, usa `npm run prisma:seed -w @simulacion-credito/api`.
 - **Código:** [`apps/api/src/prisma/seed.ts`](apps/api/src/prisma/seed.ts) (punto de entrada) y [`apps/api/src/prisma/seed/usuario-admin.seed.ts`](apps/api/src/prisma/seed/usuario-admin.seed.ts) (datos y lógica).
 
+## Autenticación
+
+Todas las rutas de la API exigen `Authorization: Bearer <accessToken>`, salvo las marcadas como públicas.
+
+| Método y ruta            | Acceso    | Cuerpo                   | Respuesta                  |
+| ------------------------ | --------- | ------------------------ | -------------------------- |
+| `POST /api/auth/login`   | Pública   | `{ username, password }` | `200` con la sesión        |
+| `POST /api/auth/refresh` | Pública   | `{ refreshToken }`       | `200` con una sesión nueva |
+| `POST /api/auth/logout`  | Protegida | `{ refreshToken }`       | `204`                      |
+| `GET /api/health`        | Pública   | —                        | `200 { status: "ok" }`     |
+
+Sesión que devuelven `login` y `refresh`:
+
+```json
+{
+  "accessToken": "eyJhbGciOiJIUzI1NiIs...",
+  "refreshToken": "q3V0...",
+  "tokenType": "Bearer",
+  "expiresIn": 900,
+  "usuario": {
+    "id": 1,
+    "username": "admin",
+    "nombreCompleto": "Administrador de prueba",
+    "rol": "ADMIN"
+  }
+}
+```
+
+- **Access token:** JWT HS256 de 15 minutos. No se guarda en la base de datos.
+- **Refresh token:** valor aleatorio de 256 bits, válido 7 días. Se guarda solo su hash SHA-256.
+- **Rotación:** cada `refresh` revoca el token usado y entrega uno nuevo de la misma sesión (familia).
+- **Reutilización:** si llega un refresh token ya usado (posible robo), se revoca toda la sesión y se responde `401 REFRESH_TOKEN_REUTILIZADO`.
+- **Logout:** revoca la sesión del refresh token indicado. Las demás sesiones del usuario (otros dispositivos) siguen activas.
+- **`refresh` es público** porque se llama precisamente cuando el access token ya expiró.
+
+Errores (`401`): `CREDENCIALES_INVALIDAS`, `ACCESS_TOKEN_INVALIDO`, `REFRESH_TOKEN_INVALIDO` y `REFRESH_TOKEN_REUTILIZADO`, con el formato `{ statusCode, error, message }`.
+
+Ejemplo:
+
+```bash
+curl -s -X POST http://localhost:3000/api/auth/login -H "Content-Type: application/json" -d '{"username":"admin","password":"Admin123!"}'
+```
+
 ## Variables de entorno
 
 | Archivo                 | Versionado | Uso                                                         |
@@ -72,14 +115,23 @@ El seed crea un usuario para iniciar sesión en desarrollo:
 
 Variables de la API:
 
-| Variable       | Ejemplo                  | Descripción                                        |
-| -------------- | ------------------------ | -------------------------------------------------- |
-| `NODE_ENV`     | `development`            | `development`, `test` o `production`               |
-| `PORT`         | `3000`                   | Puerto HTTP de la API                              |
-| `DATABASE_URL` | `file:../../data/dev.db` | Ruta SQLite, relativa a `src/prisma/schema.prisma` |
-| `CORS_ORIGIN`  | `http://localhost:5173`  | Origen permitido del frontend                      |
+| Variable                  | Ejemplo                  | Descripción                                                |
+| ------------------------- | ------------------------ | ---------------------------------------------------------- |
+| `NODE_ENV`                | `development`            | `development`, `test` o `production`                       |
+| `PORT`                    | `3000`                   | Puerto HTTP de la API                                      |
+| `DATABASE_URL`            | `file:../../data/dev.db` | Ruta SQLite, relativa a `src/prisma/schema.prisma`         |
+| `CORS_ORIGIN`             | `http://localhost:5173`  | Origen permitido del frontend                              |
+| `JWT_ACCESS_SECRET`       | (aleatorio)              | Secreto para firmar el access token (mínimo 32 caracteres) |
+| `JWT_ACCESS_TTL_SEGUNDOS` | `900`                    | Vigencia del access token (15 minutos)                     |
+| `REFRESH_TOKEN_TTL_DIAS`  | `7`                      | Vigencia del refresh token                                 |
 
 Las variables se validan al arrancar: si falta alguna o es inválida, la API no inicia.
+
+Genera tu propio `JWT_ACCESS_SECRET` para `.env`:
+
+```bash
+node -e "console.log(require('crypto').randomBytes(48).toString('base64url'))"
+```
 
 Variables del frontend:
 

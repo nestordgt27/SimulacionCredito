@@ -161,6 +161,7 @@ apps/web/src/
 | Desembolso | Solo desde APROBADA. Requiere banco (LAFISE, FICOHSA, BAC Credomatic, Banpro) y número de cuenta |
 | Comité | Vista de solo lectura: cédula, nombre, edad, cuotas, periodicidad, plazo, monto |
 | Seguridad | Access token JWT de corta duración; refresh token rotativo, guardado hasheado, revocable |
+| Seguridad (detalle) | Access 15 min (HS256); refresh opaco de 7 días, guardado en SHA-256 y enviado en el cuerpo JSON. La reutilización de un token rotado revoca toda la familia. `refresh` es público; `logout` exige access token y revoca solo la familia del refresh token indicado. Todo lo demás exige JWT (`JwtAuthGuard` global + `@Public()`) |
 
 El backend **siempre recalcula** la cuota; nunca confía en la enviada por el frontend.
 

@@ -1,7 +1,12 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { envFilePath, validateEnv } from './core/config/env';
-import { HealthController } from './core/health/health.controller';
+import { CoreModule } from './core/core.module';
+import { AuthModule } from './modules/auth/auth.module';
+import { ComiteModule } from './modules/comite/comite.module';
+import { CreditosModule } from './modules/creditos/creditos.module';
+import { DesembolsosModule } from './modules/desembolsos/desembolsos.module';
+import { SolicitudesModule } from './modules/solicitudes/solicitudes.module';
 import { PrismaModule } from './prisma/prisma.module';
 
 @Module({
@@ -11,8 +16,13 @@ import { PrismaModule } from './prisma/prisma.module';
       envFilePath: envFilePath(process.env.NODE_ENV),
       validate: validateEnv,
     }),
+    CoreModule,
     PrismaModule,
+    AuthModule,
+    SolicitudesModule,
+    ComiteModule,
+    DesembolsosModule,
+    CreditosModule,
   ],
-  controllers: [HealthController],
 })
 export class AppModule {}

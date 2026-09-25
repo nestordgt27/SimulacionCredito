@@ -12,7 +12,8 @@ Registro de cada interacción con herramientas de IA durante el desarrollo, seg�
 | `chore/estructura-monorepo` | Estructura del monorepo, SQLite local y variables de entorno | `develop` | [#2](https://github.com/nestordgt27/SimulacionCredito/pull/2) | Fusionada |
 | `feature/shared-calculos-financieros` | Cálculos financieros y enums en `packages/shared` | `develop` | [#3](https://github.com/nestordgt27/SimulacionCredito/pull/3) | Fusionada |
 | `feature/datos-modelo-prisma` | Modelo de datos Prisma, migración inicial y pruebas de integración | `develop` | [#4](https://github.com/nestordgt27/SimulacionCredito/pull/4) | Fusionada |
-| `chore/seed-usuario-admin` | Seed con usuario de prueba `admin` | `develop` | [#5](https://github.com/nestordgt27/SimulacionCredito/pull/5) | En revisión |
+| `chore/seed-usuario-admin` | Seed con usuario de prueba `admin` | `develop` | [#5](https://github.com/nestordgt27/SimulacionCredito/pull/5) | Fusionada |
+| `feature/auth-login` | Módulos de dominio y autenticación (login, refresh rotativo, logout, guard global) | `develop` | [#6](https://github.com/nestordgt27/SimulacionCredito/pull/6) | En revisión |
 
 ---
 
@@ -150,3 +151,59 @@ Registro de cada interacción con herramientas de IA durante el desarrollo, seg�
     - pruebas: unitarias de la api (10), integración (12) y e2e (1).
 - **Commits:** `feat(auth): agregar puerto password hasher con adaptador argon2id`, `chore(api): agregar seed idempotente con usuario de prueba admin`, `docs: documentar usuario de prueba y seed en el readme`, `docs(ai-log): registrar pr de seed con usuario de prueba`
 - **PR:** [#5](https://github.com/nestordgt27/SimulacionCredito/pull/5) → `develop`
+
+### [008] 2026-09-25 — Módulos de dominio y autenticación
+
+- **Herramienta:** Claude Code
+- **Rama:** `feature/auth-login`
+- **Prompt (resumen fiel):** Organizar el backend por módulos de dominio (`auth`, `solicitudes`, `comite`, `desembolsos`, `creditos`) más un `PrismaModule` global, e iniciar con `auth`:
+  - `POST /auth/login` devuelve un access token de unos 15 minutos y un refresh token;
+  - `POST /auth/refresh` rota el refresh token: invalida el anterior y guarda el nuevo hasheado;
+  - agregar `POST /auth/logout`;
+  - proteger todo lo demás con un `JwtAuthGuard` global y un decorador `@Public()` para el login.
+- **Resultado:**
+  - **`core`**:
+    - puertos `Clock` y `UnitOfWork`, y `SystemClock`;
+    - `ErrorDeDominio` con `ErroresDeDominioFilter` global (401/404/409/422);
+    - `ValidationPipe` global;
+    - `@Public()`, `@UsuarioActual()` y `UsuarioAutenticado`;
+    - `CoreModule` global con el health check público.
+  - **`PrismaModule`** global: `PrismaUnitOfWork`, que propaga la transacción con `AsyncLocalStorage` mediante `PrismaTransactionContext`.
+  - **`modules/auth`** en cuatro capas:
+    - `domain`: entidades `Usuario` y `RefreshToken`, errores y puertos;
+    - `application`: `IniciarSesionUseCase`, `RefrescarSesionUseCase`, `CerrarSesionUseCase` y `EmisorDeSesion`;
+    - `infrastructure`: JWT HS256 con `Clock`, refresh token opaco de 256 bits guardado en SHA-256, y repositorios Prisma;
+    - `presentation`: `AuthController`, DTOs y `JwtAuthGuard` como `APP_GUARD`.
+  - **Esqueletos** de `SolicitudesModule`, `ComiteModule`, `DesembolsosModule` y `CreditosModule`.
+  - **Variables nuevas:** `JWT_ACCESS_SECRET` (mínimo 32 caracteres), `JWT_ACCESS_TTL_SEGUNDOS` (900) y `REFRESH_TOKEN_TTL_DIAS` (7).
+  - **Pruebas:**
+    - 47 unitarias: casos de uso con puertos mockeados y `FakeClock`, entidades, JWT real con reloj controlado y generador;
+    - 22 de integración: rollback real del `UnitOfWork`, incluido el anidado, y repositorios de auth;
+    - 18 e2e con los casos de §6.4: login inválido, token expirado, refresh rotado y refresh reutilizado.
+    - Cobertura unitaria: dominio 100 % y aplicación 100 % de líneas (92,6 % de ramas).
+- **Decisiones y ajustes manuales:**
+  - **`POST /auth/refresh` también es `@Public()`**, no solo el login: se llama cuando el access token ya expiró. `logout` exige access token y además el refresh token de la sesión que se cierra; solo revoca si ese token pertenece al usuario autenticado.
+  - **Familias de refresh tokens:** la rotación mantiene la familia, y la reutilización de un token ya rotado revoca la familia completa (posible robo). Un token revocado cuenta como reutilización aunque además haya expirado.
+  - **La revocación se confirma antes del 401:** `RefrescarSesionUseCase` devuelve un resultado desde la transacción y lanza el error fuera de ella; un throw dentro haría rollback de la revocación.
+  - **Concurrencia:** `marcarRotado` usa un `updateMany` condicionado a `revocadoEn IS NULL`; si otra petición ya rotó el mismo token, se trata como reutilización.
+  - **Refresh token opaco con SHA-256**, no JWT ni Argon2: tiene 256 bits de entropía, así que un hash rápido es seguro, y permite buscarlo por índice único.
+  - **El `Clock` controla `iat`, `exp` y la verificación del JWT**, para que la expiración sea determinista en pruebas (e2e con `overrideProvider(CLOCK)`).
+  - **`EmisorDeSesion`** agrupa la emisión del par de tokens, que comparten login y refresh (SRP y sin duplicación).
+  - **Refresh token en el cuerpo JSON**, no en una cookie HttpOnly: es más simple para la SPA y su interceptor de Axios. Queda como mejora posible frente a XSS.
+  - **`@typescript-eslint/unbound-method` desactivada solo en pruebas:** es un falso positivo con `expect(mock.metodo)`.
+  - **Pendientes anotados:**
+    - rate limiting del login;
+    - igualar el tiempo de respuesta cuando el usuario no existe (hoy no se ejecuta Argon2 en ese caso);
+    - verificar en cada petición que el usuario siga activo (hoy el JWT es stateless por 15 minutos);
+    - unificar la cobertura de unitarias, integración y e2e para medir el 80 % global.
+  - **Bug encontrado y corregido: las pruebas escribían en `dev.db`.**
+    - **Causa:** Prisma Client carga `apps/api/.env` al importarse y `ConfigModule` no sobrescribe variables ya definidas, así que `DATABASE_URL` apuntaba a `dev.db` aunque se cargara `.env.test`.
+    - **Alcance:** afectaba también las pruebas de las entradas [006] y [007]. La verificación de [006] ("no aparecen archivos `.db` fuera de `data/`") no lo detectaba.
+    - **Corrección:** `test/setup-env.ts` carga `.env.test` con `override` en `setupFiles` de las tres configuraciones de Jest, y `limpiarBaseDeDatos` se niega a operar si `DATABASE_URL` no termina en `/test.db`.
+    - **Verificación:** después de correr las tres suites, `dev.db` quedó intacta y los datos de prueba están en `test.db`. Consecuencia: el usuario `admin` de `dev.db` fue recreado por las pruebas anteriores (id 91), sin otra pérdida porque solo contenía datos del seed.
+  - **Verificación final:**
+    - typecheck, lint, Prettier y build en verde;
+    - pruebas: shared 70, api unitarias 47, integración 22, e2e 18, web 1;
+    - flujo manual con `curl` sobre `dev.db`: login inválido 401, login 200, ruta protegida sin token 401, rotación, reutilización 401 con la sesión revocada y logout 204.
+- **Commits:** `fix(api): aislar las pruebas en test.db cargando .env.test antes que prisma`, `feat(core): agregar clock, unit of work transaccional y errores de dominio`, `refactor(api): organizar el backend por módulos de dominio`, `feat(auth): login, refresh rotativo y logout con jwt auth guard global`, `docs: documentar autenticación y arquitectura del backend`, `docs(ai-log): registrar pr de autenticación`
+- **PR:** [#6](https://github.com/nestordgt27/SimulacionCredito/pull/6) → `develop`

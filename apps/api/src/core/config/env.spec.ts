@@ -5,6 +5,7 @@ const envValido = {
   PORT: '3000',
   DATABASE_URL: 'file:../../data/dev.db',
   CORS_ORIGIN: 'http://localhost:5173',
+  JWT_ACCESS_SECRET: 'x'.repeat(32),
 };
 
 describe('validateEnv', () => {
@@ -14,12 +15,23 @@ describe('validateEnv', () => {
     expect(env.PORT).toBe(3000);
   });
 
-  it('debe usar valores por defecto cuando NODE_ENV y PORT no están definidos', () => {
-    const { DATABASE_URL, CORS_ORIGIN } = envValido;
+  it('debe usar valores por defecto cuando las variables opcionales no están definidas', () => {
+    const { DATABASE_URL, CORS_ORIGIN, JWT_ACCESS_SECRET } = envValido;
 
-    const env = validateEnv({ DATABASE_URL, CORS_ORIGIN });
+    const env = validateEnv({ DATABASE_URL, CORS_ORIGIN, JWT_ACCESS_SECRET });
 
-    expect(env).toMatchObject({ NODE_ENV: 'development', PORT: 3000 });
+    expect(env).toMatchObject({
+      NODE_ENV: 'development',
+      PORT: 3000,
+      JWT_ACCESS_TTL_SEGUNDOS: 900,
+      REFRESH_TOKEN_TTL_DIAS: 7,
+    });
+  });
+
+  it('debe lanzar error cuando JWT_ACCESS_SECRET tiene menos de 32 caracteres', () => {
+    const config = { ...envValido, JWT_ACCESS_SECRET: 'corto' };
+
+    expect(() => validateEnv(config)).toThrow(/JWT_ACCESS_SECRET/);
   });
 
   it('debe lanzar error cuando DATABASE_URL no es una ruta SQLite', () => {

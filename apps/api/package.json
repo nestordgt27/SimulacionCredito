@@ -29,10 +29,13 @@
     "@nestjs/common": "^11.0.1",
     "@nestjs/config": "^4.0.4",
     "@nestjs/core": "^11.0.1",
+    "@nestjs/jwt": "^11.0.2",
     "@nestjs/platform-express": "^11.0.1",
     "@node-rs/argon2": "^2.2.1",
     "@prisma/client": "^6.19.3",
     "@simulacion-credito/shared": "*",
+    "class-transformer": "^0.5.1",
+    "class-validator": "^0.15.1",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
     "zod": "^4.1.12"
@@ -82,6 +85,9 @@
     ],
     "coverageDirectory": "../coverage",
     "testEnvironment": "node",
-    "clearMocks": true
+    "clearMocks": true,
+    "setupFiles": [
+      "<rootDir>/../test/setup-env.ts"
+    ]
   }
 }

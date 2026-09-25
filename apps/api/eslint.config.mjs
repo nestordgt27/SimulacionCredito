@@ -32,4 +32,12 @@ export default tseslint.config(
       'no-console': 'error',
     },
   },
+  {
+    // `expect(mock.metodo).toHaveBeenCalled…()` es el patrón de Jest con puertos mockeados;
+    // unbound-method lo marca como falso positivo.
+    files: ['**/*.spec.ts', 'test/**/*.ts'],
+    rules: {
+      '@typescript-eslint/unbound-method': 'off',
+    },
+  },
 );

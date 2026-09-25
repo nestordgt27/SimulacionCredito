@@ -42,15 +42,27 @@ apps/api/
 ├── data/                 # SQLite local (dev.db, test.db). Ignorado por Git
 ├── prisma.config.ts      # Ubicación del schema y migraciones; carga .env
 ├── src/
-│   ├── core/
-│   │   ├── config/       # Validación de variables de entorno (zod)
-│   │   ├── health/       # GET /api/health
-│   │   └── http/         # Configuración HTTP común (prefijo /api, CORS)
-│   ├── modules/          # Módulos de negocio (domain / application / infrastructure / presentation)
-│   ├── prisma/           # schema.prisma y migraciones
+│   ├── core/                 # Kernel compartido (CoreModule global)
+│   │   ├── auth/             # @Public(), @UsuarioActual(), UsuarioAutenticado
+│   │   ├── config/           # Validación de variables de entorno (zod)
+│   │   ├── domain/           # Puertos Clock y UnitOfWork, ErrorDeDominio
+│   │   ├── health/           # GET /api/health (público)
+│   │   ├── http/             # configureApp (prefijo /api, CORS) y filtro de errores de dominio
+│   │   └── infrastructure/   # SystemClock
+│   ├── modules/
+│   │   ├── auth/             # Implementado: login, refresh, logout, JwtAuthGuard global
+│   │   ├── solicitudes/      # Esqueleto
+│   │   ├── comite/           # Esqueleto
+│   │   ├── desembolsos/      # Esqueleto
+│   │   └── creditos/         # Esqueleto
+│   ├── prisma/               # PrismaModule global: PrismaService, UnitOfWork, schema, migraciones, seed
 │   ├── app.module.ts
 │   └── main.ts
-└── test/                 # Pruebas e2e (Supertest)
+└── test/
+    ├── integration/      # Integración con SQLite real (*.int-spec.ts)
+    ├── support/          # FakeClock, FakeUnitOfWork, builders y puertos mockeados
+    ├── setup-env.ts      # Fuerza .env.test antes de cargar la app
+    └── *.e2e-spec.ts     # E2E con Supertest
 ```
 
 - **Configuración**: `@nestjs/config` global. Con `NODE_ENV=test` (lo define Jest) se carga `.env.test`; si no, `.env`. `validateEnv` rechaza el arranque si falta una variable o es inválida.
@@ -59,7 +71,24 @@ apps/api/
 - **`PrismaService`** (`src/prisma/`) es global. Lo usan solo los adaptadores de `infrastructure` y las pruebas de integración.
 - **Seed de desarrollo** (`src/prisma/seed.ts`, configurado en `prisma.config.ts`): crea o restablece el usuario `admin`. La lógica vive en `src/prisma/seed/` para poder probarla en integración. Se niega a ejecutarse con `NODE_ENV=production`.
 - **`PasswordHasher`** (`modules/auth/domain`) con el adaptador `Argon2PasswordHasher` (`modules/auth/infrastructure`, Argon2id vía `@node-rs/argon2`, con binarios precompilados para Windows y Linux/Alpine). Lo usan el seed y el login.
-- Los módulos de negocio (`auth`, `solicitudes`, `comite`, `desembolsos`, `creditos`) siguen la estructura por capas de `CLAUDE.md` §2.2 y se agregan en ramas propias.
+- Los módulos de negocio (`auth`, `solicitudes`, `comite`, `desembolsos`, `creditos`) siguen la estructura por capas de `CLAUDE.md` §2.2. Los cuatro últimos son esqueletos que se completan en ramas propias.
+- **Errores de dominio**: heredan de `ErrorDeDominio` (`core/domain`) con un `tipo` y un `codigo` estable. `ErroresDeDominioFilter` (global) los traduce a HTTP: `NO_AUTENTICADO` → 401, `NO_ENCONTRADO` → 404, `CONFLICTO` → 409, `REGLA_NEGOCIO` → 422. El cuerpo es `{ statusCode, error, message }`.
+- **Validación HTTP**: `ValidationPipe` global (`whitelist`, `forbidNonWhitelisted`, `transform`) sobre DTOs con `class-validator`.
+- **`UnitOfWork`**: `PrismaUnitOfWork` abre `prisma.$transaction` y guarda el cliente transaccional en un `AsyncLocalStorage` (`PrismaTransactionContext`). Los repositorios usan `contexto.cliente` y participan de la transacción sin recibirla como parámetro. Las llamadas anidadas reutilizan la transacción en curso.
+- **Aislamiento de pruebas**: Prisma Client carga `.env` por su cuenta al importarse, y `ConfigModule` no sobrescribe variables ya definidas. Por eso `test/setup-env.ts` (en `setupFiles` de las tres configuraciones de Jest) carga `.env.test` con prioridad, y `limpiarBaseDeDatos` se niega a operar si `DATABASE_URL` no apunta a `test.db`.
+
+## Módulo `auth`
+
+| Capa             | Contenido                                                                                                                                                        |
+| ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `domain`         | Entidades `Usuario` y `RefreshToken`; errores; puertos `UsuarioRepository`, `RefreshTokenRepository`, `PasswordHasher`, `TokenService` y `RefreshTokenGenerator` |
+| `application`    | `IniciarSesionUseCase`, `RefrescarSesionUseCase`, `CerrarSesionUseCase` y `EmisorDeSesion` (emite el par de tokens, compartido por login y refresh)              |
+| `infrastructure` | `JwtTokenService` (`@nestjs/jwt`, HS256), `CryptoRefreshTokenGenerator` (256 bits, SHA-256), `Argon2PasswordHasher` y repositorios Prisma                        |
+| `presentation`   | `AuthController`, DTOs y `JwtAuthGuard` (registrado como `APP_GUARD`)                                                                                            |
+
+- **Tiempo:** `JwtTokenService` calcula `iat`/`exp` y verifica con el `Clock`, no con la hora del sistema. Así la expiración es determinista en pruebas.
+- **Rotación atómica:** `RefrescarSesionUseCase` corre dentro del `UnitOfWork` y devuelve un resultado en lugar de lanzar dentro de la transacción. Así la revocación de la familia se confirma antes de responder `401`.
+- **Concurrencia:** `marcarRotado` es un `updateMany` condicionado a `revocadoEn IS NULL`. Si dos peticiones rotan el mismo token, solo una lo logra y la otra se trata como reutilización.
 
 ## Modelo de datos
 
@@ -106,8 +135,8 @@ apps/web/src/
 
 ## Pruebas
 
-| Paquete  | Unitarias                        | Integración / e2e                                                                                                                 |
-| -------- | -------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
-| `shared` | Vitest                           | —                                                                                                                                 |
-| `api`    | Jest (`src/**/*.spec.ts`)        | Integración: Jest + SQLite real (`test/**/*.int-spec.ts`). E2E: Jest + Supertest (`test/**/*.e2e-spec.ts`). Ambas con `.env.test` |
-| `web`    | Vitest + Testing Library + jsdom | —                                                                                                                                 |
+| Paquete  | Unitarias                                        | Integración / e2e                                                                                                                 |
+| -------- | ------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------- |
+| `shared` | Vitest                                           | —                                                                                                                                 |
+| `api`    | Jest (`src/**/*.spec.ts`), con puertos mockeados | Integración: Jest + SQLite real (`test/**/*.int-spec.ts`). E2E: Jest + Supertest (`test/**/*.e2e-spec.ts`). Ambas con `.env.test` |
+| `web`    | Vitest + Testing Library + jsdom                 | —                                                                                                                                 |
