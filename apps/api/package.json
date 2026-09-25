@@ -21,6 +21,7 @@
     "test:int": "jest --config ./test/jest-integration.json --runInBand",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
+    "prisma:seed": "prisma db seed",
     "prisma:studio": "prisma studio",
     "prisma:migrate:test": "dotenv -e .env.test -- prisma migrate deploy"
   },
@@ -29,6 +30,7 @@
     "@nestjs/config": "^4.0.4",
     "@nestjs/core": "^11.0.1",
     "@nestjs/platform-express": "^11.0.1",
+    "@node-rs/argon2": "^2.2.1",
     "@prisma/client": "^6.19.3",
     "@simulacion-credito/shared": "*",
     "reflect-metadata": "^0.2.2",
@@ -75,7 +77,8 @@
     "collectCoverageFrom": [
       "**/*.ts",
       "!main.ts",
-      "!**/*.module.ts"
+      "!**/*.module.ts",
+      "!prisma/seed.ts"
     ],
     "coverageDirectory": "../coverage",
     "testEnvironment": "node",

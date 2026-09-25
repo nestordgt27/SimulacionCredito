@@ -57,6 +57,8 @@ apps/api/
 - **Prefijo global** `/api`, igual que la ruta que Nginx redirigirá cuando se dockerice.
 - **Base de datos**: Prisma 6 + SQLite. Las rutas `file:` son relativas a `src/prisma/schema.prisma`, por eso `DATABASE_URL=file:../../data/dev.db`. Desarrollo y pruebas usan archivos distintos (`dev.db` y `test.db`).
 - **`PrismaService`** (`src/prisma/`) es global. Lo usan solo los adaptadores de `infrastructure` y las pruebas de integración.
+- **Seed de desarrollo** (`src/prisma/seed.ts`, configurado en `prisma.config.ts`): crea o restablece el usuario `admin`. La lógica vive en `src/prisma/seed/` para poder probarla en integración. Se niega a ejecutarse con `NODE_ENV=production`.
+- **`PasswordHasher`** (`modules/auth/domain`) con el adaptador `Argon2PasswordHasher` (`modules/auth/infrastructure`, Argon2id vía `@node-rs/argon2`, con binarios precompilados para Windows y Linux/Alpine). Lo usan el seed y el login.
 - Los módulos de negocio (`auth`, `solicitudes`, `comite`, `desembolsos`, `creditos`) siguen la estructura por capas de `CLAUDE.md` §2.2 y se agregan en ramas propias.
 
 ## Modelo de datos

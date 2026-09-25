@@ -37,11 +37,28 @@ cp apps/web/.env.example apps/web/.env
 # 3. Crear la base de datos de desarrollo (data/dev.db) y generar el cliente de Prisma
 npm run prisma:migrate -w @simulacion-credito/api
 
-# 4. Levantar api (http://localhost:3000/api) y web (http://localhost:5173)
+# 4. Crear el usuario de prueba (ver "Usuario de prueba")
+npm run prisma:seed -w @simulacion-credito/api
+
+# 5. Levantar api (http://localhost:3000/api) y web (http://localhost:5173)
 npm run dev
 ```
 
 La web redirige `/api` a la API mediante el proxy de Vite, así que en el navegador todo se sirve desde `http://localhost:5173`.
+
+## Usuario de prueba
+
+El seed crea un usuario para iniciar sesión en desarrollo:
+
+| Usuario | Contraseña  | Rol     |
+| ------- | ----------- | ------- |
+| `admin` | `Admin123!` | `ADMIN` |
+
+- **Solo para desarrollo:** el seed se niega a ejecutarse con `NODE_ENV=production`. No uses estas credenciales fuera de tu máquina.
+- **Idempotente:** se puede ejecutar las veces que haga falta. Si el usuario ya existe, restablece la contraseña documentada y lo reactiva.
+- **Contraseña:** se guarda como hash **Argon2id**, nunca en texto plano. Es el mismo algoritmo que usará el login (puerto `PasswordHasher`).
+- **Ejecución automática:** `prisma migrate dev` ejecuta el seed cuando crea o reinicia la base de datos. Para una base existente, usa `npm run prisma:seed -w @simulacion-credito/api`.
+- **Código:** [`apps/api/src/prisma/seed.ts`](apps/api/src/prisma/seed.ts) (punto de entrada) y [`apps/api/src/prisma/seed/usuario-admin.seed.ts`](apps/api/src/prisma/seed/usuario-admin.seed.ts) (datos y lógica).
 
 ## Variables de entorno
 
@@ -89,6 +106,7 @@ Base de datos (`-w @simulacion-credito/api`):
 | --------------------- | ----------------------------------------------------------------------------------------- |
 | `prisma:generate`     | Genera el cliente de Prisma                                                               |
 | `prisma:migrate`      | Crea y aplica migraciones sobre `data/dev.db`                                             |
+| `prisma:seed`         | Crea o restablece el usuario de prueba en `data/dev.db` (idempotente)                     |
 | `prisma:migrate:test` | Aplica las migraciones sobre `data/test.db` (se ejecuta antes de `test:int` y `test:e2e`) |
 | `prisma:studio`       | Abre Prisma Studio                                                                        |
 
