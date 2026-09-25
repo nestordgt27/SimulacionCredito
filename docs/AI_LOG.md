@@ -17,7 +17,7 @@ Registro de cada interacción con herramientas de IA durante el desarrollo, seg�
 | `feature/solicitudes-crear-solicitud` | Registro y listado de solicitudes con cuota recalculada y regla de edad | `develop` | [#7](https://github.com/nestordgt27/SimulacionCredito/pull/7) | Fusionada |
 | `feature/comite-aprobar-solicitud` | Módulo de comité: vista reducida, aprobación atómica con crédito y plan, rechazo | `develop` | [#8](https://github.com/nestordgt27/SimulacionCredito/pull/8) | Fusionada |
 | `feature/desembolsos-desembolsar-credito` | Módulo de desembolsos: APROBADA → DESEMBOLSADA con banco y cuenta en una transacción | `develop` | [#9](https://github.com/nestordgt27/SimulacionCredito/pull/9) | Fusionada |
-| `feature/creditos-consultar-credito` | Consulta de créditos por cédula con plan de pagos | `develop` | Pendiente | En curso |
+| `feature/creditos-consultar-credito` | Consulta de créditos por cédula con plan de pagos | `develop` | [#10](https://github.com/nestordgt27/SimulacionCredito/pull/10) | En revisión |
 
 ---
 
@@ -370,4 +370,5 @@ Registro de cada interacción con herramientas de IA durante el desarrollo, seg�
   - **Verificación final:**
     - typecheck, lint, Prettier y build en verde;
     - consulta real sobre `dev.db` con `fetch` de Node: `?cedula=001-150385-0007k` en minúsculas devuelve el crédito `CR-2026-000001` DESEMBOLSADO con 24 cuotas cuyo capital suma 50 000 y saldo final 0; cédula inválida da 400; sin token da 401.
-- **Commits:** `feat(creditos): consultar créditos por cédula con su plan de pagos`, `docs: documentar la consulta de créditos`
+- **Commits:** `feat(creditos): consultar créditos por cédula con su plan de pagos`, `docs: documentar la consulta de créditos`, `docs(ai-log): registrar pr de consulta de créditos`
+- **PR:** [#10](https://github.com/nestordgt27/SimulacionCredito/pull/10) → `develop`
