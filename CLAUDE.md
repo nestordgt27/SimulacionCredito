@@ -147,12 +147,15 @@ apps/web/src/
 | Tasa periódica | `i = (tasaAnual / 100) / n` |
 | Cuota nivelada | `M * [i(1+i)^c] / [(1+i)^c − 1]`; si `i = 0` → `M / c` |
 | Redondeo | Cada cuota a 2 decimales; la última ajusta el residuo para que el saldo final sea exactamente 0 |
+| Redondeo (detalle) | `ROUND_HALF_UP`. El interés de cada periodo se redondea a 2 decimales sobre el saldo; capital = cuota − interés. El monto admite como máximo 2 decimales |
 | Plazo | Derivado: `plazoMeses = cuotas * 12 / n` |
 | Edad | Rechazar si el cliente tiene **más de 80 años**. Validar en frontend (UX) y backend (regla real) |
 | Estados | `PENDIENTE → APROBADA`, `PENDIENTE → RECHAZADA`, `APROBADA → DESEMBOLSADA`. Todo lo demás es inválido |
 | Aprobación | Observaciones obligatorias. En una sola transacción: estado → APROBADA, crear crédito con número único, crear N cuotas |
 | Número de crédito | Incremental con formato `CR-AAAA-NNNNNN` |
 | Fechas de vencimiento | Desde la fecha de aprobación: +15 días (quincenal), +1 mes (mensual), +1 año (anual) |
+| Fechas (detalle) | Aritmética en UTC. La cuota k vence en `inicio + k periodos` (sin encadenar). Si el día no existe en el mes destino se usa el último día del mes (31/01 + 1 mes = 28 o 29/02) |
+| Edad (detalle) | `calcularEdad(fechaNacimiento, fechaReferencia)`: la referencia es un parámetro para mantener la función pura (backend la toma del `Clock`). Nacidos un 29/02 cumplen el 01/03 en años no bisiestos |
 | Desembolso | Solo desde APROBADA. Requiere banco (LAFISE, FICOHSA, BAC Credomatic, Banpro) y número de cuenta |
 | Comité | Vista de solo lectura: cédula, nombre, edad, cuotas, periodicidad, plazo, monto |
 | Seguridad | Access token JWT de corta duración; refresh token rotativo, guardado hasheado, revocable |

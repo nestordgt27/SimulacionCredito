@@ -9,7 +9,8 @@ Registro de cada interacción con herramientas de IA durante el desarrollo, seg�
 | `main` | Commit inicial: `.gitignore`, `LICENSE` | — | — | Activa |
 | `develop` | Rama de integración | `main` | — | Activa |
 | `docs/instrucciones-proyecto` | Agregar `CLAUDE.md` y `docs/AI_LOG.md` | `develop` | [#1](https://github.com/nestordgt27/SimulacionCredito/pull/1) | Fusionada |
-| `chore/estructura-monorepo` | Estructura del monorepo, SQLite local y variables de entorno | `develop` | [#2](https://github.com/nestordgt27/SimulacionCredito/pull/2) | En revisión |
+| `chore/estructura-monorepo` | Estructura del monorepo, SQLite local y variables de entorno | `develop` | [#2](https://github.com/nestordgt27/SimulacionCredito/pull/2) | Fusionada |
+| `feature/shared-calculos-financieros` | Cálculos financieros y enums en `packages/shared` | `develop` | [#3](https://github.com/nestordgt27/SimulacionCredito/pull/3) | En revisión |
 
 ---
 
@@ -66,3 +67,28 @@ Registro de cada interacción con herramientas de IA durante el desarrollo, seg�
   - Verificación: typecheck, lint, pruebas unitarias (api 6, web 1), e2e (1), build y prueba manual de `GET /api/health` directa y a través del proxy de Vite.
 - **Commits:** `chore(monorepo): configurar npm workspaces y paquete shared`, `chore(api): agregar esqueleto nestjs con prisma, sqlite local y variables de entorno`, `chore(web): agregar esqueleto react con vite, router y tanstack query`, `docs: documentar estructura del monorepo y puesta en marcha`, `docs(ai-log): registrar pr de estructura del monorepo`
 - **PR:** [#2](https://github.com/nestordgt27/SimulacionCredito/pull/2) → `develop`
+
+### [005] 2026-09-25 — Cálculos financieros en `packages/shared`
+
+- **Herramienta:** Claude Code
+- **Rama:** `feature/shared-calculos-financieros`
+- **Prompt (resumen fiel):** Implementar en shared la función pura `calcularCuotaNivelada(monto, tasaAnual, cuotas, periodicidad)`; `generarPlanPagos(...)`, que devuelva por cada cuota número, fecha, cuota, interés, capital y saldo; `calcularEdad(fechaNacimiento)`; los enums `Periodicidad` y `EstadoSolicitud`, y el mapa de `n` (1, 12, 24).
+- **Resultado:**
+  - `Periodicidad` y `PERIODICIDADES` (estrategia `{ n, avanzarFecha }`), más `obtenerConfiguracion`, que rechaza valores no soportados en tiempo de ejecución.
+  - `EstadoSolicitud` (PENDIENTE, APROBADA, RECHAZADA, DESEMBOLSADA).
+  - `calcularCuotaNivelada` con `decimal.js`, que contempla tasa 0.
+  - `generarPlanPagos` → `CuotaPlan[]` (`numero`, `fechaVencimiento`, `cuota`, `interes`, `capital`, `saldo`), con ajuste del residuo en la última cuota.
+  - `calcularEdad` y `calcularPlazoMeses`.
+  - 68 pruebas con 100 % de cobertura (sentencias, ramas, funciones y líneas).
+  - Supuestos registrados en `CLAUDE.md` §4 y en el README; tabla de exports en `docs/ARCHITECTURE.md`.
+- **Decisiones y ajustes manuales:**
+  - **`calcularEdad` recibe también `fechaReferencia`**, a diferencia de la firma pedida (`calcularEdad(fechaNacimiento)`). Sin ella la función necesitaría `new Date()` y dejaría de ser pura, lo que contradice `CLAUDE.md` §2.4 y §3.1 (tiempo inyectable con `Clock`).
+  - Se agregó `calcularPlazoMeses`, que `CLAUDE.md` §2.4 lista en shared y que usa el mapa de `n`.
+  - **Enums como objetos `const` con tipo homónimo** en lugar de `enum` de TypeScript: se guardan como texto en SQLite, sirven para `z.enum` y son compatibles con `erasableSyntaxOnly` en la web.
+  - **Fechas en UTC y sin encadenar** (cuota k = inicio + k periodos), para que 31/01 → 28/02 → 31/03 no derive a 28/03. Si el día no existe en el mes destino, se usa el último día del mes.
+  - **Redondeo:** el interés se redondea por periodo (`ROUND_HALF_UP`) y la última cuota paga el saldo restante. El monto admite como máximo 2 decimales.
+  - **Montos como `number`** en unidades monetarias; la conversión a centavos para persistir queda en el backend.
+  - **Corrección durante la iteración:** el valor esperado de la última cuota (10 000 al 12 %, 12 meses) se había estimado mal en la prueba (888,54). Se verificó con un cálculo independiente en centavos enteros que el correcto es 888,47, porque redondear la cuota hacia arriba hace que se amortice un poco de más, y se corrigió la prueba, no el código. Los demás valores de referencia (888,49; 443,21; 4163,49; 877,63) se obtuvieron con la fórmula en punto flotante, de forma independiente a la implementación.
+  - **Verificación:** build dual comprobado desde la api (`require`, CJS) y la web (`import`, ESM); typecheck, lint, pruebas y Prettier de todo el repo en verde.
+- **Commits:** `feat(shared): agregar enums de periodicidad y estado de solicitud`, `feat(shared): calcular cuota nivelada y plan de pagos con decimal.js`, `feat(shared): calcular edad y plazo en meses`, `docs: registrar supuestos de cálculo y exports de shared`, `docs(ai-log): registrar pr de cálculos financieros`
+- **PR:** [#3](https://github.com/nestordgt27/SimulacionCredito/pull/3) → `develop`
