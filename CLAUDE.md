@@ -165,6 +165,7 @@ apps/web/src/
 | Edad (detalle) | `calcularEdad(fechaNacimiento, fechaReferencia)`: la referencia es un parámetro para mantener la función pura (backend la toma del `Clock`). Nacidos un 29/02 cumplen el 01/03 en años no bisiestos |
 | Desembolso | Solo desde APROBADA. Requiere banco (LAFISE, FICOHSA, BAC Credomatic, Banpro) y número de cuenta |
 | Desembolso (detalle) | `POST /desembolsos/:solicitudId` con `banco` (enum `Banco` de shared) y `numeroCuenta` (texto de 6 a 20 dígitos). Siempre por el monto total del crédito y una sola vez (`creditoId` único). Estado + historial + desembolso en una transacción; 409 desde cualquier estado distinto de APROBADA |
+| Consulta de créditos | `GET /creditos?cedula=` devuelve los créditos otorgados del cliente (más reciente primero) con su plan de pagos y el desembolso sin número de cuenta; lista vacía si no tiene. Cédula normalizada como al registrar |
 | Comité | Vista de solo lectura: cédula, nombre, edad, cuotas, periodicidad, plazo, monto |
 | Seguridad | Access token JWT de corta duración; refresh token rotativo, guardado hasheado, revocable |
 | Seguridad (detalle) | Access 15 min (HS256); refresh opaco de 7 días, guardado en SHA-256 y enviado en el cuerpo JSON. La reutilización de un token rotado revoca toda la familia. `refresh` es público; `logout` exige access token y revoca solo la familia del refresh token indicado. Todo lo demás exige JWT (`JwtAuthGuard` global + `@Public()`) |

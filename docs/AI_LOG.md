@@ -16,7 +16,8 @@ Registro de cada interacción con herramientas de IA durante el desarrollo, seg�
 | `feature/auth-login` | Módulos de dominio y autenticación (login, refresh rotativo, logout, guard global) | `develop` | [#6](https://github.com/nestordgt27/SimulacionCredito/pull/6) | Fusionada |
 | `feature/solicitudes-crear-solicitud` | Registro y listado de solicitudes con cuota recalculada y regla de edad | `develop` | [#7](https://github.com/nestordgt27/SimulacionCredito/pull/7) | Fusionada |
 | `feature/comite-aprobar-solicitud` | Módulo de comité: vista reducida, aprobación atómica con crédito y plan, rechazo | `develop` | [#8](https://github.com/nestordgt27/SimulacionCredito/pull/8) | Fusionada |
-| `feature/desembolsos-desembolsar-credito` | Módulo de desembolsos: APROBADA → DESEMBOLSADA con banco y cuenta en una transacción | `develop` | [#9](https://github.com/nestordgt27/SimulacionCredito/pull/9) | En revisión |
+| `feature/desembolsos-desembolsar-credito` | Módulo de desembolsos: APROBADA → DESEMBOLSADA con banco y cuenta en una transacción | `develop` | [#9](https://github.com/nestordgt27/SimulacionCredito/pull/9) | Fusionada |
+| `feature/creditos-consultar-credito` | Consulta de créditos por cédula con plan de pagos | `develop` | Pendiente | En curso |
 
 ---
 
@@ -341,3 +342,32 @@ Registro de cada interacción con herramientas de IA durante el desarrollo, seg�
     - flujo manual sobre `dev.db`: un banco inválido da 400; desembolsar la solicitud 36 da 201 con la cuenta `0012345678` intacta; repetirlo da 409; la solicitud aparece en `?estado=DESEMBOLSADA`.
 - **Commits:** `refactor(solicitudes): generalizar el registro de transiciones con usuario, fecha y comentario`, `feat(solicitudes): permitir desembolsar una solicitud aprobada`, `feat(desembolsos): desembolsar créditos aprobados en una transacción`, `docs: documentar el módulo de desembolsos`, `docs(ai-log): registrar pr de desembolsos`
 - **PR:** [#9](https://github.com/nestordgt27/SimulacionCredito/pull/9) → `develop`
+
+### [012] 2026-09-25 — Consulta de créditos por cédula
+
+- **Herramienta:** Claude Code
+- **Rama:** `feature/creditos-consultar-credito`
+- **Prompt (resumen fiel):** Implementar la consulta de créditos (extra): `GET /creditos?cedula=...` devuelve los créditos y su plan de pagos.
+- **Resultado:**
+  - **`creditos/domain`:** puerto de lectura `ConsultaCreditos.porCedula` con el tipo `CreditoDetalle` (en centavos).
+  - **`creditos/application`:** `ConsultarCreditosUseCase`, que devuelve `CreditoVista` en unidades con `plazoMeses` derivado y `planPagos` con los nombres de shared.
+  - **`creditos/infrastructure`:** `PrismaConsultaCreditos`, una sola consulta con estado de la solicitud, cliente, desembolso y cuotas ordenadas, filtrada por la cédula del cliente de la solicitud.
+  - **`creditos/presentation`:** `ConsultarCreditosQuery` (cédula normalizada y validada) y `CreditosController`.
+  - **Pruebas:**
+    - unitarias de la api: 151;
+    - integración: 45 (6 nuevas: filtro por cédula, plan ordenado que suma el monto, estado y desembolso, `null` sin desembolso, orden de varios créditos, solicitudes sin crédito excluidas);
+    - e2e: 84 (10 nuevas: respuesta completa, plan de 12 cuotas con su primera y última fila, desembolso, sin número de cuenta, aislamiento por cédula, minúsculas, lista vacía, 400 y 401).
+    - Cobertura unitaria de `creditos` (dominio y aplicación): 100 %.
+  - **Documentación:** README (sección Consulta de créditos), `docs/ARCHITECTURE.md` (modelo de lectura) y `CLAUDE.md` §4.
+- **Decisiones y ajustes manuales:**
+  - **Modelo de lectura** en lugar de reconstruir entidades: `ConsultaCreditos` es un puerto solo de lectura, separado de `CreditoRepository`, que es de escritura (segregación de interfaces). El puerto vive en `domain` para respetar la regla de dependencias (la infraestructura implementa puertos del dominio).
+  - **Respuesta como arreglo** (`[]` si no hay créditos o el cliente no existe), en lugar de 404: es un filtro sobre la colección de créditos.
+  - **`planPagos` con los mismos nombres que `generarPlanPagos` de shared**, para que la web lo muestre sin traducir campos.
+  - **Sin número de cuenta en la respuesta,** con una e2e que lo verifica: solo banco y fecha del desembolso.
+  - **La cédula se normaliza igual que al registrar la solicitud** (sin espacios y en mayúsculas).
+  - **Verificación de valores:** la primera cuota quincenal (interés 50, capital 393,21, saldo 9606,79) se comparó con un cálculo independiente.
+  - **Hallazgo de lint corregido** en la e2e: desestructuración de `body`, que está tipado como `any`.
+  - **Verificación final:**
+    - typecheck, lint, Prettier y build en verde;
+    - consulta real sobre `dev.db` con `fetch` de Node: `?cedula=001-150385-0007k` en minúsculas devuelve el crédito `CR-2026-000001` DESEMBOLSADO con 24 cuotas cuyo capital suma 50 000 y saldo final 0; cédula inválida da 400; sin token da 401.
+- **Commits:** `feat(creditos): consultar créditos por cédula con su plan de pagos`, `docs: documentar la consulta de créditos`
