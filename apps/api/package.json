@@ -21,6 +21,7 @@
     "test:int": "jest --config ./test/jest-integration.json --runInBand",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
+    "prisma:seed": "prisma db seed",
     "prisma:studio": "prisma studio",
     "prisma:migrate:test": "dotenv -e .env.test -- prisma migrate deploy"
   },
@@ -76,7 +77,8 @@
     "collectCoverageFrom": [
       "**/*.ts",
       "!main.ts",
-      "!**/*.module.ts"
+      "!**/*.module.ts",
+      "!prisma/seed.ts"
     ],
     "coverageDirectory": "../coverage",
     "testEnvironment": "node",
