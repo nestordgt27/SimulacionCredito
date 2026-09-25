@@ -164,6 +164,7 @@ apps/web/src/
 | Límites de captura | Monto mayor que 0 hasta 21 474 836,47; tasa de 0 a 100 %; montos y tasa con máximo 2 decimales; de 1 a 360 cuotas |
 | Edad (detalle) | `calcularEdad(fechaNacimiento, fechaReferencia)`: la referencia es un parámetro para mantener la función pura (backend la toma del `Clock`). Nacidos un 29/02 cumplen el 01/03 en años no bisiestos |
 | Desembolso | Solo desde APROBADA. Requiere banco (LAFISE, FICOHSA, BAC Credomatic, Banpro) y número de cuenta |
+| Desembolso (detalle) | `POST /desembolsos/:solicitudId` con `banco` (enum `Banco` de shared) y `numeroCuenta` (texto de 6 a 20 dígitos). Siempre por el monto total del crédito y una sola vez (`creditoId` único). Estado + historial + desembolso en una transacción; 409 desde cualquier estado distinto de APROBADA |
 | Comité | Vista de solo lectura: cédula, nombre, edad, cuotas, periodicidad, plazo, monto |
 | Seguridad | Access token JWT de corta duración; refresh token rotativo, guardado hasheado, revocable |
 | Seguridad (detalle) | Access 15 min (HS256); refresh opaco de 7 días, guardado en SHA-256 y enviado en el cuerpo JSON. La reutilización de un token rotado revoca toda la familia. `refresh` es público; `logout` exige access token y revoca solo la familia del refresh token indicado. Todo lo demás exige JWT (`JwtAuthGuard` global + `@Public()`) |

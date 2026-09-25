@@ -1,14 +1,14 @@
-import { crearPuertosComite } from '../../../../test/support/comite-puertos';
+import { crearPuertosSolicitudYCredito } from '../../../../test/support/puertos-solicitud-credito';
 import { unaSolicitud } from '../../../../test/support/solicitud-builders';
 import { SolicitudNoEncontradaError } from '../../solicitudes/domain/errores';
 import { ObtenerSolicitudComiteUseCase } from './obtener-solicitud-comite.use-case';
 
 describe('ObtenerSolicitudComiteUseCase', () => {
-  let puertos: ReturnType<typeof crearPuertosComite>;
+  let puertos: ReturnType<typeof crearPuertosSolicitudYCredito>;
   let useCase: ObtenerSolicitudComiteUseCase;
 
   beforeEach(() => {
-    puertos = crearPuertosComite();
+    puertos = crearPuertosSolicitudYCredito();
     useCase = new ObtenerSolicitudComiteUseCase(puertos.solicitudes, puertos.clock);
   });
 

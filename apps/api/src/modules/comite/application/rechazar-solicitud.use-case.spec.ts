@@ -1,5 +1,5 @@
 import { EstadoSolicitud } from '@simulacion-credito/shared';
-import { crearPuertosComite } from '../../../../test/support/comite-puertos';
+import { crearPuertosSolicitudYCredito } from '../../../../test/support/puertos-solicitud-credito';
 import { unaSolicitud } from '../../../../test/support/solicitud-builders';
 import {
   SolicitudNoEncontradaError,
@@ -8,11 +8,11 @@ import {
 import { RechazarSolicitudUseCase } from './rechazar-solicitud.use-case';
 
 describe('RechazarSolicitudUseCase', () => {
-  let puertos: ReturnType<typeof crearPuertosComite>;
+  let puertos: ReturnType<typeof crearPuertosSolicitudYCredito>;
   let useCase: RechazarSolicitudUseCase;
 
   beforeEach(() => {
-    puertos = crearPuertosComite();
+    puertos = crearPuertosSolicitudYCredito();
     useCase = new RechazarSolicitudUseCase(puertos.solicitudes, puertos.unitOfWork, puertos.clock);
     puertos.solicitudes.buscarPorId.mockResolvedValue(unaSolicitud().persistida(5));
   });
@@ -31,9 +31,14 @@ describe('RechazarSolicitudUseCase', () => {
   it('debe registrar la evaluación condicionada a que la solicitud siga PENDIENTE', async () => {
     await rechazar(null);
 
-    expect(puertos.solicitudes.registrarEvaluacion).toHaveBeenCalledWith(
+    expect(puertos.solicitudes.registrarTransicion).toHaveBeenCalledWith(
       expect.objectContaining({ estado: EstadoSolicitud.RECHAZADA, observaciones: null }),
-      EstadoSolicitud.PENDIENTE,
+      {
+        estadoAnterior: EstadoSolicitud.PENDIENTE,
+        usuarioId: 9,
+        fecha: puertos.clock.ahora(),
+        comentario: null,
+      },
     );
   });
 
@@ -49,11 +54,11 @@ describe('RechazarSolicitudUseCase', () => {
     );
 
     await expect(rechazar()).rejects.toThrow(TransicionInvalidaError);
-    expect(puertos.solicitudes.registrarEvaluacion).not.toHaveBeenCalled();
+    expect(puertos.solicitudes.registrarTransicion).not.toHaveBeenCalled();
   });
 
   it('debe lanzar TransicionInvalidaError cuando otra petición la evaluó antes', async () => {
-    puertos.solicitudes.registrarEvaluacion.mockResolvedValue(false);
+    puertos.solicitudes.registrarTransicion.mockResolvedValue(false);
 
     await expect(rechazar()).rejects.toThrow(TransicionInvalidaError);
   });

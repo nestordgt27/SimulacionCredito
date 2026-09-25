@@ -4,16 +4,17 @@ import type { SolicitudRepository } from '../../src/modules/solicitudes/domain/s
 import { FakeClock } from './fake-clock';
 import { FakeUnitOfWork } from './fake-unit-of-work';
 
-// Puertos mockeados para los casos de uso del comité (CLAUDE.md §6.2).
-export function crearPuertosComite() {
+// Puertos mockeados de solicitudes y créditos (CLAUDE.md §6.2).
+export function crearPuertosSolicitudYCredito() {
   const solicitudes: jest.Mocked<SolicitudRepository> = {
     crear: jest.fn(),
     listar: jest.fn(),
     buscarPorId: jest.fn(),
-    registrarEvaluacion: jest.fn().mockResolvedValue(true),
+    registrarTransicion: jest.fn().mockResolvedValue(true),
   };
   const creditos: jest.Mocked<CreditoRepository> = {
     crear: jest.fn().mockResolvedValue(undefined),
+    buscarPorSolicitud: jest.fn(),
   };
   const numeros: jest.Mocked<NumeroCreditoGenerator> = {
     generar: jest.fn().mockResolvedValue('CR-2026-000001'),

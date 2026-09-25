@@ -6,7 +6,7 @@ import {
   SOLICITUD_REPOSITORY,
   type SolicitudRepository,
 } from '../../solicitudes/domain/solicitud.repository';
-import { buscarSolicitud, registrarEvaluacion } from './evaluacion';
+import { buscarSolicitud, registrarTransicion } from '../../solicitudes/application/transiciones';
 
 export interface RechazarSolicitudComando {
   solicitudId: number;
@@ -34,9 +34,15 @@ export class RechazarSolicitudUseCase {
     evaluadorId,
   }: RechazarSolicitudComando): Promise<ResultadoRechazo> {
     return this.unitOfWork.run(async () => {
+      const ahora = this.clock.ahora();
       const pendiente = await buscarSolicitud(this.solicitudes, solicitudId);
-      const rechazada = pendiente.rechazar(observaciones, evaluadorId, this.clock.ahora());
-      await registrarEvaluacion(this.solicitudes, rechazada, pendiente.estado);
+      const rechazada = pendiente.rechazar(observaciones, evaluadorId, ahora);
+      await registrarTransicion(this.solicitudes, rechazada, {
+        estadoAnterior: pendiente.estado,
+        usuarioId: evaluadorId,
+        fecha: ahora,
+        comentario: rechazada.observaciones,
+      });
 
       return {
         solicitudId: rechazada.id,

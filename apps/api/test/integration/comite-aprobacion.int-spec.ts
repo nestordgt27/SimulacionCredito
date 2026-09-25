@@ -150,9 +150,15 @@ describe('Aprobación del comité (integración con SQLite)', () => {
         data: { estado: EstadoSolicitud.RECHAZADA },
       });
 
-      const registrada = await repositorio.registrarEvaluacion(
-        pendiente.aprobar('Cumple', usuarioId, new Date()),
-        EstadoSolicitud.PENDIENTE,
+      const ahora = new Date();
+      const registrada = await repositorio.registrarTransicion(
+        pendiente.aprobar('Cumple', usuarioId, ahora),
+        {
+          estadoAnterior: EstadoSolicitud.PENDIENTE,
+          usuarioId,
+          fecha: ahora,
+          comentario: 'Cumple',
+        },
       );
 
       expect(registrada).toBe(false);

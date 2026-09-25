@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaTransactionContext } from '../../../prisma/prisma-transaction-context';
 import type { Credito } from '../domain/credito';
-import type { CreditoRepository } from '../domain/credito.repository';
+import type { CreditoRepository, CreditoResumen } from '../domain/credito.repository';
 
 @Injectable()
 export class PrismaCreditoRepository implements CreditoRepository {
@@ -23,6 +23,13 @@ export class PrismaCreditoRepository implements CreditoRepository {
 
     await this.contexto.cliente.cuotaPlan.createMany({
       data: credito.cuotas.map((cuota) => ({ creditoId, ...cuota })),
+    });
+  }
+
+  buscarPorSolicitud(solicitudId: number): Promise<CreditoResumen | null> {
+    return this.contexto.cliente.credito.findUnique({
+      where: { solicitudId },
+      select: { id: true, numeroCredito: true, montoCentavos: true },
     });
   }
 }

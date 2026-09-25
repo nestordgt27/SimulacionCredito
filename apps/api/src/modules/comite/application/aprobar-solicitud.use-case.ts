@@ -16,7 +16,7 @@ import {
   SOLICITUD_REPOSITORY,
   type SolicitudRepository,
 } from '../../solicitudes/domain/solicitud.repository';
-import { buscarSolicitud, registrarEvaluacion } from './evaluacion';
+import { buscarSolicitud, registrarTransicion } from '../../solicitudes/application/transiciones';
 
 export interface AprobarSolicitudComando {
   solicitudId: number;
@@ -61,7 +61,12 @@ export class AprobarSolicitudUseCase {
       const ahora = this.clock.ahora();
       const pendiente = await buscarSolicitud(this.solicitudes, solicitudId);
       const aprobada = pendiente.aprobar(observaciones, evaluadorId, ahora);
-      await registrarEvaluacion(this.solicitudes, aprobada, pendiente.estado);
+      await registrarTransicion(this.solicitudes, aprobada, {
+        estadoAnterior: pendiente.estado,
+        usuarioId: evaluadorId,
+        fecha: ahora,
+        comentario: aprobada.observaciones,
+      });
 
       const numeroCredito = await this.numeros.generar(ahora.getUTCFullYear());
       const credito = Credito.otorgar(

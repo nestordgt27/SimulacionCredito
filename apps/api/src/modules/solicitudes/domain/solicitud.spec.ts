@@ -163,4 +163,30 @@ describe('Solicitud', () => {
       expect(rechazar).toThrow(TransicionInvalidaError);
     });
   });
+
+  describe('desembolsar', () => {
+    it('debe pasar de APROBADA a DESEMBOLSADA conservando el dictamen', () => {
+      const aprobada = unaSolicitud()
+        .persistida(5)
+        .aprobar('Cumple', 9, new Date('2026-09-26T15:00:00Z'));
+
+      const desembolsada = aprobada.desembolsar();
+
+      expect(desembolsada).toMatchObject({
+        id: 5,
+        estado: EstadoSolicitud.DESEMBOLSADA,
+        observaciones: 'Cumple',
+        evaluadaPorId: 9,
+      });
+    });
+
+    it.each([EstadoSolicitud.PENDIENTE, EstadoSolicitud.RECHAZADA, EstadoSolicitud.DESEMBOLSADA])(
+      'debe lanzar TransicionInvalidaError cuando la solicitud está %s',
+      (estado) => {
+        const desembolsar = () => unaSolicitud().enEstado(estado).persistida().desembolsar();
+
+        expect(desembolsar).toThrow(TransicionInvalidaError);
+      },
+    );
+  });
 });
