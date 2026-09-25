@@ -9,7 +9,12 @@ describe('ListarSolicitudesUseCase', () => {
   let useCase: ListarSolicitudesUseCase;
 
   beforeEach(() => {
-    solicitudes = { crear: jest.fn(), listar: jest.fn().mockResolvedValue([]) };
+    solicitudes = {
+      crear: jest.fn(),
+      listar: jest.fn().mockResolvedValue([]),
+      buscarPorId: jest.fn(),
+      registrarEvaluacion: jest.fn(),
+    };
     useCase = new ListarSolicitudesUseCase(solicitudes, new FakeClock(HOY));
   });
 

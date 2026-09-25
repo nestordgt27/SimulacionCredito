@@ -14,7 +14,8 @@ Registro de cada interacción con herramientas de IA durante el desarrollo, seg�
 | `feature/datos-modelo-prisma` | Modelo de datos Prisma, migración inicial y pruebas de integración | `develop` | [#4](https://github.com/nestordgt27/SimulacionCredito/pull/4) | Fusionada |
 | `chore/seed-usuario-admin` | Seed con usuario de prueba `admin` | `develop` | [#5](https://github.com/nestordgt27/SimulacionCredito/pull/5) | Fusionada |
 | `feature/auth-login` | Módulos de dominio y autenticación (login, refresh rotativo, logout, guard global) | `develop` | [#6](https://github.com/nestordgt27/SimulacionCredito/pull/6) | Fusionada |
-| `feature/solicitudes-crear-solicitud` | Registro y listado de solicitudes con cuota recalculada y regla de edad | `develop` | [#7](https://github.com/nestordgt27/SimulacionCredito/pull/7) | En revisión |
+| `feature/solicitudes-crear-solicitud` | Registro y listado de solicitudes con cuota recalculada y regla de edad | `develop` | [#7](https://github.com/nestordgt27/SimulacionCredito/pull/7) | Fusionada |
+| `feature/comite-aprobar-solicitud` | Módulo de comité: vista reducida, aprobación atómica con crédito y plan, rechazo | `develop` | [#8](https://github.com/nestordgt27/SimulacionCredito/pull/8) | En revisión |
 
 ---
 
@@ -251,3 +252,52 @@ Registro de cada interacción con herramientas de IA durante el desarrollo, seg�
     - flujo manual con `curl` sobre `dev.db`: el `POST` con `cuotaNivelada: 1` guardó 2289,98, que coincide con la referencia independiente 2289,9766; un cliente de 86 años recibe 422 `EDAD_NO_PERMITIDA`; `GET ?estado=PENDIENTE` filtra correctamente.
 - **Commits:** `feat(shared): exponer edad máxima y validación de edad permitida`, `feat(core): agregar conversión de montos a centavos y tasas a puntos básicos`, `feat(solicitudes): crear y listar solicitudes con cuota recalculada en el servidor`, `docs: documentar el módulo de solicitudes y sus supuestos`, `docs(ai-log): registrar pr de solicitudes`
 - **PR:** [#7](https://github.com/nestordgt27/SimulacionCredito/pull/7) → `develop`
+
+### [010] 2026-09-25 — Módulo de comité
+
+- **Herramienta:** Claude Code
+- **Rama:** `feature/comite-aprobar-solicitud`
+- **Prompt (resumen fiel):** Implementar el módulo de comité:
+  - `GET /comite/solicitudes/:id` devuelve un DTO reducido solo con los campos del enunciado (cédula, nombre, edad, cuotas, periodicidad, plazo y monto);
+  - `POST /comite/solicitudes/:id/aprobar` recibe las observaciones y, dentro de un solo `prisma.$transaction`, verifica que el estado sea PENDIENTE, lo cambia a APROBADA, crea el crédito con su número y crea todas las cuotas del plan; si algo falla, no queda nada a medias;
+  - `POST /comite/solicitudes/:id/rechazar` completa el módulo.
+- **Resultado:**
+  - **`solicitudes/domain`:**
+    - `SolicitudStateMachine`;
+    - `Solicitud.aprobar` (observaciones obligatorias) y `Solicitud.rechazar` (observaciones opcionales), inmutables;
+    - campos `evaluadaPorId` y `fechaEvaluacion`;
+    - errores `SolicitudNoEncontradaError` (404), `TransicionInvalidaError` (409) y `ObservacionesRequeridasError` (422).
+  - **`SolicitudRepository`:** `buscarPorId` y `registrarEvaluacion`, que es condicional al estado anterior y agrega la entrada de historial.
+  - **`creditos`:**
+    - `Credito.otorgar` genera el plan con `generarPlanPagos` y lo guarda en centavos;
+    - `formatearNumeroCredito`;
+    - `PrismaCreditoRepository` (crédito + `createMany` de cuotas);
+    - `PrismaNumeroCreditoGenerator` (secuencia anual con incremento atómico).
+  - **`comite`:**
+    - `ObtenerSolicitudComiteUseCase`, con una vista de exactamente 7 campos;
+    - `AprobarSolicitudUseCase` y `RechazarSolicitudUseCase`, dentro del `UnitOfWork`;
+    - `ComiteController` y DTOs.
+  - **Pruebas:**
+    - unitarias de la api: 132, que incluyen las 16 combinaciones de la máquina de estados, aprobar sin observaciones y la creación de N cuotas;
+    - integración: 36, con el rollback completo ante un fallo real de la base al crear las cuotas;
+    - e2e: 56 (16 nuevas del comité).
+    - Cobertura unitaria de dominio y aplicación de `comite`, `creditos` y `solicitudes`: 100 %.
+  - **Documentación:** README (sección Comité y supuestos), `docs/ARCHITECTURE.md` (módulos `comite` y `creditos`) y `CLAUDE.md` §4.
+- **Decisiones y ajustes manuales:**
+  - **Máquina de estados como única fuente de transiciones.** `aprobar` y `rechazar` la usan. La verificación "está PENDIENTE" ocurre dos veces: en el dominio, que da un error claro, y en la base con un `updateMany ... WHERE estado = 'PENDIENTE'`, que cubre la concurrencia. Si otra petición cambió el estado, responde 409 y no se crea el crédito.
+  - **La transacción de aprobación incluye el número de crédito.** Si falla la creación de cuotas, también se revierte el incremento de la secuencia, así no quedan huecos en la numeración.
+  - **Rollback probado con un fallo real de SQLite, no con un mock:** una subclase del repositorio repite una cuota y la base rechaza el `createMany` (`P2002`) después de insertar el crédito.
+  - **Vista del comité con exactamente los 7 campos pedidos** (probado con `toStrictEqual`). No incluye `id` ni `estado`, porque el enunciado no los pide.
+  - **Observaciones vacías (solo espacios):** el DTO acepta cualquier texto y es el dominio el que responde 422 `OBSERVACIONES_REQUERIDAS`. Si falta el campo, responde 400.
+  - **Rechazo sin observaciones obligatorias:** `CLAUDE.md` solo las exige al aprobar.
+  - **Aprobar y rechazar responden 200** con el resultado, en lugar de 201: son acciones sobre un recurso existente.
+  - **`Credito.reconstituir` se eliminó** porque solo lo usaba una prueba; volverá con la consulta de créditos.
+  - **Correcciones durante la iteración:**
+    - un valor esperado mío en la e2e estaba mal estimado (470,73); la referencia independiente (fórmula en punto flotante) da 443,2061 y se corrigió la prueba;
+    - dos hallazgos de lint corregidos.
+  - **Dato corrupto en `dev.db` causado por la prueba manual de [009]:** el `curl` desde Git Bash en Windows envió "Martínez" en la codificación de la consola, no UTF-8, y el parser JSON lo guardó con U+FFFD. No es un bug de la API (las e2e envían UTF-8 y funcionan). Se corrigió el registro de prueba en `dev.db`.
+  - **Verificación final:**
+    - typecheck, lint, Prettier y build en verde;
+    - flujo manual sobre `dev.db`: vista reducida, 422 sin observaciones, aprobación con `CR-2026-000001` y 24 cuotas que suman el monto con saldo final 0 y primer vencimiento 15 días después, y 409 al aprobar de nuevo.
+- **Commits:** `feat(solicitudes): agregar máquina de estados y dictamen de aprobación o rechazo`, `feat(creditos): otorgar crédito con número incremental y plan de pagos`, `feat(comite): vista reducida, aprobación atómica y rechazo de solicitudes`, `docs: documentar el módulo de comité y la aprobación atómica`, `docs(ai-log): registrar pr de comité`
+- **PR:** [#8](https://github.com/nestordgt27/SimulacionCredito/pull/8) → `develop`

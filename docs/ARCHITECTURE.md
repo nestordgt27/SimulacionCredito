@@ -52,9 +52,9 @@ apps/api/
 │   ├── modules/
 │   │   ├── auth/             # Implementado: login, refresh, logout, JwtAuthGuard global
 │   │   ├── solicitudes/      # Implementado: crear y listar solicitudes
-│   │   ├── comite/           # Esqueleto
+│   │   ├── comite/           # Implementado: vista reducida, aprobar y rechazar
 │   │   ├── desembolsos/      # Esqueleto
-│   │   └── creditos/         # Esqueleto
+│   │   └── creditos/         # Dominio y persistencia del crédito y su plan (consulta HTTP pendiente)
 │   ├── prisma/               # PrismaModule global: PrismaService, UnitOfWork, schema, migraciones, seed
 │   ├── app.module.ts
 │   └── main.ts
@@ -101,6 +101,20 @@ apps/api/
 - **Unidades en los bordes:** el DTO y la vista trabajan en unidades y porcentaje. El dominio y la base, en centavos y puntos básicos (`core/domain/dinero.ts`).
 - **Atomicidad:** `CrearSolicitudUseCase` persiste dentro del `UnitOfWork`. Si falla la solicitud o el historial, el upsert del cliente también se revierte (probado en integración).
 - **Tiempo:** la fecha de creación y la edad salen del `Clock`.
+
+## Módulos `comite` y `creditos`
+
+| Módulo / capa             | Contenido                                                                                                                                                                                                                                                 |
+| ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `solicitudes/domain`      | `SolicitudStateMachine` (única fuente de transiciones), `Solicitud.aprobar` / `rechazar` (inmutables; devuelven una solicitud nueva) y errores `SolicitudNoEncontradaError` (404), `TransicionInvalidaError` (409) y `ObservacionesRequeridasError` (422) |
+| `creditos/domain`         | `Credito.otorgar` (copia las condiciones aprobadas y genera el plan con `generarPlanPagos`, en centavos), `formatearNumeroCredito`, y puertos `CreditoRepository` y `NumeroCreditoGenerator`                                                              |
+| `creditos/infrastructure` | `PrismaCreditoRepository` (crédito + `createMany` de cuotas) y `PrismaNumeroCreditoGenerator` (upsert con incremento atómico en `secuencias`, clave `CREDITO-AAAA`)                                                                                       |
+| `comite/application`      | `ObtenerSolicitudComiteUseCase`, `AprobarSolicitudUseCase` y `RechazarSolicitudUseCase`                                                                                                                                                                   |
+| `comite/presentation`     | `ComiteController` y DTOs de evaluación                                                                                                                                                                                                                   |
+
+- **Una sola transacción:** `AprobarSolicitudUseCase` ejecuta todo dentro de `unitOfWork.run` (`prisma.$transaction`): leer, `aprobar` (máquina de estados), `registrarEvaluacion` (condicional al estado anterior + historial), generar el número y crear el crédito con sus cuotas. Cualquier error revierte los pasos anteriores, incluido el incremento de la secuencia.
+- **Rollback probado con un fallo real:** la prueba de integración reemplaza `CREDITO_REPOSITORY` por una subclase que repite una cuota. La base rechaza el `createMany` (`P2002`) después de insertar el crédito y consumir el número, y se verifica que el estado, el historial, el crédito, las cuotas y la secuencia quedan intactos.
+- **Dependencias entre módulos:** `ComiteModule` importa `SolicitudesModule` y `CreditosModule`, que exportan los tokens de sus puertos. El comité no tiene dominio propio.
 
 - **Rotación atómica:** `RefrescarSesionUseCase` corre dentro del `UnitOfWork` y devuelve un resultado en lugar de lanzar dentro de la transacción. Así la revocación de la familia se confirma antes de responder `401`.
 - **Concurrencia:** `marcarRotado` es un `updateMany` condicionado a `revocadoEn IS NULL`. Si dos peticiones rotan el mismo token, solo una lo logra y la otra se trata como reutilización.

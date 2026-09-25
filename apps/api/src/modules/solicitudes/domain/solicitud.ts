@@ -8,7 +8,12 @@ import {
 } from '@simulacion-credito/shared';
 import { aCentavos, desdeCentavos, desdePuntosBasicos } from '../../../core/domain/dinero';
 import type { Cliente } from './cliente';
-import { EdadNoPermitidaError, FechaNacimientoInvalidaError } from './errores';
+import {
+  EdadNoPermitidaError,
+  FechaNacimientoInvalidaError,
+  ObservacionesRequeridasError,
+} from './errores';
+import { SolicitudStateMachine } from './solicitud-state-machine';
 
 export interface DatosLaborales {
   tipoEmpleo: TipoEmpleo;
@@ -37,6 +42,8 @@ export interface DatosSolicitud extends NuevaSolicitud {
   estado: EstadoSolicitud;
   observaciones: string | null;
   creadaEn: Date;
+  evaluadaPorId: number | null;
+  fechaEvaluacion: Date | null;
 }
 
 export class Solicitud {
@@ -48,6 +55,8 @@ export class Solicitud {
   readonly observaciones: string | null;
   readonly creadaPorId: number;
   readonly creadaEn: Date;
+  readonly evaluadaPorId: number | null;
+  readonly fechaEvaluacion: Date | null;
   private readonly _id: number | null;
 
   private constructor(datos: DatosSolicitud) {
@@ -60,6 +69,8 @@ export class Solicitud {
     this.observaciones = datos.observaciones;
     this.creadaPorId = datos.creadaPorId;
     this.creadaEn = datos.creadaEn;
+    this.evaluadaPorId = datos.evaluadaPorId;
+    this.fechaEvaluacion = datos.fechaEvaluacion;
   }
 
   /**
@@ -82,6 +93,8 @@ export class Solicitud {
       estado: EstadoSolicitud.PENDIENTE,
       observaciones: null,
       creadaEn: ahora,
+      evaluadaPorId: null,
+      fechaEvaluacion: null,
     });
   }
 
@@ -98,6 +111,53 @@ export class Solicitud {
       condiciones.periodicidad,
     );
     return aCentavos(cuota);
+  }
+
+  /** Dictamen favorable del comité. Las observaciones son obligatorias (CLAUDE.md §4). */
+  aprobar(observaciones: string, evaluadorId: number, ahora: Date): Solicitud {
+    const texto = observaciones.trim();
+    if (texto === '') {
+      throw new ObservacionesRequeridasError();
+    }
+    return this.evaluar(EstadoSolicitud.APROBADA, texto, evaluadorId, ahora);
+  }
+
+  rechazar(observaciones: string | null, evaluadorId: number, ahora: Date): Solicitud {
+    const texto = observaciones?.trim() || null;
+    return this.evaluar(EstadoSolicitud.RECHAZADA, texto, evaluadorId, ahora);
+  }
+
+  private evaluar(
+    destino: EstadoSolicitud,
+    observaciones: string | null,
+    evaluadorId: number,
+    ahora: Date,
+  ): Solicitud {
+    SolicitudStateMachine.assertTransicion(this.estado, destino);
+
+    return new Solicitud({
+      ...this.datos(),
+      estado: destino,
+      observaciones,
+      evaluadaPorId: evaluadorId,
+      fechaEvaluacion: ahora,
+    });
+  }
+
+  private datos(): DatosSolicitud {
+    return {
+      id: this._id,
+      cliente: this.cliente,
+      laboral: this.laboral,
+      condiciones: this.condiciones,
+      cuotaNiveladaCentavos: this.cuotaNiveladaCentavos,
+      estado: this.estado,
+      observaciones: this.observaciones,
+      creadaPorId: this.creadaPorId,
+      creadaEn: this.creadaEn,
+      evaluadaPorId: this.evaluadaPorId,
+      fechaEvaluacion: this.fechaEvaluacion,
+    };
   }
 
   get id(): number {

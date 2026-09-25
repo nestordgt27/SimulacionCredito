@@ -152,6 +152,57 @@ La respuesta (y cada elemento del listado) agrega `id`, `estado`, `observaciones
   - `periodicidad` y `tipoEmpleo` con los valores de `shared`.
 - **Cliente:** se identifica por cédula. Si ya existe, se actualizan sus datos con los de la nueva solicitud.
 
+## Comité
+
+Rutas protegidas: requieren access token.
+
+| Método y ruta                               | Cuerpo                             | Respuesta                                       |
+| ------------------------------------------- | ---------------------------------- | ----------------------------------------------- |
+| `GET /api/comite/solicitudes/:id`           | —                                  | `200`: vista reducida de la solicitud           |
+| `POST /api/comite/solicitudes/:id/aprobar`  | `{ observaciones }` (obligatorias) | `200`: solicitud aprobada y crédito otorgado    |
+| `POST /api/comite/solicitudes/:id/rechazar` | `{ observaciones? }` (opcionales)  | `200`: `{ solicitudId, estado, observaciones }` |
+
+Vista reducida (solo los campos del enunciado):
+
+```json
+{
+  "cedula": "001-150385-0007K",
+  "nombreCompleto": "Luis Martínez",
+  "edad": 41,
+  "cantidadCuotas": 24,
+  "periodicidad": "QUINCENAL",
+  "plazoMeses": 12,
+  "monto": 50000
+}
+```
+
+Respuesta de la aprobación:
+
+```json
+{
+  "solicitudId": 36,
+  "estado": "APROBADA",
+  "observaciones": "Ingresos estables y buen historial",
+  "credito": {
+    "numeroCredito": "CR-2026-000001",
+    "fechaAprobacion": "2026-09-25T17:14:57.578Z",
+    "monto": 50000,
+    "tasaAnual": 18.5,
+    "cantidadCuotas": 24,
+    "periodicidad": "QUINCENAL",
+    "cuotaNivelada": 2289.98
+  }
+}
+```
+
+- **Aprobación atómica:** en un solo `prisma.$transaction` se verifica que la solicitud esté `PENDIENTE`, se pasa a `APROBADA` (con el historial), se genera el número `CR-AAAA-NNNNNN` y se crean el crédito y todas sus cuotas con `generarPlanPagos`. Si algo falla, no queda nada a medias; tampoco se consume el número de crédito.
+- **Transiciones:** solo `PENDIENTE → APROBADA`, `PENDIENTE → RECHAZADA` y `APROBADA → DESEMBOLSADA`. Cualquier otra responde `409 TRANSICION_INVALIDA`.
+- **Concurrencia:** el cambio de estado es condicional (`WHERE estado = 'PENDIENTE'`). Si dos personas aprueban a la vez, solo una lo logra y la otra recibe `409`.
+- **Errores:**
+  - `404 SOLICITUD_NO_ENCONTRADA`;
+  - `422 OBSERVACIONES_REQUERIDAS` al aprobar con observaciones vacías;
+  - `400` si falta el campo `observaciones` o el id no es numérico.
+
 ## Variables de entorno
 
 | Archivo                 | Versionado | Uso                                                         |
@@ -230,4 +281,6 @@ Supuestos de negocio (detalle en `CLAUDE.md` §4):
 - **Persistencia de montos y tasas:** montos en centavos y tasas en puntos básicos (18,50 % = 1850), ambos enteros. Por eso la tasa admite como máximo 2 decimales. El cliente de Prisma maneja `Int` de 32 bits, así que el monto máximo es 21 474 836,47.
 - **Número de crédito:** la secuencia se reinicia cada año (`CR-2026-000001`, `CR-2027-000001`), porque el año forma parte del número.
 - **Cliente:** se identifica por cédula única y puede tener varias solicitudes. La información laboral se guarda en cada solicitud como foto del momento. Al registrar una solicitud de una cédula existente, se actualizan los datos del cliente (gana la última captura).
+- **Aprobación:** la fecha de aprobación es el momento del dictamen (UTC) y es la base de los vencimientos. El año del número de crédito es el de esa fecha.
+- **Rechazo:** las observaciones son opcionales.
 - **Límites de captura:** hasta 360 cuotas y tasa de 0 a 100 %, con máximo 2 decimales en montos y tasa.

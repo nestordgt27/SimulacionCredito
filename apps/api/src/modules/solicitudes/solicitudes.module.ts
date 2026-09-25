@@ -14,5 +14,6 @@ import { SolicitudesController } from './presentation/solicitudes.controller';
     ListarSolicitudesUseCase,
     { provide: SOLICITUD_REPOSITORY, useClass: PrismaSolicitudRepository },
   ],
+  exports: [SOLICITUD_REPOSITORY],
 })
 export class SolicitudesModule {}

@@ -1,4 +1,4 @@
-import { Periodicidad, TipoEmpleo } from '@simulacion-credito/shared';
+import { EstadoSolicitud, Periodicidad, TipoEmpleo } from '@simulacion-credito/shared';
 import type { CrearSolicitudComando } from '../../src/modules/solicitudes/application/crear-solicitud.use-case';
 import { Cliente } from '../../src/modules/solicitudes/domain/cliente';
 import {
@@ -22,6 +22,7 @@ class SolicitudBuilder {
     periodicidad: Periodicidad.MENSUAL,
   };
   private creadaPorId = 1;
+  private estado: EstadoSolicitud = EstadoSolicitud.PENDIENTE;
 
   conFechaNacimiento(iso: string): this {
     this.fechaNacimiento = fecha(iso);
@@ -40,6 +41,12 @@ class SolicitudBuilder {
 
   creadaPor(usuarioId: number): this {
     this.creadaPorId = usuarioId;
+    return this;
+  }
+
+  /** Estado con el que se reconstituye en `persistida()` (por defecto PENDIENTE). */
+  enEstado(estado: EstadoSolicitud): this {
+    this.estado = estado;
     return this;
   }
 
@@ -75,9 +82,11 @@ class SolicitudBuilder {
       ...this.build(),
       id,
       cuotaNiveladaCentavos: nueva.cuotaNiveladaCentavos,
-      estado: nueva.estado,
+      estado: this.estado,
       observaciones: null,
       creadaEn: nueva.creadaEn,
+      evaluadaPorId: null,
+      fechaEvaluacion: null,
     });
   }
 }

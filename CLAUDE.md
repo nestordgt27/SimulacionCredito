@@ -153,6 +153,7 @@ apps/web/src/
 | Estados | `PENDIENTE → APROBADA`, `PENDIENTE → RECHAZADA`, `APROBADA → DESEMBOLSADA`. Todo lo demás es inválido |
 | Aprobación | Observaciones obligatorias. En una sola transacción: estado → APROBADA, crear crédito con número único, crear N cuotas |
 | Número de crédito | Incremental con formato `CR-AAAA-NNNNNN` |
+| Aprobación (detalle) | `fechaAprobacion` = momento del dictamen según el `Clock` (UTC); el año del número es el de esa fecha. El cambio de estado es condicional al estado anterior (409 si otra petición lo cambió). El rechazo no exige observaciones |
 | Número de crédito (detalle) | Tabla `Secuencia` con clave `CREDITO-AAAA`: la numeración se reinicia cada año y se incrementa dentro de la transacción de aprobación |
 | Persistencia | Montos en centavos y tasas en puntos básicos (`Int`). La tasa admite máximo 2 decimales. Máximo por monto: 2 147 483 647 centavos (`Int` de 32 bits en el cliente de Prisma) |
 | Fechas de vencimiento | Desde la fecha de aprobación: +15 días (quincenal), +1 mes (mensual), +1 año (anual) |
