@@ -1,4 +1,4 @@
-import { Test, type TestingModule } from '@nestjs/testing';
+import { Test, type TestingModule, type TestingModuleBuilder } from '@nestjs/testing';
 import { AppModule } from '../../../src/app.module';
 import { PrismaService } from '../../../src/prisma/prisma.service';
 
@@ -10,10 +10,13 @@ export interface BaseDeDatosDePrueba {
 }
 
 // Levanta la app con .env.test (Jest define NODE_ENV=test), por lo que usa data/test.db.
-export async function abrirBaseDeDatosDePrueba(): Promise<BaseDeDatosDePrueba> {
-  const app: TestingModule = await Test.createTestingModule({
-    imports: [AppModule],
-  }).compile();
+// `configurar` permite reemplazar providers (por ejemplo, para inyectar un fallo).
+export async function abrirBaseDeDatosDePrueba(
+  configurar: (builder: TestingModuleBuilder) => TestingModuleBuilder = (builder) => builder,
+): Promise<BaseDeDatosDePrueba> {
+  const app: TestingModule = await configurar(
+    Test.createTestingModule({ imports: [AppModule] }),
+  ).compile();
   await app.init();
 
   return {
