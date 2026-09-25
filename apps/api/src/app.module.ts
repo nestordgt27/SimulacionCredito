@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { envFilePath, validateEnv } from './core/config/env';
-import { HealthController } from './core/health/health.controller';
+import { CoreModule } from './core/core.module';
 import { PrismaModule } from './prisma/prisma.module';
 
 @Module({
@@ -11,8 +11,8 @@ import { PrismaModule } from './prisma/prisma.module';
       envFilePath: envFilePath(process.env.NODE_ENV),
       validate: validateEnv,
     }),
+    CoreModule,
     PrismaModule,
   ],
-  controllers: [HealthController],
 })
 export class AppModule {}
