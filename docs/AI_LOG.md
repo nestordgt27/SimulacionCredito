@@ -16,7 +16,7 @@ Registro de cada interacción con herramientas de IA durante el desarrollo, seg�
 | `feature/auth-login` | Módulos de dominio y autenticación (login, refresh rotativo, logout, guard global) | `develop` | [#6](https://github.com/nestordgt27/SimulacionCredito/pull/6) | Fusionada |
 | `feature/solicitudes-crear-solicitud` | Registro y listado de solicitudes con cuota recalculada y regla de edad | `develop` | [#7](https://github.com/nestordgt27/SimulacionCredito/pull/7) | Fusionada |
 | `feature/comite-aprobar-solicitud` | Módulo de comité: vista reducida, aprobación atómica con crédito y plan, rechazo | `develop` | [#8](https://github.com/nestordgt27/SimulacionCredito/pull/8) | Fusionada |
-| `feature/desembolsos-desembolsar-credito` | Módulo de desembolsos: APROBADA → DESEMBOLSADA con banco y cuenta en una transacción | `develop` | Pendiente | En curso |
+| `feature/desembolsos-desembolsar-credito` | Módulo de desembolsos: APROBADA → DESEMBOLSADA con banco y cuenta en una transacción | `develop` | [#9](https://github.com/nestordgt27/SimulacionCredito/pull/9) | En revisión |
 
 ---
 
@@ -339,4 +339,5 @@ Registro de cada interacción con herramientas de IA durante el desarrollo, seg�
   - **Verificación final:**
     - typecheck, lint, Prettier y build en verde;
     - flujo manual sobre `dev.db`: un banco inválido da 400; desembolsar la solicitud 36 da 201 con la cuenta `0012345678` intacta; repetirlo da 409; la solicitud aparece en `?estado=DESEMBOLSADA`.
-- **Commits:** `refactor(solicitudes): generalizar el registro de transiciones con usuario, fecha y comentario`, `feat(solicitudes): permitir desembolsar una solicitud aprobada`, `feat(desembolsos): desembolsar créditos aprobados en una transacción`, `docs: documentar el módulo de desembolsos`
+- **Commits:** `refactor(solicitudes): generalizar el registro de transiciones con usuario, fecha y comentario`, `feat(solicitudes): permitir desembolsar una solicitud aprobada`, `feat(desembolsos): desembolsar créditos aprobados en una transacción`, `docs: documentar el módulo de desembolsos`, `docs(ai-log): registrar pr de desembolsos`
+- **PR:** [#9](https://github.com/nestordgt27/SimulacionCredito/pull/9) → `develop`
