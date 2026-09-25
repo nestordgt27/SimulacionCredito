@@ -10,7 +10,8 @@ Registro de cada interacción con herramientas de IA durante el desarrollo, seg�
 | `develop` | Rama de integración | `main` | — | Activa |
 | `docs/instrucciones-proyecto` | Agregar `CLAUDE.md` y `docs/AI_LOG.md` | `develop` | [#1](https://github.com/nestordgt27/SimulacionCredito/pull/1) | Fusionada |
 | `chore/estructura-monorepo` | Estructura del monorepo, SQLite local y variables de entorno | `develop` | [#2](https://github.com/nestordgt27/SimulacionCredito/pull/2) | Fusionada |
-| `feature/shared-calculos-financieros` | Cálculos financieros y enums en `packages/shared` | `develop` | [#3](https://github.com/nestordgt27/SimulacionCredito/pull/3) | En revisión |
+| `feature/shared-calculos-financieros` | Cálculos financieros y enums en `packages/shared` | `develop` | [#3](https://github.com/nestordgt27/SimulacionCredito/pull/3) | Fusionada |
+| `feature/datos-modelo-prisma` | Modelo de datos Prisma, migración inicial y pruebas de integración | `develop` | [#4](https://github.com/nestordgt27/SimulacionCredito/pull/4) | En revisión |
 
 ---
 
@@ -92,3 +93,32 @@ Registro de cada interacción con herramientas de IA durante el desarrollo, seg�
   - **Verificación:** build dual comprobado desde la api (`require`, CJS) y la web (`import`, ESM); typecheck, lint, pruebas y Prettier de todo el repo en verde.
 - **Commits:** `feat(shared): agregar enums de periodicidad y estado de solicitud`, `feat(shared): calcular cuota nivelada y plan de pagos con decimal.js`, `feat(shared): calcular edad y plazo en meses`, `docs: registrar supuestos de cálculo y exports de shared`, `docs(ai-log): registrar pr de cálculos financieros`
 - **PR:** [#3](https://github.com/nestordgt27/SimulacionCredito/pull/3) → `develop`
+
+### [006] 2026-09-25 — Modelo de datos con Prisma
+
+- **Herramienta:** Claude Code
+- **Rama:** `feature/datos-modelo-prisma`
+- **Prompt (resumen fiel):** Implementar el modelado de datos a partir de una propuesta de `schema.prisma` adjunta, usándola y actualizándola si es necesario según lo implementado en `packages/shared`.
+- **Resultado:**
+  - **Schema** en `apps/api/src/prisma/schema.prisma` con los modelos `Usuario`, `RefreshToken`, `Cliente`, `Solicitud`, `SolicitudHistorial`, `Credito`, `CuotaPlan`, `Desembolso` y `Secuencia`.
+  - **Migración inicial** `20260925144015_modelo_inicial`, aplicada en `dev.db` y `test.db`.
+  - **`PrismaService`** (recibe `DATABASE_URL` desde `ConfigService`) y **`PrismaModule`** global, registrado en `AppModule`.
+  - **`packages/shared`:** nuevos enums `Banco` y `TipoEmpleo`, con sus pruebas (70 pruebas, 100 % de cobertura).
+  - **Pruebas de integración** con SQLite real:
+    - configuración `test/jest-integration.json`;
+    - scripts `test:int` y `pretest:int`/`pretest:e2e`, que aplican las migraciones sobre `test.db`;
+    - helpers `abrirBaseDeDatosDePrueba`/`limpiarBaseDeDatos` y builders `crearUsuario`/`crearCliente`/`crearSolicitud`/`crearCredito`;
+    - 9 pruebas del modelo: estado por defecto, plan de `generarPlanPagos` guardado en centavos con saldo final 0, unicidades, `Restrict` y `Cascade`.
+  - **Documentación:** README (puesta en marcha con `prisma:migrate`, scripts y supuestos), `docs/ARCHITECTURE.md` (diagrama y convenciones del modelo) y `CLAUDE.md` §4 (secuencia anual y límites de persistencia).
+- **Decisiones y ajustes manuales sobre la propuesta:**
+  - **`CuotaPlan` alineado con el `CuotaPlan` de `generarPlanPagos`:** `numeroCuota` → `numero` y `saldoRestanteCentavos` → `saldoCentavos`. El mapeo queda campo a campo con el sufijo `Centavos`.
+  - **Tasa en puntos básicos:** se mantiene, y se documenta que shared recibe porcentaje (`tasaAnualBps / 100`), por lo que la tasa admite como máximo 2 decimales. La validación se hará en el dominio de solicitudes.
+  - **`Banco` y `TipoEmpleo` en shared:** la propuesta los referenciaba como enums de shared y `CLAUDE.md` §2.4 los ubica ahí, pero no existían.
+  - **Roles:** no se definieron en shared. La propuesta sugería ADMIN, CAPTURA, ANALISTA y OPERACIONES; se definirán en el módulo `auth`.
+  - **Ubicación y comentarios:** se ajustó la ubicación a `src/prisma/` (§2.2) y se quitó el comentario sobre Prisma 7, porque se usa Prisma 6. Se documentó que `fechaAprobacion` es la `fechaInicio` de `generarPlanPagos`, y que edad y plazo son derivados y no se guardan.
+  - **Sin CHECK constraints en SQL:** Prisma no los modela, y con SQLite las migraciones que redefinen tablas los perderían sin aviso. La validación de enums y rangos queda en el dominio.
+  - **Pruebas de integración:** limpian las tablas en `beforeEach` en lugar de usar `prisma migrate reset`, que es más lento y destructivo. Levantan `AppModule`, así que prueban la misma configuración que la app real.
+  - **Ruta de SQLite:** se verificó que el `url` explícito en `PrismaService` sigue resolviendo la ruta relativa desde el schema (no aparecen archivos `.db` fuera de `apps/api/data/`).
+  - **Verificación:** typecheck, lint, Prettier, pruebas unitarias (shared 70, api 6, web 1), integración (9), e2e (1) y build en verde.
+- **Commits:** `feat(shared): agregar enums de banco y tipo de empleo`, `feat(api): modelar datos con prisma y migración inicial`, `test(api): cubrir el modelo de datos con pruebas de integración en sqlite`, `docs: documentar modelo de datos y supuestos de persistencia`, `docs(ai-log): registrar pr de modelo de datos`
+- **PR:** [#4](https://github.com/nestordgt27/SimulacionCredito/pull/4) → `develop`

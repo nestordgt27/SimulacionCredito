@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { envFilePath, validateEnv } from './core/config/env';
 import { HealthController } from './core/health/health.controller';
+import { PrismaModule } from './prisma/prisma.module';
 
 @Module({
   imports: [
@@ -10,6 +11,7 @@ import { HealthController } from './core/health/health.controller';
       envFilePath: envFilePath(process.env.NODE_ENV),
       validate: validateEnv,
     }),
+    PrismaModule,
   ],
   controllers: [HealthController],
 })

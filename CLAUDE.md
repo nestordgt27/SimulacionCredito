@@ -153,6 +153,8 @@ apps/web/src/
 | Estados | `PENDIENTE → APROBADA`, `PENDIENTE → RECHAZADA`, `APROBADA → DESEMBOLSADA`. Todo lo demás es inválido |
 | Aprobación | Observaciones obligatorias. En una sola transacción: estado → APROBADA, crear crédito con número único, crear N cuotas |
 | Número de crédito | Incremental con formato `CR-AAAA-NNNNNN` |
+| Número de crédito (detalle) | Tabla `Secuencia` con clave `CREDITO-AAAA`: la numeración se reinicia cada año y se incrementa dentro de la transacción de aprobación |
+| Persistencia | Montos en centavos y tasas en puntos básicos (`Int`). La tasa admite máximo 2 decimales. Máximo por monto: 2 147 483 647 centavos (`Int` de 32 bits en el cliente de Prisma) |
 | Fechas de vencimiento | Desde la fecha de aprobación: +15 días (quincenal), +1 mes (mensual), +1 año (anual) |
 | Fechas (detalle) | Aritmética en UTC. La cuota k vence en `inicio + k periodos` (sin encadenar). Si el día no existe en el mes destino se usa el último día del mes (31/01 + 1 mes = 28 o 29/02) |
 | Edad (detalle) | `calcularEdad(fechaNacimiento, fechaReferencia)`: la referencia es un parámetro para mantener la función pura (backend la toma del `Clock`). Nacidos un 29/02 cumplen el 01/03 en años no bisiestos |

@@ -22,6 +22,7 @@ apps/web  ──┘
 | ------------------------------ | ------------------------------------------------------------------------------------------- |
 | `periodicidad.ts`              | `Periodicidad` y `PERIODICIDADES`: estrategia por periodicidad `{ n, avanzarFecha }`        |
 | `estado-solicitud.ts`          | `EstadoSolicitud`                                                                           |
+| `banco.ts`, `tipo-empleo.ts`   | `Banco`, `TipoEmpleo`                                                                       |
 | `cuota-nivelada.ts`            | `calcularCuotaNivelada(monto, tasaAnual, cuotas, periodicidad)`                             |
 | `plan-pagos.ts`                | `generarPlanPagos({ monto, tasaAnual, cuotas, periodicidad, fechaInicio })` → `CuotaPlan[]` |
 | `edad.ts`                      | `calcularEdad(fechaNacimiento, fechaReferencia)`                                            |
@@ -55,7 +56,38 @@ apps/api/
 - **Configuración**: `@nestjs/config` global. Con `NODE_ENV=test` (lo define Jest) se carga `.env.test`; si no, `.env`. `validateEnv` rechaza el arranque si falta una variable o es inválida.
 - **Prefijo global** `/api`, igual que la ruta que Nginx redirigirá cuando se dockerice.
 - **Base de datos**: Prisma 6 + SQLite. Las rutas `file:` son relativas a `src/prisma/schema.prisma`, por eso `DATABASE_URL=file:../../data/dev.db`. Desarrollo y pruebas usan archivos distintos (`dev.db` y `test.db`).
+- **`PrismaService`** (`src/prisma/`) es global. Lo usan solo los adaptadores de `infrastructure` y las pruebas de integración.
 - Los módulos de negocio (`auth`, `solicitudes`, `comite`, `desembolsos`, `creditos`) siguen la estructura por capas de `CLAUDE.md` §2.2 y se agregan en ramas propias.
+
+## Modelo de datos
+
+```
+Usuario ─┬─< RefreshToken (cascade; rotación por familiaId)
+         ├─< Solicitud (creadaPor / evaluadaPor)
+         ├─< SolicitudHistorial
+         └─< Desembolso
+
+Cliente ──< Solicitud ──< SolicitudHistorial
+                │
+                └── 1:1 ── Credito ──< CuotaPlan
+                              │
+                              └── 1:1 ── Desembolso
+
+Secuencia (contador del número de crédito por año)
+```
+
+| Convención | Detalle                                                                                                          |
+| ---------- | ---------------------------------------------------------------------------------------------------------------- |
+| Montos     | Centavos (`Int`). El dominio convierte a unidades para llamar a `shared`                                         |
+| Tasas      | Puntos básicos (`Int`): `tasaAnual = tasaAnualBps / 100`                                                         |
+| Enums      | `String`, validados con los enums de `shared`                                                                    |
+| Borrado    | `Restrict` en datos financieros; `Cascade` solo en `RefreshToken`                                                |
+| Unicidad   | Cédula, número de crédito, un crédito por solicitud, un desembolso por crédito, `(creditoId, numero)` en el plan |
+| Derivados  | Edad y plazo no se guardan; se calculan con `calcularEdad` y `calcularPlazoMeses`                                |
+
+- **Solicitud vs. crédito:** la solicitud es la petición; el crédito es lo pactado. Al aprobar se copian las condiciones al crédito como contrato inmutable.
+- **`CuotaPlan`** usa los mismos nombres que el `CuotaPlan` de `generarPlanPagos` (`numero`, `cuota`, `capital`, `interes`, `saldo`), con el sufijo `Centavos`.
+- Migraciones en `src/prisma/migrations/`.
 
 ## `apps/web` (React + Vite)
 
@@ -72,8 +104,8 @@ apps/web/src/
 
 ## Pruebas
 
-| Paquete  | Unitarias                        | Integración / e2e                                           |
-| -------- | -------------------------------- | ----------------------------------------------------------- |
-| `shared` | Vitest                           | —                                                           |
-| `api`    | Jest (`src/**/*.spec.ts`)        | Jest + Supertest (`test/**/*.e2e-spec.ts`), con `.env.test` |
-| `web`    | Vitest + Testing Library + jsdom | —                                                           |
+| Paquete  | Unitarias                        | Integración / e2e                                                                                                                 |
+| -------- | -------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| `shared` | Vitest                           | —                                                                                                                                 |
+| `api`    | Jest (`src/**/*.spec.ts`)        | Integración: Jest + SQLite real (`test/**/*.int-spec.ts`). E2E: Jest + Supertest (`test/**/*.e2e-spec.ts`). Ambas con `.env.test` |
+| `web`    | Vitest + Testing Library + jsdom | —                                                                                                                                 |

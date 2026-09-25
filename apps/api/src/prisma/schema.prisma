@@ -1,5 +1,19 @@
+// =============================================================================
+// Modelo de datos — Simulación del ciclo de vida de una solicitud de crédito
+// Ubicación: apps/api/src/prisma/schema.prisma
+//
+// Convenciones (ver CLAUDE.md §3.1 y §4):
+//   - Montos en CENTAVOS (Int). Ej: C$ 15,000.50 -> 1500050
+//   - Tasas en PUNTOS BÁSICOS (Int). Ej: 18.50 % -> 1850. packages/shared recibe la
+//     tasa en porcentaje: tasaAnual = tasaAnualBps / 100 (la tasa admite máximo 2 decimales).
+//   - Campos tipo enum se guardan como String y se validan con los enums de
+//     packages/shared (SQLite no soporta enums y así hay una sola fuente de verdad).
+//   - Fechas en UTC, igual que los cálculos de packages/shared.
+//   - Datos financieros nunca se borran en cascada (onDelete: Restrict).
+//
 // Las rutas relativas de SQLite se resuelven desde este archivo (src/prisma/),
 // por eso DATABASE_URL apunta a ../../data/<archivo>.db (apps/api/data).
+// =============================================================================
 
 generator client {
   provider = "prisma-client-js"
@@ -8,4 +22,194 @@ generator client {
 datasource db {
   provider = "sqlite"
   url      = env("DATABASE_URL")
+}
+
+// -----------------------------------------------------------------------------
+// AUTENTICACIÓN
+// -----------------------------------------------------------------------------
+
+model Usuario {
+  id             Int      @id @default(autoincrement())
+  username       String   @unique
+  passwordHash   String // bcrypt / argon2, nunca texto plano
+  nombreCompleto String
+  rol            String // Valores definidos por el módulo auth
+  activo         Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  refreshTokens        RefreshToken[]
+  solicitudesCreadas   Solicitud[]          @relation("SolicitudCreadaPor")
+  solicitudesEvaluadas Solicitud[]          @relation("SolicitudEvaluadaPor")
+  desembolsos          Desembolso[]
+  cambiosEstado        SolicitudHistorial[]
+
+  @@map("usuarios")
+}
+
+model RefreshToken {
+  id               Int       @id @default(autoincrement())
+  usuarioId        Int
+  tokenHash        String    @unique // SHA-256 del token; el token real solo lo tiene el cliente
+  // Agrupa la cadena de rotación: si se reutiliza un token revocado,
+  // se revoca toda la familia (detección de robo).
+  familiaId        String
+  expiraEn         DateTime
+  revocadoEn       DateTime?
+  reemplazadoPorId Int?      @unique
+  createdAt        DateTime  @default(now())
+
+  usuario        Usuario       @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  reemplazadoPor RefreshToken? @relation("RotacionToken", fields: [reemplazadoPorId], references: [id])
+  reemplazaA     RefreshToken? @relation("RotacionToken")
+
+  @@index([usuarioId])
+  @@index([familiaId])
+  @@map("refresh_tokens")
+}
+
+// -----------------------------------------------------------------------------
+// CLIENTE Y SOLICITUD
+// -----------------------------------------------------------------------------
+
+model Cliente {
+  id              Int      @id @default(autoincrement())
+  cedula          String   @unique // Normalizada: mayúsculas, formato 000-000000-0000X
+  nombreCompleto  String
+  correo          String
+  telefono        String
+  fechaNacimiento DateTime // Solo fecha (00:00 UTC); la edad se deriva con calcularEdad
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  solicitudes Solicitud[]
+
+  @@map("clientes")
+}
+
+model Solicitud {
+  id        Int @id @default(autoincrement())
+  clienteId Int
+
+  // Información laboral (snapshot al momento de solicitar)
+  tipoEmpleo             String // TipoEmpleo (shared): ASALARIADO | INDEPENDIENTE
+  empresa                String
+  antiguedadLaboralAnios Int
+  ingresoMensualCentavos Int
+
+  // Condiciones del crédito solicitado. El plazo no se guarda: se deriva con calcularPlazoMeses.
+  montoSolicitadoCentavos Int
+  cantidadCuotas          Int
+  tasaAnualBps            Int
+  periodicidad            String // Periodicidad (shared): ANUAL | MENSUAL | QUINCENAL
+  cuotaNiveladaCentavos   Int // Recalculada SIEMPRE en backend con calcularCuotaNivelada
+
+  // Estado y dictamen
+  estado          String    @default("PENDIENTE") // EstadoSolicitud (shared)
+  observaciones   String? // Obligatoria al aprobar (regla de dominio)
+  evaluadaPorId   Int?
+  fechaEvaluacion DateTime?
+
+  creadaPorId Int
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  cliente     Cliente              @relation(fields: [clienteId], references: [id], onDelete: Restrict)
+  creadaPor   Usuario              @relation("SolicitudCreadaPor", fields: [creadaPorId], references: [id], onDelete: Restrict)
+  evaluadaPor Usuario?             @relation("SolicitudEvaluadaPor", fields: [evaluadaPorId], references: [id], onDelete: Restrict)
+  credito     Credito?
+  historial   SolicitudHistorial[]
+
+  @@index([estado])
+  @@index([clienteId])
+  @@map("solicitudes")
+}
+
+// Auditoría de transiciones de estado (se escribe en la misma transacción que el cambio)
+model SolicitudHistorial {
+  id             Int      @id @default(autoincrement())
+  solicitudId    Int
+  estadoAnterior String? // null en la creación
+  estadoNuevo    String
+  usuarioId      Int
+  comentario     String?
+  fecha          DateTime @default(now())
+
+  solicitud Solicitud @relation(fields: [solicitudId], references: [id], onDelete: Restrict)
+  usuario   Usuario   @relation(fields: [usuarioId], references: [id], onDelete: Restrict)
+
+  @@index([solicitudId])
+  @@map("solicitudes_historial")
+}
+
+// -----------------------------------------------------------------------------
+// CRÉDITO, PLAN DE PAGOS Y DESEMBOLSO
+// -----------------------------------------------------------------------------
+
+// Se crea al APROBAR. Copia las condiciones como contrato inmutable:
+// la solicitud es la petición, el crédito es lo pactado.
+model Credito {
+  id                    Int      @id @default(autoincrement())
+  numeroCredito         String   @unique // CR-AAAA-NNNNNN
+  solicitudId           Int      @unique // Relación 1:1
+  montoCentavos         Int
+  tasaAnualBps          Int
+  periodicidad          String
+  cantidadCuotas        Int
+  cuotaNiveladaCentavos Int
+  fechaAprobacion       DateTime // fechaInicio de generarPlanPagos (base de los vencimientos)
+  createdAt             DateTime @default(now())
+
+  solicitud  Solicitud   @relation(fields: [solicitudId], references: [id], onDelete: Restrict)
+  cuotas     CuotaPlan[]
+  desembolso Desembolso?
+
+  @@map("creditos")
+}
+
+// Una fila por cada CuotaPlan que devuelve generarPlanPagos (mismos nombres, en centavos).
+model CuotaPlan {
+  id               Int      @id @default(autoincrement())
+  creditoId        Int
+  numero           Int // 1..cantidadCuotas
+  fechaVencimiento DateTime
+  cuotaCentavos    Int // capital + interés (la última absorbe el residuo de redondeo)
+  capitalCentavos  Int
+  interesCentavos  Int
+  saldoCentavos    Int // Saldo después de pagar esta cuota; la última = 0
+
+  credito Credito @relation(fields: [creditoId], references: [id], onDelete: Restrict)
+
+  @@unique([creditoId, numero])
+  @@map("cuotas_plan")
+}
+
+model Desembolso {
+  id                Int      @id @default(autoincrement())
+  creditoId         Int      @unique // Un crédito se desembolsa una sola vez
+  banco             String // Banco (shared): LAFISE | FICOHSA | BAC_CREDOMATIC | BANPRO
+  numeroCuenta      String // String: preserva ceros a la izquierda
+  montoCentavos     Int
+  desembolsadoPorId Int
+  fechaDesembolso   DateTime @default(now())
+
+  credito         Credito @relation(fields: [creditoId], references: [id], onDelete: Restrict)
+  desembolsadoPor Usuario @relation(fields: [desembolsadoPorId], references: [id], onDelete: Restrict)
+
+  @@map("desembolsos")
+}
+
+// -----------------------------------------------------------------------------
+// SOPORTE
+// -----------------------------------------------------------------------------
+
+// Contador para el número de crédito incremental.
+// clave = "CREDITO-2026" (se reinicia cada año, ya que el año forma parte del número).
+// Se incrementa dentro de la transacción de aprobación; SQLite serializa escrituras,
+// por lo que no hay números duplicados.
+model Secuencia {
+  clave String @id
+  valor Int    @default(0)
+
+  @@map("secuencias")
 }

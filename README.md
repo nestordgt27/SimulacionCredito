@@ -34,8 +34,8 @@ npm install
 cp apps/api/.env.example apps/api/.env
 cp apps/web/.env.example apps/web/.env
 
-# 3. Generar el cliente de Prisma
-npm run prisma:generate -w @simulacion-credito/api
+# 3. Crear la base de datos de desarrollo (data/dev.db) y generar el cliente de Prisma
+npm run prisma:migrate -w @simulacion-credito/api
 
 # 4. Levantar api (http://localhost:3000/api) y web (http://localhost:5173)
 npm run dev
@@ -72,24 +72,25 @@ Variables del frontend:
 
 ## Scripts (desde la raíz)
 
-| Script                                        | Descripción                             |
-| --------------------------------------------- | --------------------------------------- |
-| `npm run dev`                                 | Levanta api y web en paralelo           |
-| `npm run build`                               | Compila shared, api y web               |
-| `npm test`                                    | Pruebas unitarias de todos los paquetes |
-| `npm run test:e2e -w @simulacion-credito/api` | Pruebas e2e de la API (usa `.env.test`) |
-| `npm run lint`                                | Lint de todos los paquetes              |
-| `npm run typecheck`                           | `tsc` sin emitir en todos los paquetes  |
-| `npm run format`                              | Formatea con Prettier                   |
+| Script                                        | Descripción                                              |
+| --------------------------------------------- | -------------------------------------------------------- |
+| `npm run dev`                                 | Levanta api y web en paralelo                            |
+| `npm run build`                               | Compila shared, api y web                                |
+| `npm test`                                    | Pruebas unitarias de todos los paquetes                  |
+| `npm run test:int -w @simulacion-credito/api` | Pruebas de integración con SQLite real (usa `.env.test`) |
+| `npm run test:e2e -w @simulacion-credito/api` | Pruebas e2e de la API (usa `.env.test`)                  |
+| `npm run lint`                                | Lint de todos los paquetes                               |
+| `npm run typecheck`                           | `tsc` sin emitir en todos los paquetes                   |
+| `npm run format`                              | Formatea con Prettier                                    |
 
 Base de datos (`-w @simulacion-credito/api`):
 
-| Script                | Descripción                                   |
-| --------------------- | --------------------------------------------- |
-| `prisma:generate`     | Genera el cliente de Prisma                   |
-| `prisma:migrate`      | Crea y aplica migraciones sobre `data/dev.db` |
-| `prisma:migrate:test` | Aplica las migraciones sobre `data/test.db`   |
-| `prisma:studio`       | Abre Prisma Studio                            |
+| Script                | Descripción                                                                               |
+| --------------------- | ----------------------------------------------------------------------------------------- |
+| `prisma:generate`     | Genera el cliente de Prisma                                                               |
+| `prisma:migrate`      | Crea y aplica migraciones sobre `data/dev.db`                                             |
+| `prisma:migrate:test` | Aplica las migraciones sobre `data/test.db` (se ejecuta antes de `test:int` y `test:e2e`) |
+| `prisma:studio`       | Abre Prisma Studio                                                                        |
 
 ## Supuestos
 
@@ -106,4 +107,7 @@ Supuestos de negocio (detalle en `CLAUDE.md` §4):
 - **Tasa 0:** la cuota es `monto / cuotas`, y la última absorbe el centavo restante.
 - **Fechas de vencimiento:** se calculan en UTC desde la fecha de aprobación, sin encadenar: la cuota k vence en `inicio + k periodos`. Si el día no existe en el mes destino, se usa el último día del mes.
 - **Edad:** se calcula en años cumplidos a una fecha de referencia que se pasa como parámetro (el "hoy" del `Clock` en el backend). Quien nació un 29 de febrero cumple años el 1 de marzo en los años no bisiestos.
-- **Plazo:** `cuotas · 12 / n`; puede ser fraccionario (3 cuotas quincenales = 1,5 meses).
+- **Plazo:** `cuotas · 12 / n`; puede ser fraccionario (3 cuotas quincenales = 1,5 meses). No se persiste: se deriva.
+- **Persistencia de montos y tasas:** montos en centavos y tasas en puntos básicos (18,50 % = 1850), ambos enteros. Por eso la tasa admite como máximo 2 decimales. El cliente de Prisma maneja `Int` de 32 bits, así que el monto máximo es 21 474 836,47.
+- **Número de crédito:** la secuencia se reinicia cada año (`CR-2026-000001`, `CR-2027-000001`), porque el año forma parte del número.
+- **Cliente:** se identifica por cédula única y puede tener varias solicitudes. La información laboral se guarda en cada solicitud como foto del momento.
