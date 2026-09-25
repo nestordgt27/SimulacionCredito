@@ -13,7 +13,8 @@ Registro de cada interacción con herramientas de IA durante el desarrollo, seg�
 | `feature/shared-calculos-financieros` | Cálculos financieros y enums en `packages/shared` | `develop` | [#3](https://github.com/nestordgt27/SimulacionCredito/pull/3) | Fusionada |
 | `feature/datos-modelo-prisma` | Modelo de datos Prisma, migración inicial y pruebas de integración | `develop` | [#4](https://github.com/nestordgt27/SimulacionCredito/pull/4) | Fusionada |
 | `chore/seed-usuario-admin` | Seed con usuario de prueba `admin` | `develop` | [#5](https://github.com/nestordgt27/SimulacionCredito/pull/5) | Fusionada |
-| `feature/auth-login` | Módulos de dominio y autenticación (login, refresh rotativo, logout, guard global) | `develop` | [#6](https://github.com/nestordgt27/SimulacionCredito/pull/6) | En revisión |
+| `feature/auth-login` | Módulos de dominio y autenticación (login, refresh rotativo, logout, guard global) | `develop` | [#6](https://github.com/nestordgt27/SimulacionCredito/pull/6) | Fusionada |
+| `feature/solicitudes-crear-solicitud` | Registro y listado de solicitudes con cuota recalculada y regla de edad | `develop` | Pendiente | En curso |
 
 ---
 
@@ -207,3 +208,45 @@ Registro de cada interacción con herramientas de IA durante el desarrollo, seg�
     - flujo manual con `curl` sobre `dev.db`: login inválido 401, login 200, ruta protegida sin token 401, rotación, reutilización 401 con la sesión revocada y logout 204.
 - **Commits:** `fix(api): aislar las pruebas en test.db cargando .env.test antes que prisma`, `feat(core): agregar clock, unit of work transaccional y errores de dominio`, `refactor(api): organizar el backend por módulos de dominio`, `feat(auth): login, refresh rotativo y logout con jwt auth guard global`, `docs: documentar autenticación y arquitectura del backend`, `docs(ai-log): registrar pr de autenticación`
 - **PR:** [#6](https://github.com/nestordgt27/SimulacionCredito/pull/6) → `develop`
+
+### [009] 2026-09-25 — Módulo de solicitudes
+
+- **Herramienta:** Claude Code
+- **Rama:** `feature/solicitudes-crear-solicitud`
+- **Prompt (resumen fiel):** Implementar el módulo de solicitudes:
+  - `POST /solicitudes` valida los DTO con class-validator, aplica la regla de edad y recalcula la cuota en el servidor con shared; nunca se confía en la cuota que manda el frontend;
+  - `GET /solicitudes?estado=PENDIENTE` sirve para listar.
+- **Resultado:**
+  - **`packages/shared`:** `EDAD_MAXIMA = 80` y `esEdadPermitida` (74 pruebas, 100 % de cobertura).
+  - **`core/domain/dinero.ts`:** conversiones unidades ↔ centavos y porcentaje ↔ puntos básicos.
+  - **`modules/solicitudes`:**
+    - `domain`: entidad `Solicitud` (`crear` aplica edad y calcula la cuota con shared; `reconstituir` para lecturas), `Cliente`, errores `EdadNoPermitidaError` y `FechaNacimientoInvalidaError` (422), y puerto `SolicitudRepository`;
+    - `application`: `CrearSolicitudUseCase` (dentro del `UnitOfWork`), `ListarSolicitudesUseCase` y `SolicitudVista` (unidades, edad y plazo derivados);
+    - `infrastructure`: `PrismaSolicitudRepository` (upsert del cliente por cédula, solicitud e historial `null → PENDIENTE`; listado del más reciente al más antiguo);
+    - `presentation`: `CrearSolicitudDto` anidado (`cliente`, `empleo`, `credito`) con normalización (trim, cédula en mayúsculas, correo en minúsculas), `ListarSolicitudesQuery` y `SolicitudesController`.
+  - **Pruebas:**
+    - unitarias de la api: 76 (entidad, casos de uso, dinero);
+    - integración: 29 (repositorio, incluido el rollback del cliente si falla la solicitud);
+    - e2e: 40 (21 nuevas: cuota falsa ignorada, 80 frente a 81 años, 9 validaciones con 400, filtro por estado, 401 sin token).
+    - Cobertura unitaria de `solicitudes`: 100 % en dominio y aplicación.
+  - **Documentación:** README (sección Solicitudes y supuestos), `docs/ARCHITECTURE.md` (módulo `solicitudes`) y `CLAUDE.md` §4 (edad, cuota del frontend, cliente, límites).
+- **Decisiones y ajustes manuales:**
+  - **La cuota no se puede inyectar por diseño:** `Solicitud.crear` es la única forma de crear una solicitud nueva y calcula la cuota con shared. `credito.cuotaNivelada` se acepta en el DTO para no rechazar clientes que la envían, pero el controller la descarta; una e2e envía `cuotaNivelada: 1` y verifica que se guarda 888,49.
+  - **Umbral de edad desde shared:** el dominio usa `EDAD_MAXIMA` de shared (una sola fuente con la web). Se valida también que la fecha de nacimiento no sea futura.
+  - **Cliente por cédula con upsert:** una solicitud nueva de una cédula existente actualiza los datos del cliente (gana la última captura). Documentado como supuesto.
+  - **Límites de captura:**
+    - monto hasta 21 474 836,47 (`Int` de 32 bits en centavos);
+    - tasa de 0 a 100 %;
+    - hasta 360 cuotas;
+    - antigüedad hasta 80 años;
+    - máximo 2 decimales en montos y tasa.
+  - **DTO anidado** en tres bloques (cliente, empleo, crédito), igual que la respuesta.
+  - **Listado del más reciente al más antiguo y sin paginación.** Queda pendiente paginar si el volumen lo requiere.
+  - **Sin control por rol:** cualquier usuario autenticado puede crear y listar. Los roles se definirán más adelante.
+  - **Correcciones durante la iteración:**
+    - un valor esperado mío en una prueba estaba mal estimado (87 895); se verificó con la fórmula en punto flotante, independiente de shared, que el correcto es 87 887 (878,8718) y se corrigió la prueba, no el código;
+    - se corrigieron 4 hallazgos de lint en pruebas (aserciones de tipo innecesarias y un `objectContaining` anidado tipado como `any`).
+  - **Verificación final:**
+    - typecheck, lint, Prettier y build en verde;
+    - flujo manual con `curl` sobre `dev.db`: el `POST` con `cuotaNivelada: 1` guardó 2289,98, que coincide con la referencia independiente 2289,9766; un cliente de 86 años recibe 422 `EDAD_NO_PERMITIDA`; `GET ?estado=PENDIENTE` filtra correctamente.
+- **Commits:** `feat(shared): exponer edad máxima y validación de edad permitida`, `feat(core): agregar conversión de montos a centavos y tasas a puntos básicos`, `feat(solicitudes): crear y listar solicitudes con cuota recalculada en el servidor`, `docs: documentar el módulo de solicitudes y sus supuestos`

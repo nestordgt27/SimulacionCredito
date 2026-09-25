@@ -157,6 +157,10 @@ apps/web/src/
 | Persistencia | Montos en centavos y tasas en puntos básicos (`Int`). La tasa admite máximo 2 decimales. Máximo por monto: 2 147 483 647 centavos (`Int` de 32 bits en el cliente de Prisma) |
 | Fechas de vencimiento | Desde la fecha de aprobación: +15 días (quincenal), +1 mes (mensual), +1 año (anual) |
 | Fechas (detalle) | Aritmética en UTC. La cuota k vence en `inicio + k periodos` (sin encadenar). Si el día no existe en el mes destino se usa el último día del mes (31/01 + 1 mes = 28 o 29/02) |
+| Edad (implementación) | `EDAD_MAXIMA = 80` y `esEdadPermitida` en `shared`. El backend la aplica en `Solicitud.crear` con el `Clock` (422 `EDAD_NO_PERMITIDA`); una fecha de nacimiento futura da 422 `FECHA_NACIMIENTO_INVALIDA` |
+| Cuota enviada por el frontend | Se acepta en `credito.cuotaNivelada` para no romper clientes, pero se ignora siempre |
+| Cliente | Identificado por cédula (`000-000000-0000X`, en mayúsculas). Una solicitud nueva de una cédula existente actualiza los datos del cliente (gana la última captura) |
+| Límites de captura | Monto mayor que 0 hasta 21 474 836,47; tasa de 0 a 100 %; montos y tasa con máximo 2 decimales; de 1 a 360 cuotas |
 | Edad (detalle) | `calcularEdad(fechaNacimiento, fechaReferencia)`: la referencia es un parámetro para mantener la función pura (backend la toma del `Clock`). Nacidos un 29/02 cumplen el 01/03 en años no bisiestos |
 | Desembolso | Solo desde APROBADA. Requiere banco (LAFISE, FICOHSA, BAC Credomatic, Banpro) y número de cuenta |
 | Comité | Vista de solo lectura: cédula, nombre, edad, cuotas, periodicidad, plazo, monto |
