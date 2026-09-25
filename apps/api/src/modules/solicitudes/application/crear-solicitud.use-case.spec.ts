@@ -26,10 +26,14 @@ describe('CrearSolicitudUseCase', () => {
             observaciones: solicitud.observaciones,
             creadaPorId: solicitud.creadaPorId,
             creadaEn: solicitud.creadaEn,
+            evaluadaPorId: null,
+            fechaEvaluacion: null,
           }),
         ),
       ),
       listar: jest.fn(),
+      buscarPorId: jest.fn(),
+      registrarEvaluacion: jest.fn(),
     };
     useCase = new CrearSolicitudUseCase(solicitudes, new FakeUnitOfWork(), new FakeClock(HOY));
   });

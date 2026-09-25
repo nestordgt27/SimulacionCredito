@@ -37,6 +37,8 @@ const aDominio = (registro: SolicitudConCliente): Solicitud =>
     observaciones: registro.observaciones,
     creadaPorId: registro.creadaPorId,
     creadaEn: registro.createdAt,
+    evaluadaPorId: registro.evaluadaPorId,
+    fechaEvaluacion: registro.fechaEvaluacion,
   });
 
 @Injectable()
@@ -95,5 +97,43 @@ export class PrismaSolicitudRepository implements SolicitudRepository {
       orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
     });
     return registros.map(aDominio);
+  }
+
+  async buscarPorId(id: number): Promise<Solicitud | null> {
+    const registro = await this.contexto.cliente.solicitud.findUnique({
+      where: { id },
+      include: { cliente: true },
+    });
+    return registro ? aDominio(registro) : null;
+  }
+
+  async registrarEvaluacion(
+    solicitud: Solicitud,
+    estadoAnterior: EstadoSolicitud,
+  ): Promise<boolean> {
+    const { count } = await this.contexto.cliente.solicitud.updateMany({
+      where: { id: solicitud.id, estado: estadoAnterior },
+      data: {
+        estado: solicitud.estado,
+        observaciones: solicitud.observaciones,
+        evaluadaPorId: solicitud.evaluadaPorId,
+        fechaEvaluacion: solicitud.fechaEvaluacion,
+      },
+    });
+    if (count === 0) {
+      return false;
+    }
+
+    await this.contexto.cliente.solicitudHistorial.create({
+      data: {
+        solicitudId: solicitud.id,
+        estadoAnterior,
+        estadoNuevo: solicitud.estado,
+        usuarioId: solicitud.evaluadaPorId ?? solicitud.creadaPorId,
+        comentario: solicitud.observaciones,
+        fecha: solicitud.fechaEvaluacion ?? solicitud.creadaEn,
+      },
+    });
+    return true;
   }
 }

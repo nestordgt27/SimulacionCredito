@@ -13,6 +13,13 @@ export interface SolicitudRepository {
   crear(solicitud: Solicitud): Promise<Solicitud>;
   /** Más recientes primero. */
   listar(filtro: FiltroSolicitudes): Promise<Solicitud[]>;
+  buscarPorId(id: number): Promise<Solicitud | null>;
+  /**
+   * Guarda el dictamen (estado, observaciones, evaluador y fecha) y su entrada de historial,
+   * solo si la solicitud sigue en `estadoAnterior`. Devuelve `false` si otro proceso ya la
+   * cambió (control de concurrencia optimista). Debe ejecutarse dentro de un UnitOfWork.
+   */
+  registrarEvaluacion(solicitud: Solicitud, estadoAnterior: EstadoSolicitud): Promise<boolean>;
 }
 
 export const SOLICITUD_REPOSITORY = Symbol('SOLICITUD_REPOSITORY');
