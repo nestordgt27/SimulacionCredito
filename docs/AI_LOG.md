@@ -17,7 +17,8 @@ Registro de cada interacción con herramientas de IA durante el desarrollo, seg�
 | `feature/solicitudes-crear-solicitud` | Registro y listado de solicitudes con cuota recalculada y regla de edad | `develop` | [#7](https://github.com/nestordgt27/SimulacionCredito/pull/7) | Fusionada |
 | `feature/comite-aprobar-solicitud` | Módulo de comité: vista reducida, aprobación atómica con crédito y plan, rechazo | `develop` | [#8](https://github.com/nestordgt27/SimulacionCredito/pull/8) | Fusionada |
 | `feature/desembolsos-desembolsar-credito` | Módulo de desembolsos: APROBADA → DESEMBOLSADA con banco y cuenta en una transacción | `develop` | [#9](https://github.com/nestordgt27/SimulacionCredito/pull/9) | Fusionada |
-| `feature/creditos-consultar-credito` | Consulta de créditos por cédula con plan de pagos | `develop` | [#10](https://github.com/nestordgt27/SimulacionCredito/pull/10) | En revisión |
+| `feature/creditos-consultar-credito` | Consulta de créditos por cédula con plan de pagos | `develop` | [#10](https://github.com/nestordgt27/SimulacionCredito/pull/10) | Fusionada |
+| `feature/web-auth-login` | Base del frontend (Axios con refresh, sesión, rutas protegidas, UI) y pantalla de login | `develop` | Pendiente | En curso |
 
 ---
 
@@ -372,3 +373,52 @@ Registro de cada interacción con herramientas de IA durante el desarrollo, seg�
     - consulta real sobre `dev.db` con `fetch` de Node: `?cedula=001-150385-0007k` en minúsculas devuelve el crédito `CR-2026-000001` DESEMBOLSADO con 24 cuotas cuyo capital suma 50 000 y saldo final 0; cédula inválida da 400; sin token da 401.
 - **Commits:** `feat(creditos): consultar créditos por cédula con su plan de pagos`, `docs: documentar la consulta de créditos`, `docs(ai-log): registrar pr de consulta de créditos`
 - **PR:** [#10](https://github.com/nestordgt27/SimulacionCredito/pull/10) → `develop`
+
+### [013] 2026-09-25 — Frontend: base y pantalla de login
+
+- **Herramienta:** Claude Code
+- **Rama:** `feature/web-auth-login`
+- **Prompt (resumen fiel):** Implementar el frontend con React Router, TanStack Query para el estado del servidor, React Hook Form + Zod para los formularios y un cliente Axios con interceptor, que adjunte el token y, ante un 401, llame a `/auth/refresh` una sola vez y reintente la petición. Pantalla 1: Login. La UI puede ser simple (Tailwind o una librería de componentes), limpia y consistente.
+- **Resultado:**
+  - **Dependencias:** axios, react-hook-form, @hookform/resolvers, zod y Tailwind CSS v4 (`@tailwindcss/vite`); para pruebas, msw y @testing-library/user-event.
+  - **`shared/auth`:** `sesionStore` (fuera de React: access token en memoria; refresh token y usuario en `localStorage`) y `useSesion` (`useSyncExternalStore`).
+  - **`shared/api`:**
+    - `clienteHttp` con interceptor de request (Bearer) y de response (ante 401: refresh single-flight, reintento único, sin refresh en `/auth/login` ni `/auth/refresh`, cierre de sesión si el refresh falla);
+    - `mensajeDeError`.
+  - **`shared/ui`:** `Boton`, `Campo` (label, `aria-invalid` y `aria-describedby`), `Alerta` y `Tarjeta`.
+  - **`features/auth`:** `auth.api`, `loginSchema` (Zod), `useIniciarSesion`, `useCerrarSesion`, `LoginForm` (RHF + `zodResolver`) y `LoginPage`.
+  - **`app`:**
+    - `crearQueryClient` (sin reintentos en 4xx; hasta 2 en 5xx y errores de red; mutaciones sin reintento);
+    - `RutaProtegida`, que redirige al login recordando la ruta;
+    - `AppLayout`, con el usuario y "Cerrar sesión";
+    - `InicioPage` provisional;
+    - rutas `/login`, `/` y el comodín `*`.
+  - **Pruebas web:** 44 con Vitest + Testing Library + MSW.
+    - Interceptor (11): Bearer, refresh y reintento, tokens rotados, 3 peticiones concurrentes con un solo refresh, un único reintento, refresh fallido que cierra la sesión, sin refresh en login ni sin sesión, recarga sin access token, errores que no son 401.
+    - Store de sesión (6), `mensajeDeError` (5), política del `QueryClient` (9).
+    - Login (7): validación, éxito, 401 del backend, error de red, botón deshabilitado, redirección con sesión.
+    - Navegación (7): ruta protegida, vuelta a la ruta pedida, logout con y sin respuesta del servidor, sesión cerrada por refresh fallido, ruta desconocida.
+    - Cobertura de la web: 98 % de líneas.
+  - **Documentación:** README (sección Frontend y supuesto de sesión), `docs/ARCHITECTURE.md` (estructura, sesión e interceptores, pruebas del frontend) y `CLAUDE.md` §4.
+- **Decisiones y ajustes manuales:**
+  - **Almacenamiento de tokens:** el access token solo en memoria; el refresh token y el usuario en `localStorage`, para sobrevivir al recargo. Es un compromiso frente a XSS: una cookie HttpOnly sería más segura, pero requiere cambiar el backend (hoy el refresh viaja en el cuerpo JSON). Queda documentado como supuesto.
+  - **Refresh single-flight:** es imprescindible con este backend. Dos refresh paralelos con el mismo token harían que el segundo se tratara como reutilización y se revocara toda la sesión.
+  - **Store fuera de React:** el interceptor de Axios no puede usar hooks; los componentes lo leen con `useSyncExternalStore`, así un refresh fallido redirige al login sin lógica adicional.
+  - **La página de login redirige sola cuando aparece la sesión** (sin `navigate` en `onSuccess`), y vuelve a la ruta pedida originalmente (`state.desde`).
+  - **Logout:** la sesión local se cierra aunque falle la revocación en el servidor.
+  - **`conSesion` en su propio helper** (`test/sesion.ts`), separado de `renderApp`: las pruebas del interceptor no dependen de las rutas de la app, y cada commit se puede verificar por separado.
+  - **`App.tsx` excluido de la cobertura** (igual que `main.tsx`): solo conecta el router del navegador; las rutas reales se prueban con `createMemoryRouter`.
+  - **Prueba de mutación del interceptor:**
+    - al quitar el single-flight (`??=` → `=`) falla exactamente la prueba de peticiones concurrentes;
+    - al quitar la marca `_reintentada`, la prueba original entraba en un ciclo infinito de refresh y reintento (se colgó y hubo que detener los procesos de vitest). Se ajustó para que el refresh solo funcione una vez: ahora esa mutación falla en 51 ms en la prueba correcta.
+    - El interceptor se restauró y se verificó con `git diff` que no quedaron cambios.
+  - **Verificación manual en el navegador** (panel del navegador, API sobre `dev.db` y Vite):
+    - `/` redirige a `/login`;
+    - el formulario vacío muestra la validación de Zod;
+    - una contraseña incorrecta muestra "Usuario o contraseña incorrectos";
+    - el login correcto lleva al inicio con el nombre del usuario;
+    - `localStorage` contiene solo `refreshToken` y `usuario`;
+    - al recargar, la sesión se mantiene; dos peticiones reales sin access token dieron dos 401, **un solo** `POST /auth/refresh` y dos reintentos con 200, con el refresh token rotado;
+    - "Cerrar sesión" hizo `POST /auth/logout` (204), borró `localStorage` y volvió al login.
+  - **Verificación final:** typecheck, lint, Prettier y build en verde; pruebas de shared (74), api (151) y web (44).
+- **Commits:** `feat(web): agregar cliente http con refresh automático y almacén de sesión`, `feat(web): agregar componentes base de ui con tailwind`, `feat(auth): pantalla de login con rutas protegidas y cierre de sesión`, `docs: documentar el frontend y la sesión`
