@@ -127,6 +127,12 @@ export class Solicitud {
     return this.evaluar(EstadoSolicitud.RECHAZADA, texto, evaluadorId, ahora);
   }
 
+  /** Solo una solicitud APROBADA puede desembolsarse (CLAUDE.md §4). */
+  desembolsar(): Solicitud {
+    SolicitudStateMachine.assertTransicion(this.estado, EstadoSolicitud.DESEMBOLSADA);
+    return new Solicitud({ ...this.datos(), estado: EstadoSolicitud.DESEMBOLSADA });
+  }
+
   private evaluar(
     destino: EstadoSolicitud,
     observaciones: string | null,
