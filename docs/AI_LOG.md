@@ -10,7 +10,7 @@ Registro de cada interacción con herramientas de IA durante el desarrollo, seg�
 | `develop` | Rama de integración | `main` | — | Activa |
 | `docs/instrucciones-proyecto` | Agregar `CLAUDE.md` y `docs/AI_LOG.md` | `develop` | [#1](https://github.com/nestordgt27/SimulacionCredito/pull/1) | Fusionada |
 | `chore/estructura-monorepo` | Estructura del monorepo, SQLite local y variables de entorno | `develop` | [#2](https://github.com/nestordgt27/SimulacionCredito/pull/2) | Fusionada |
-| `feature/shared-calculos-financieros` | Cálculos financieros y enums en `packages/shared` | `develop` | Pendiente | En curso |
+| `feature/shared-calculos-financieros` | Cálculos financieros y enums en `packages/shared` | `develop` | [#3](https://github.com/nestordgt27/SimulacionCredito/pull/3) | En revisión |
 
 ---
 
@@ -90,4 +90,5 @@ Registro de cada interacción con herramientas de IA durante el desarrollo, seg�
   - **Montos como `number`** en unidades monetarias; la conversión a centavos para persistir queda en el backend.
   - **Corrección durante la iteración:** el valor esperado de la última cuota (10 000 al 12 %, 12 meses) se había estimado mal en la prueba (888,54). Se verificó con un cálculo independiente en centavos enteros que el correcto es 888,47, porque redondear la cuota hacia arriba hace que se amortice un poco de más, y se corrigió la prueba, no el código. Los demás valores de referencia (888,49; 443,21; 4163,49; 877,63) se obtuvieron con la fórmula en punto flotante, de forma independiente a la implementación.
   - **Verificación:** build dual comprobado desde la api (`require`, CJS) y la web (`import`, ESM); typecheck, lint, pruebas y Prettier de todo el repo en verde.
-- **Commits:** `feat(shared): agregar enums de periodicidad y estado de solicitud`, `feat(shared): calcular cuota nivelada y plan de pagos con decimal.js`, `feat(shared): calcular edad y plazo en meses`, `docs: registrar supuestos de cálculo y exports de shared`
+- **Commits:** `feat(shared): agregar enums de periodicidad y estado de solicitud`, `feat(shared): calcular cuota nivelada y plan de pagos con decimal.js`, `feat(shared): calcular edad y plazo en meses`, `docs: registrar supuestos de cálculo y exports de shared`, `docs(ai-log): registrar pr de cálculos financieros`
+- **PR:** [#3](https://github.com/nestordgt27/SimulacionCredito/pull/3) → `develop`
