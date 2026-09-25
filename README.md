@@ -98,3 +98,12 @@ Supuestos técnicos del entorno. Los supuestos de negocio se agregan a medida qu
 - **Versiones fijadas por compatibilidad con Node 22.13:** NestJS 11 (el CLI 12 falla en esta versión de Node), Prisma 6 (Prisma 8 exige Node ≥ 22.18), React Router 7 (la 8 exige Node ≥ 22.22) y TypeScript 5.9 (`ts-jest` aún no soporta TypeScript 7).
 - **SQLite local en `apps/api/data/`** solo para desarrollo, mientras no se dockeriza. La carpeta está en `.gitignore` (salvo `.gitkeep`).
 - **Linter:** ESLint con reglas de tipos en la api; oxlint en la web (el que genera la plantilla de Vite).
+
+Supuestos de negocio (detalle en `CLAUDE.md` §4):
+
+- **Redondeo:** `ROUND_HALF_UP` a 2 decimales. El interés de cada periodo se redondea sobre el saldo pendiente y la última cuota paga el saldo restante, por lo que puede diferir en centavos de la cuota nivelada (ejemplo: 10 000 al 12 % en 12 cuotas mensuales → 11 cuotas de 888,49 y una última de 888,47).
+- **Monto:** como máximo 2 decimales.
+- **Tasa 0:** la cuota es `monto / cuotas`, y la última absorbe el centavo restante.
+- **Fechas de vencimiento:** se calculan en UTC desde la fecha de aprobación, sin encadenar: la cuota k vence en `inicio + k periodos`. Si el día no existe en el mes destino, se usa el último día del mes.
+- **Edad:** se calcula en años cumplidos a una fecha de referencia que se pasa como parámetro (el "hoy" del `Clock` en el backend). Quien nació un 29 de febrero cumple años el 1 de marzo en los años no bisiestos.
+- **Plazo:** `cuotas · 12 / n`; puede ser fraccionario (3 cuotas quincenales = 1,5 meses).

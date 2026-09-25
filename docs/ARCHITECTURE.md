@@ -17,6 +17,20 @@ apps/web  ──┘
 ## `packages/shared`
 
 - Funciones puras y tipos: cálculos financieros, enums y validaciones.
+
+| Archivo                        | Exporta                                                                                     |
+| ------------------------------ | ------------------------------------------------------------------------------------------- |
+| `periodicidad.ts`              | `Periodicidad` y `PERIODICIDADES`: estrategia por periodicidad `{ n, avanzarFecha }`        |
+| `estado-solicitud.ts`          | `EstadoSolicitud`                                                                           |
+| `cuota-nivelada.ts`            | `calcularCuotaNivelada(monto, tasaAnual, cuotas, periodicidad)`                             |
+| `plan-pagos.ts`                | `generarPlanPagos({ monto, tasaAnual, cuotas, periodicidad, fechaInicio })` → `CuotaPlan[]` |
+| `edad.ts`                      | `calcularEdad(fechaNacimiento, fechaReferencia)`                                            |
+| `plazo.ts`                     | `calcularPlazoMeses(cuotas, periodicidad)`                                                  |
+| `fechas.ts`, `validaciones.ts` | Internos (no se exportan en `index.ts`)                                                     |
+
+- Los enums son objetos `const` con un tipo del mismo nombre, en lugar de `enum` de TypeScript. Se guardan como texto (SQLite no tiene enums), sirven para `z.enum(...)` en la web y cumplen `erasableSyntaxOnly`.
+- Los cálculos usan `decimal.js`. Los montos entran y salen como `number` en unidades monetarias con 2 decimales; la conversión a centavos para persistir es responsabilidad del backend.
+- Las entradas inválidas lanzan `RangeError`. El backend las valida antes con DTOs y errores de dominio, así que aquí son la última barrera.
 - Se compila con **tsup** en doble formato: CommonJS (`dist/index.cjs`) para NestJS y ESM (`dist/index.js`) para Vite. El campo `exports` de `package.json` elige el formato según quién lo importe.
 - Pruebas con Vitest y umbral de cobertura del **100 %**.
 
