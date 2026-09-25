@@ -1,0 +1,11 @@
+// Las rutas relativas de SQLite se resuelven desde este archivo (src/prisma/),
+// por eso DATABASE_URL apunta a ../../data/<archivo>.db (apps/api/data).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
