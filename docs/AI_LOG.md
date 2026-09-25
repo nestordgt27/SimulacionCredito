@@ -11,7 +11,7 @@ Registro de cada interacción con herramientas de IA durante el desarrollo, seg�
 | `docs/instrucciones-proyecto` | Agregar `CLAUDE.md` y `docs/AI_LOG.md` | `develop` | [#1](https://github.com/nestordgt27/SimulacionCredito/pull/1) | Fusionada |
 | `chore/estructura-monorepo` | Estructura del monorepo, SQLite local y variables de entorno | `develop` | [#2](https://github.com/nestordgt27/SimulacionCredito/pull/2) | Fusionada |
 | `feature/shared-calculos-financieros` | Cálculos financieros y enums en `packages/shared` | `develop` | [#3](https://github.com/nestordgt27/SimulacionCredito/pull/3) | Fusionada |
-| `feature/datos-modelo-prisma` | Modelo de datos Prisma, migración inicial y pruebas de integración | `develop` | Pendiente | En curso |
+| `feature/datos-modelo-prisma` | Modelo de datos Prisma, migración inicial y pruebas de integración | `develop` | [#4](https://github.com/nestordgt27/SimulacionCredito/pull/4) | En revisión |
 
 ---
 
@@ -120,4 +120,5 @@ Registro de cada interacción con herramientas de IA durante el desarrollo, seg�
   - **Pruebas de integración:** limpian las tablas en `beforeEach` en lugar de usar `prisma migrate reset`, que es más lento y destructivo. Levantan `AppModule`, así que prueban la misma configuración que la app real.
   - **Ruta de SQLite:** se verificó que el `url` explícito en `PrismaService` sigue resolviendo la ruta relativa desde el schema (no aparecen archivos `.db` fuera de `apps/api/data/`).
   - **Verificación:** typecheck, lint, Prettier, pruebas unitarias (shared 70, api 6, web 1), integración (9), e2e (1) y build en verde.
-- **Commits:** `feat(shared): agregar enums de banco y tipo de empleo`, `feat(api): modelar datos con prisma y migración inicial`, `test(api): cubrir el modelo de datos con pruebas de integración en sqlite`, `docs: documentar modelo de datos y supuestos de persistencia`
+- **Commits:** `feat(shared): agregar enums de banco y tipo de empleo`, `feat(api): modelar datos con prisma y migración inicial`, `test(api): cubrir el modelo de datos con pruebas de integración en sqlite`, `docs: documentar modelo de datos y supuestos de persistencia`, `docs(ai-log): registrar pr de modelo de datos`
+- **PR:** [#4](https://github.com/nestordgt27/SimulacionCredito/pull/4) → `develop`
