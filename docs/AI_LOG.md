@@ -13,7 +13,7 @@ Registro de cada interacción con herramientas de IA durante el desarrollo, seg�
 | `feature/shared-calculos-financieros` | Cálculos financieros y enums en `packages/shared` | `develop` | [#3](https://github.com/nestordgt27/SimulacionCredito/pull/3) | Fusionada |
 | `feature/datos-modelo-prisma` | Modelo de datos Prisma, migración inicial y pruebas de integración | `develop` | [#4](https://github.com/nestordgt27/SimulacionCredito/pull/4) | Fusionada |
 | `chore/seed-usuario-admin` | Seed con usuario de prueba `admin` | `develop` | [#5](https://github.com/nestordgt27/SimulacionCredito/pull/5) | Fusionada |
-| `feature/auth-login` | Módulos de dominio y autenticación (login, refresh rotativo, logout, guard global) | `develop` | Pendiente | En curso |
+| `feature/auth-login` | Módulos de dominio y autenticación (login, refresh rotativo, logout, guard global) | `develop` | [#6](https://github.com/nestordgt27/SimulacionCredito/pull/6) | En revisión |
 
 ---
 
@@ -205,4 +205,5 @@ Registro de cada interacción con herramientas de IA durante el desarrollo, seg�
     - typecheck, lint, Prettier y build en verde;
     - pruebas: shared 70, api unitarias 47, integración 22, e2e 18, web 1;
     - flujo manual con `curl` sobre `dev.db`: login inválido 401, login 200, ruta protegida sin token 401, rotación, reutilización 401 con la sesión revocada y logout 204.
-- **Commits:** `fix(api): aislar las pruebas en test.db cargando .env.test antes que prisma`, `feat(core): agregar clock, unit of work transaccional y errores de dominio`, `refactor(api): organizar el backend por módulos de dominio`, `feat(auth): login, refresh rotativo y logout con jwt auth guard global`, `docs: documentar autenticación y arquitectura del backend`
+- **Commits:** `fix(api): aislar las pruebas en test.db cargando .env.test antes que prisma`, `feat(core): agregar clock, unit of work transaccional y errores de dominio`, `refactor(api): organizar el backend por módulos de dominio`, `feat(auth): login, refresh rotativo y logout con jwt auth guard global`, `docs: documentar autenticación y arquitectura del backend`, `docs(ai-log): registrar pr de autenticación`
+- **PR:** [#6](https://github.com/nestordgt27/SimulacionCredito/pull/6) → `develop`
