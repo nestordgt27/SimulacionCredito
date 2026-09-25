@@ -11,7 +11,8 @@ Registro de cada interacción con herramientas de IA durante el desarrollo, seg�
 | `docs/instrucciones-proyecto` | Agregar `CLAUDE.md` y `docs/AI_LOG.md` | `develop` | [#1](https://github.com/nestordgt27/SimulacionCredito/pull/1) | Fusionada |
 | `chore/estructura-monorepo` | Estructura del monorepo, SQLite local y variables de entorno | `develop` | [#2](https://github.com/nestordgt27/SimulacionCredito/pull/2) | Fusionada |
 | `feature/shared-calculos-financieros` | Cálculos financieros y enums en `packages/shared` | `develop` | [#3](https://github.com/nestordgt27/SimulacionCredito/pull/3) | Fusionada |
-| `feature/datos-modelo-prisma` | Modelo de datos Prisma, migración inicial y pruebas de integración | `develop` | [#4](https://github.com/nestordgt27/SimulacionCredito/pull/4) | En revisión |
+| `feature/datos-modelo-prisma` | Modelo de datos Prisma, migración inicial y pruebas de integración | `develop` | [#4](https://github.com/nestordgt27/SimulacionCredito/pull/4) | Fusionada |
+| `chore/seed-usuario-admin` | Seed con usuario de prueba `admin` | `develop` | Pendiente | En curso |
 
 ---
 
@@ -122,3 +123,29 @@ Registro de cada interacción con herramientas de IA durante el desarrollo, seg�
   - **Verificación:** typecheck, lint, Prettier, pruebas unitarias (shared 70, api 6, web 1), integración (9), e2e (1) y build en verde.
 - **Commits:** `feat(shared): agregar enums de banco y tipo de empleo`, `feat(api): modelar datos con prisma y migración inicial`, `test(api): cubrir el modelo de datos con pruebas de integración en sqlite`, `docs: documentar modelo de datos y supuestos de persistencia`, `docs(ai-log): registrar pr de modelo de datos`
 - **PR:** [#4](https://github.com/nestordgt27/SimulacionCredito/pull/4) → `develop`
+
+### [007] 2026-09-25 — Seed con usuario de prueba
+
+- **Herramienta:** Claude Code
+- **Rama:** `chore/seed-usuario-admin`
+- **Prompt (resumen fiel):** Crear un seed con un usuario de prueba (por ejemplo admin / Admin123!) y documentarlo en el README.
+- **Resultado:**
+  - Seed `src/prisma/seed.ts`, configurado en `prisma.config.ts` (`migrations.seed`), con el script `prisma:seed`.
+  - Lógica en `src/prisma/seed/usuario-admin.seed.ts`: `USUARIO_ADMIN` y `sembrarUsuarioAdmin`, idempotente mediante `upsert` por `username`.
+  - Puerto `PasswordHasher` (`modules/auth/domain`) y adaptador `Argon2PasswordHasher` (`modules/auth/infrastructure`, `@node-rs/argon2`).
+  - Pruebas:
+    - 4 unitarias del hasher: formato argon2id, sal aleatoria, verificación correcta e incorrecta;
+    - 3 de integración del seed: crea el admin activo con hash verificable, es idempotente, y restablece contraseña y estado si el usuario fue modificado.
+  - README: paso 4 de la puesta en marcha, sección "Usuario de prueba" y script `prisma:seed`. `docs/ARCHITECTURE.md`: seed y `PasswordHasher`.
+- **Decisiones y ajustes manuales:**
+  - **Argon2id** (recomendación de OWASP) con `@node-rs/argon2`: trae binarios precompilados para Windows y Linux/Alpine, así que no requiere compilación nativa ahora ni al dockerizar. Se descartó `bcrypt`, que requiere compilación nativa.
+  - **Puerto `PasswordHasher` ya creado:** el login lo usará después, y así el seed y la autenticación comparten el algoritmo desde el inicio (principio D; es su segundo uso próximo).
+  - **Upsert que restablece la contraseña documentada** y reactiva el usuario, para que las credenciales del README funcionen siempre en desarrollo.
+  - **Bloqueo en producción:** el seed falla con `NODE_ENV=production` (código de salida 1, verificado).
+  - **Rol `ADMIN`** como texto; se tipará cuando el módulo `auth` defina los roles.
+  - Se usa `Logger` de Nest en lugar de `console` (`CLAUDE.md` §3.1). `seed.ts` se excluye de la cobertura unitaria porque es solo el punto de entrada.
+  - **Verificación:**
+    - seed ejecutado dos veces sobre `dev.db`: queda 1 usuario, con hash `$argon2id$` y contraseña verificada;
+    - typecheck, lint, Prettier y build en verde;
+    - pruebas: unitarias de la api (10), integración (12) y e2e (1).
+- **Commits:** `feat(auth): agregar puerto password hasher con adaptador argon2id`, `chore(api): agregar seed idempotente con usuario de prueba admin`, `docs: documentar usuario de prueba y seed en el readme`
