@@ -12,7 +12,7 @@ Registro de cada interacción con herramientas de IA durante el desarrollo, seg�
 | `chore/estructura-monorepo` | Estructura del monorepo, SQLite local y variables de entorno | `develop` | [#2](https://github.com/nestordgt27/SimulacionCredito/pull/2) | Fusionada |
 | `feature/shared-calculos-financieros` | Cálculos financieros y enums en `packages/shared` | `develop` | [#3](https://github.com/nestordgt27/SimulacionCredito/pull/3) | Fusionada |
 | `feature/datos-modelo-prisma` | Modelo de datos Prisma, migración inicial y pruebas de integración | `develop` | [#4](https://github.com/nestordgt27/SimulacionCredito/pull/4) | Fusionada |
-| `chore/seed-usuario-admin` | Seed con usuario de prueba `admin` | `develop` | Pendiente | En curso |
+| `chore/seed-usuario-admin` | Seed con usuario de prueba `admin` | `develop` | [#5](https://github.com/nestordgt27/SimulacionCredito/pull/5) | En revisión |
 
 ---
 
@@ -148,4 +148,5 @@ Registro de cada interacción con herramientas de IA durante el desarrollo, seg�
     - seed ejecutado dos veces sobre `dev.db`: queda 1 usuario, con hash `$argon2id$` y contraseña verificada;
     - typecheck, lint, Prettier y build en verde;
     - pruebas: unitarias de la api (10), integración (12) y e2e (1).
-- **Commits:** `feat(auth): agregar puerto password hasher con adaptador argon2id`, `chore(api): agregar seed idempotente con usuario de prueba admin`, `docs: documentar usuario de prueba y seed en el readme`
+- **Commits:** `feat(auth): agregar puerto password hasher con adaptador argon2id`, `chore(api): agregar seed idempotente con usuario de prueba admin`, `docs: documentar usuario de prueba y seed en el readme`, `docs(ai-log): registrar pr de seed con usuario de prueba`
+- **PR:** [#5](https://github.com/nestordgt27/SimulacionCredito/pull/5) → `develop`
