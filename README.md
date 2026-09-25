@@ -234,6 +234,58 @@ Ruta protegida: requiere access token.
   - `404` si no existe;
   - `400` con un banco fuera de la lista, un número de cuenta inválido o un id no numérico.
 
+## Consulta de créditos
+
+Ruta protegida: requiere access token.
+
+| Método y ruta                               | Respuesta                                                           |
+| ------------------------------------------- | ------------------------------------------------------------------- |
+| `GET /api/creditos?cedula=001-150385-0007K` | `200`: créditos del cliente con su plan de pagos (`[]` si no tiene) |
+
+```json
+[
+  {
+    "numeroCredito": "CR-2026-000001",
+    "solicitudId": 36,
+    "estado": "DESEMBOLSADA",
+    "fechaAprobacion": "2026-09-25T17:14:57.578Z",
+    "cliente": { "cedula": "001-150385-0007K", "nombreCompleto": "Luis Martínez" },
+    "monto": 50000,
+    "tasaAnual": 18.5,
+    "cantidadCuotas": 24,
+    "periodicidad": "QUINCENAL",
+    "plazoMeses": 12,
+    "cuotaNivelada": 2289.98,
+    "desembolso": { "banco": "BAC_CREDOMATIC", "fechaDesembolso": "2026-09-25T17:44:51.563Z" },
+    "planPagos": [
+      {
+        "numero": 1,
+        "fechaVencimiento": "2026-10-10T17:14:57.578Z",
+        "cuota": 2289.98,
+        "capital": 1904.56,
+        "interes": 385.42,
+        "saldo": 48095.44
+      },
+      {
+        "numero": 24,
+        "fechaVencimiento": "2027-09-20T17:14:57.578Z",
+        "cuota": 2289.9,
+        "capital": 2272.38,
+        "interes": 17.52,
+        "saldo": 0
+      }
+    ]
+  }
+]
+```
+
+(En el ejemplo, `planPagos` se muestra abreviado.)
+
+- **Cédula:** se normaliza igual que al registrar la solicitud (sin espacios y en mayúsculas), así que `001-150385-0007k` también funciona. Un formato inválido o una cédula ausente responde `400`.
+- **Qué se incluye:** solo créditos otorgados (solicitudes aprobadas o desembolsadas), del más reciente al más antiguo.
+- **`desembolso`:** es `null` hasta que el crédito se desembolsa. **No incluye el número de cuenta.**
+- **`planPagos`:** usa los mismos nombres que `generarPlanPagos` de `packages/shared` (`numero`, `fechaVencimiento`, `cuota`, `capital`, `interes`, `saldo`), en unidades.
+
 ## Variables de entorno
 
 | Archivo                 | Versionado | Uso                                                         |

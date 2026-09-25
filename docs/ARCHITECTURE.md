@@ -54,7 +54,7 @@ apps/api/
 │   │   ├── solicitudes/      # Implementado: crear y listar solicitudes
 │   │   ├── comite/           # Implementado: vista reducida, aprobar y rechazar
 │   │   ├── desembolsos/      # Implementado: desembolsar una solicitud aprobada
-│   │   └── creditos/         # Dominio y persistencia del crédito y su plan (consulta HTTP pendiente)
+│   │   └── creditos/         # Crédito y plan de pagos; consulta por cédula (GET /creditos)
 │   ├── prisma/               # PrismaModule global: PrismaService, UnitOfWork, schema, migraciones, seed
 │   ├── app.module.ts
 │   └── main.ts
@@ -114,6 +114,7 @@ apps/api/
 
 - **Una sola transacción:** `AprobarSolicitudUseCase` ejecuta todo dentro de `unitOfWork.run` (`prisma.$transaction`): leer, `aprobar` (máquina de estados), `registrarEvaluacion` (condicional al estado anterior + historial), generar el número y crear el crédito con sus cuotas. Cualquier error revierte los pasos anteriores, incluido el incremento de la secuencia.
 - **Rollback probado con un fallo real:** la prueba de integración reemplaza `CREDITO_REPOSITORY` por una subclase que repite una cuota. La base rechaza el `createMany` (`P2002`) después de insertar el crédito y consumir el número, y se verifica que el estado, el historial, el crédito, las cuotas y la secuencia quedan intactos.
+- **Consulta de créditos (modelo de lectura):** `ConsultaCreditos` (`creditos/domain`) es un puerto solo de lectura, separado de `CreditoRepository` (escritura), según la segregación de interfaces. `PrismaConsultaCreditos` resuelve crédito + estado de la solicitud + cliente + desembolso + cuotas en una sola consulta, sin reconstruir entidades. `ConsultarCreditosUseCase` convierte a unidades y deriva el plazo con `calcularPlazoMeses`. `GET /creditos?cedula=` lo expone con `CreditosController`.
 - **Transiciones compartidas:** `solicitudes/application/transiciones.ts` (`buscarSolicitud`, `registrarTransicion`) lo usan el comité y los desembolsos. `SolicitudRepository.registrarTransicion` recibe explícitamente quién ejecuta el cambio, la fecha y el comentario del historial.
 - **Dependencias entre módulos:** `ComiteModule` importa `SolicitudesModule` y `CreditosModule`, que exportan los tokens de sus puertos. El comité no tiene dominio propio.
 
