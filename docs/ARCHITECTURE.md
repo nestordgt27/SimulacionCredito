@@ -53,7 +53,7 @@ apps/api/
 │   │   ├── auth/             # Implementado: login, refresh, logout, JwtAuthGuard global
 │   │   ├── solicitudes/      # Implementado: crear y listar solicitudes
 │   │   ├── comite/           # Implementado: vista reducida, aprobar y rechazar
-│   │   ├── desembolsos/      # Esqueleto
+│   │   ├── desembolsos/      # Implementado: desembolsar una solicitud aprobada
 │   │   └── creditos/         # Dominio y persistencia del crédito y su plan (consulta HTTP pendiente)
 │   ├── prisma/               # PrismaModule global: PrismaService, UnitOfWork, schema, migraciones, seed
 │   ├── app.module.ts
@@ -114,7 +114,20 @@ apps/api/
 
 - **Una sola transacción:** `AprobarSolicitudUseCase` ejecuta todo dentro de `unitOfWork.run` (`prisma.$transaction`): leer, `aprobar` (máquina de estados), `registrarEvaluacion` (condicional al estado anterior + historial), generar el número y crear el crédito con sus cuotas. Cualquier error revierte los pasos anteriores, incluido el incremento de la secuencia.
 - **Rollback probado con un fallo real:** la prueba de integración reemplaza `CREDITO_REPOSITORY` por una subclase que repite una cuota. La base rechaza el `createMany` (`P2002`) después de insertar el crédito y consumir el número, y se verifica que el estado, el historial, el crédito, las cuotas y la secuencia quedan intactos.
+- **Transiciones compartidas:** `solicitudes/application/transiciones.ts` (`buscarSolicitud`, `registrarTransicion`) lo usan el comité y los desembolsos. `SolicitudRepository.registrarTransicion` recibe explícitamente quién ejecuta el cambio, la fecha y el comentario del historial.
 - **Dependencias entre módulos:** `ComiteModule` importa `SolicitudesModule` y `CreditosModule`, que exportan los tokens de sus puertos. El comité no tiene dominio propio.
+
+## Módulo `desembolsos`
+
+| Capa             | Contenido                                                                                                                                                                                               |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `domain`         | `Desembolso.registrar` (monto total del crédito) y puerto `DesembolsoRepository`                                                                                                                        |
+| `application`    | `DesembolsarCreditoUseCase`: dentro del `UnitOfWork`, `Solicitud.desembolsar` (máquina de estados, solo desde `APROBADA`), busca el crédito, `registrarTransicion` condicional y registra el desembolso |
+| `infrastructure` | `PrismaDesembolsoRepository` (`creditoId` único: un desembolso por crédito)                                                                                                                             |
+| `presentation`   | `DesembolsosController` (`POST /desembolsos/:solicitudId`) y `DesembolsarDto`                                                                                                                           |
+
+- `CreditoRepository.buscarPorSolicitud` devuelve un `CreditoResumen` (`id`, `numeroCredito`, `montoCentavos`). Si una solicitud `APROBADA` no tuviera crédito (dato inconsistente), responde `404 CREDITO_NO_ENCONTRADO`.
+- **Rollback probado:** con un desembolso previo para el mismo crédito, el `INSERT` viola `UNIQUE(creditoId)` después de cambiar el estado, y se verifica que la solicitud vuelve a quedar `APROBADA` con su historial intacto.
 
 - **Rotación atómica:** `RefrescarSesionUseCase` corre dentro del `UnitOfWork` y devuelve un resultado en lugar de lanzar dentro de la transacción. Así la revocación de la familia se confirma antes de responder `401`.
 - **Concurrencia:** `marcarRotado` es un `updateMany` condicionado a `revocadoEn IS NULL`. Si dos peticiones rotan el mismo token, solo una lo logra y la otra se trata como reutilización.

@@ -203,6 +203,37 @@ Respuesta de la aprobación:
   - `422 OBSERVACIONES_REQUERIDAS` al aprobar con observaciones vacías;
   - `400` si falta el campo `observaciones` o el id no es numérico.
 
+## Desembolsos
+
+Ruta protegida: requiere access token.
+
+| Método y ruta                        | Cuerpo                    | Respuesta                          |
+| ------------------------------------ | ------------------------- | ---------------------------------- |
+| `POST /api/desembolsos/:solicitudId` | `{ banco, numeroCuenta }` | `201` con los datos del desembolso |
+
+- **`banco`:** `LAFISE`, `FICOHSA`, `BAC_CREDOMATIC` o `BANPRO` (enum `Banco` de `packages/shared`).
+- **`numeroCuenta`:** texto de 6 a 20 dígitos. Se guarda como texto para conservar los ceros a la izquierda.
+
+```json
+{
+  "solicitudId": 36,
+  "estado": "DESEMBOLSADA",
+  "desembolso": {
+    "numeroCredito": "CR-2026-000001",
+    "banco": "BAC_CREDOMATIC",
+    "numeroCuenta": "0012345678",
+    "monto": 50000,
+    "fechaDesembolso": "2026-09-25T17:44:51.563Z"
+  }
+}
+```
+
+- **Una transacción:** se valida que la solicitud esté `APROBADA`, se pasa a `DESEMBOLSADA` (con su entrada de historial) y se registra el desembolso por el monto total del crédito. Si algo falla, no queda nada a medias.
+- **Errores:**
+  - `409 TRANSICION_INVALIDA` si la solicitud está `PENDIENTE`, `RECHAZADA` o ya `DESEMBOLSADA`;
+  - `404` si no existe;
+  - `400` con un banco fuera de la lista, un número de cuenta inválido o un id no numérico.
+
 ## Variables de entorno
 
 | Archivo                 | Versionado | Uso                                                         |
@@ -283,4 +314,5 @@ Supuestos de negocio (detalle en `CLAUDE.md` §4):
 - **Cliente:** se identifica por cédula única y puede tener varias solicitudes. La información laboral se guarda en cada solicitud como foto del momento. Al registrar una solicitud de una cédula existente, se actualizan los datos del cliente (gana la última captura).
 - **Aprobación:** la fecha de aprobación es el momento del dictamen (UTC) y es la base de los vencimientos. El año del número de crédito es el de esa fecha.
 - **Rechazo:** las observaciones son opcionales.
+- **Desembolso:** siempre por el monto total del crédito y una sola vez. El número de cuenta acepta solo dígitos (de 6 a 20).
 - **Límites de captura:** hasta 360 cuotas y tasa de 0 a 100 %, con máximo 2 decimales en montos y tasa.

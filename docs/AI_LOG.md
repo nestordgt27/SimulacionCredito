@@ -15,7 +15,8 @@ Registro de cada interacción con herramientas de IA durante el desarrollo, seg�
 | `chore/seed-usuario-admin` | Seed con usuario de prueba `admin` | `develop` | [#5](https://github.com/nestordgt27/SimulacionCredito/pull/5) | Fusionada |
 | `feature/auth-login` | Módulos de dominio y autenticación (login, refresh rotativo, logout, guard global) | `develop` | [#6](https://github.com/nestordgt27/SimulacionCredito/pull/6) | Fusionada |
 | `feature/solicitudes-crear-solicitud` | Registro y listado de solicitudes con cuota recalculada y regla de edad | `develop` | [#7](https://github.com/nestordgt27/SimulacionCredito/pull/7) | Fusionada |
-| `feature/comite-aprobar-solicitud` | Módulo de comité: vista reducida, aprobación atómica con crédito y plan, rechazo | `develop` | [#8](https://github.com/nestordgt27/SimulacionCredito/pull/8) | En revisión |
+| `feature/comite-aprobar-solicitud` | Módulo de comité: vista reducida, aprobación atómica con crédito y plan, rechazo | `develop` | [#8](https://github.com/nestordgt27/SimulacionCredito/pull/8) | Fusionada |
+| `feature/desembolsos-desembolsar-credito` | Módulo de desembolsos: APROBADA → DESEMBOLSADA con banco y cuenta en una transacción | `develop` | Pendiente | En curso |
 
 ---
 
@@ -301,3 +302,41 @@ Registro de cada interacción con herramientas de IA durante el desarrollo, seg�
     - flujo manual sobre `dev.db`: vista reducida, 422 sin observaciones, aprobación con `CR-2026-000001` y 24 cuotas que suman el monto con saldo final 0 y primer vencimiento 15 días después, y 409 al aprobar de nuevo.
 - **Commits:** `feat(solicitudes): agregar máquina de estados y dictamen de aprobación o rechazo`, `feat(creditos): otorgar crédito con número incremental y plan de pagos`, `feat(comite): vista reducida, aprobación atómica y rechazo de solicitudes`, `docs: documentar el módulo de comité y la aprobación atómica`, `docs(ai-log): registrar pr de comité`
 - **PR:** [#8](https://github.com/nestordgt27/SimulacionCredito/pull/8) → `develop`
+
+### [011] 2026-09-25 — Módulo de desembolsos
+
+- **Herramienta:** Claude Code
+- **Rama:** `feature/desembolsos-desembolsar-credito`
+- **Prompt (resumen fiel):** Implementar el módulo de desembolsos: `POST /desembolsos/:solicitudId` recibe el banco (enum de los 4 bancos) y el número de cuenta, valida que el estado sea APROBADA y lo actualiza a DESEMBOLSADA en una transacción.
+- **Resultado:**
+  - **Refactor previo, sin cambio de comportamiento:**
+    - `SolicitudRepository.registrarEvaluacion` pasa a llamarse `registrarTransicion(solicitud, { estadoAnterior, usuarioId, fecha, comentario })`, para que el historial registre quién ejecuta cada cambio (evaluador o quien desembolsa);
+    - los helpers `buscarSolicitud` y `registrarTransicion` se movieron de `comite` a `solicitudes/application/transiciones.ts`, porque los usan comité y desembolsos.
+  - **`solicitudes/domain`:** `Solicitud.desembolsar()` vía la máquina de estados (solo desde APROBADA).
+  - **`creditos`:** `CreditoRepository.buscarPorSolicitud` (devuelve un `CreditoResumen`) y `CreditoNoEncontradoError` (404).
+  - **`desembolsos`:**
+    - `Desembolso.registrar`, siempre por el monto total del crédito;
+    - `DesembolsarCreditoUseCase`: en el `UnitOfWork`, desembolsar la solicitud, buscar el crédito, registrar la transición condicional y crear el desembolso;
+    - `PrismaDesembolsoRepository`;
+    - `DesembolsarDto` (`banco` del enum `Banco`; `numeroCuenta` de 6 a 20 dígitos como texto);
+    - `DesembolsosController`, que responde 201.
+  - **Pruebas:**
+    - unitarias de la api: 146;
+    - integración: 39, con el rollback real si falla el `INSERT` del desembolso;
+    - e2e: 74 (18 nuevas: 409 desde PENDIENTE, RECHAZADA y al repetir; los 4 bancos; 6 validaciones con 400; 404; 401).
+    - Cobertura unitaria de dominio y aplicación de `desembolsos`: 100 %.
+  - **Documentación:** README (sección Desembolsos y supuestos), `docs/ARCHITECTURE.md` (módulo `desembolsos` y transiciones compartidas) y `CLAUDE.md` §4.
+- **Decisiones y ajustes manuales:**
+  - **Validación en dos niveles**, igual que en el comité:
+    - la máquina de estados valida el estado (409 claro);
+    - el `updateMany` condicional al estado anterior cubre la concurrencia;
+    - además, `creditoId` es único en `desembolsos`, así que un crédito no se puede desembolsar dos veces ni por error.
+  - **Desembolso por el monto total** del crédito, sin montos parciales.
+  - **Número de cuenta:** solo dígitos (de 6 a 20) y como texto, para conservar los ceros a la izquierda. Un número JSON en lugar de texto responde 400. Queda como supuesto: el enunciado no fija un formato por banco.
+  - **Comentario de historial `Desembolso en <BANCO>`,** sin el número de cuenta, para no copiar datos bancarios en la auditoría.
+  - **El helper de puertos de prueba se renombró** a `crearPuertosSolicitudYCredito` (`test/support/puertos-solicitud-credito.ts`), porque ahora lo usan el comité y los desembolsos.
+  - **Prueba manual con `fetch` de Node en lugar de `curl`,** para evitar el problema de codificación de la consola de Windows detectado en [010].
+  - **Verificación final:**
+    - typecheck, lint, Prettier y build en verde;
+    - flujo manual sobre `dev.db`: un banco inválido da 400; desembolsar la solicitud 36 da 201 con la cuenta `0012345678` intacta; repetirlo da 409; la solicitud aparece en `?estado=DESEMBOLSADA`.
+- **Commits:** `refactor(solicitudes): generalizar el registro de transiciones con usuario, fecha y comentario`, `feat(solicitudes): permitir desembolsar una solicitud aprobada`, `feat(desembolsos): desembolsar créditos aprobados en una transacción`, `docs: documentar el módulo de desembolsos`
