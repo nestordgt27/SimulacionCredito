@@ -18,7 +18,7 @@ Registro de cada interacción con herramientas de IA durante el desarrollo, seg�
 | `feature/comite-aprobar-solicitud` | Módulo de comité: vista reducida, aprobación atómica con crédito y plan, rechazo | `develop` | [#8](https://github.com/nestordgt27/SimulacionCredito/pull/8) | Fusionada |
 | `feature/desembolsos-desembolsar-credito` | Módulo de desembolsos: APROBADA → DESEMBOLSADA con banco y cuenta en una transacción | `develop` | [#9](https://github.com/nestordgt27/SimulacionCredito/pull/9) | Fusionada |
 | `feature/creditos-consultar-credito` | Consulta de créditos por cédula con plan de pagos | `develop` | [#10](https://github.com/nestordgt27/SimulacionCredito/pull/10) | Fusionada |
-| `feature/web-auth-login` | Base del frontend (Axios con refresh, sesión, rutas protegidas, UI) y pantalla de login | `develop` | Pendiente | En curso |
+| `feature/web-auth-login` | Base del frontend (Axios con refresh, sesión, rutas protegidas, UI) y pantalla de login | `develop` | [#11](https://github.com/nestordgt27/SimulacionCredito/pull/11) | En revisión |
 
 ---
 
@@ -395,7 +395,7 @@ Registro de cada interacción con herramientas de IA durante el desarrollo, seg�
     - rutas `/login`, `/` y el comodín `*`.
   - **Pruebas web:** 44 con Vitest + Testing Library + MSW.
     - Interceptor (11): Bearer, refresh y reintento, tokens rotados, 3 peticiones concurrentes con un solo refresh, un único reintento, refresh fallido que cierra la sesión, sin refresh en login ni sin sesión, recarga sin access token, errores que no son 401.
-    - Store de sesión (6), `mensajeDeError` (5), política del `QueryClient` (9).
+    - Store de sesión (6), `mensajeDeError` (5), política del `QueryClient` (8).
     - Login (7): validación, éxito, 401 del backend, error de red, botón deshabilitado, redirección con sesión.
     - Navegación (7): ruta protegida, vuelta a la ruta pedida, logout con y sin respuesta del servidor, sesión cerrada por refresh fallido, ruta desconocida.
     - Cobertura de la web: 98 % de líneas.
@@ -421,4 +421,5 @@ Registro de cada interacción con herramientas de IA durante el desarrollo, seg�
     - al recargar, la sesión se mantiene; dos peticiones reales sin access token dieron dos 401, **un solo** `POST /auth/refresh` y dos reintentos con 200, con el refresh token rotado;
     - "Cerrar sesión" hizo `POST /auth/logout` (204), borró `localStorage` y volvió al login.
   - **Verificación final:** typecheck, lint, Prettier y build en verde; pruebas de shared (74), api (151) y web (44).
-- **Commits:** `feat(web): agregar cliente http con refresh automático y almacén de sesión`, `feat(web): agregar componentes base de ui con tailwind`, `feat(auth): pantalla de login con rutas protegidas y cierre de sesión`, `docs: documentar el frontend y la sesión`
+- **Commits:** `feat(web): agregar cliente http con refresh automático y almacén de sesión`, `feat(web): agregar componentes base de ui con tailwind`, `feat(auth): pantalla de login con rutas protegidas y cierre de sesión`, `docs: documentar el frontend y la sesión`, `docs(ai-log): registrar pr del frontend y login`
+- **PR:** [#11](https://github.com/nestordgt27/SimulacionCredito/pull/11) → `develop`
