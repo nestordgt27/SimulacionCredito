@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { calcularEdad } from './edad';
+import { calcularEdad, EDAD_MAXIMA, esEdadPermitida } from './edad';
 
 const fecha = (iso: string) => new Date(`${iso}T00:00:00Z`);
 const HOY = fecha('2026-09-25');
@@ -58,5 +58,23 @@ describe('calcularEdad', () => {
     const calcular = () => calcularEdad(fecha('1990-01-01'), new Date('no-es-fecha'));
 
     expect(calcular).toThrow(/fecha de referencia/);
+  });
+});
+
+describe('esEdadPermitida', () => {
+  it('debe fijar la edad máxima en 80 años', () => {
+    expect(EDAD_MAXIMA).toBe(80);
+  });
+
+  it('debe permitir a quien tiene exactamente 80 años', () => {
+    expect(esEdadPermitida(fecha('1945-09-26'), HOY)).toBe(true);
+  });
+
+  it('debe permitir a quien cumple 80 años hoy', () => {
+    expect(esEdadPermitida(fecha('1946-09-25'), HOY)).toBe(true);
+  });
+
+  it('debe rechazar a quien cumplió 81 años hoy', () => {
+    expect(esEdadPermitida(fecha('1945-09-25'), HOY)).toBe(false);
   });
 });

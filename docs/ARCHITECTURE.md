@@ -45,13 +45,13 @@ apps/api/
 │   ├── core/                 # Kernel compartido (CoreModule global)
 │   │   ├── auth/             # @Public(), @UsuarioActual(), UsuarioAutenticado
 │   │   ├── config/           # Validación de variables de entorno (zod)
-│   │   ├── domain/           # Puertos Clock y UnitOfWork, ErrorDeDominio
+│   │   ├── domain/           # Puertos Clock y UnitOfWork, ErrorDeDominio, conversión de dinero
 │   │   ├── health/           # GET /api/health (público)
 │   │   ├── http/             # configureApp (prefijo /api, CORS) y filtro de errores de dominio
 │   │   └── infrastructure/   # SystemClock
 │   ├── modules/
 │   │   ├── auth/             # Implementado: login, refresh, logout, JwtAuthGuard global
-│   │   ├── solicitudes/      # Esqueleto
+│   │   ├── solicitudes/      # Implementado: crear y listar solicitudes
 │   │   ├── comite/           # Esqueleto
 │   │   ├── desembolsos/      # Esqueleto
 │   │   └── creditos/         # Esqueleto
@@ -87,6 +87,21 @@ apps/api/
 | `presentation`   | `AuthController`, DTOs y `JwtAuthGuard` (registrado como `APP_GUARD`)                                                                                            |
 
 - **Tiempo:** `JwtTokenService` calcula `iat`/`exp` y verifica con el `Clock`, no con la hora del sistema. Así la expiración es determinista en pruebas.
+
+## Módulo `solicitudes`
+
+| Capa             | Contenido                                                                                                                                                  |
+| ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `domain`         | Entidad `Solicitud` (`crear` y `reconstituir`), `Cliente`, errores `EdadNoPermitidaError` y `FechaNacimientoInvalidaError`, y puerto `SolicitudRepository` |
+| `application`    | `CrearSolicitudUseCase`, `ListarSolicitudesUseCase` y `SolicitudVista` (salida en unidades, con edad y plazo derivados)                                    |
+| `infrastructure` | `PrismaSolicitudRepository`: upsert del cliente por cédula, solicitud e historial inicial (`null → PENDIENTE`)                                             |
+| `presentation`   | `SolicitudesController`, `CrearSolicitudDto` (anidado: `cliente`, `empleo`, `credito`) y `ListarSolicitudesQuery`                                          |
+
+- **La cuota no se puede inyectar:** `Solicitud.crear` aplica la regla de edad y calcula la cuota con `calcularCuotaNivelada`. No hay otra forma de construir una solicitud nueva. `reconstituir` solo se usa al leer de la base.
+- **Unidades en los bordes:** el DTO y la vista trabajan en unidades y porcentaje. El dominio y la base, en centavos y puntos básicos (`core/domain/dinero.ts`).
+- **Atomicidad:** `CrearSolicitudUseCase` persiste dentro del `UnitOfWork`. Si falla la solicitud o el historial, el upsert del cliente también se revierte (probado en integración).
+- **Tiempo:** la fecha de creación y la edad salen del `Clock`.
+
 - **Rotación atómica:** `RefrescarSesionUseCase` corre dentro del `UnitOfWork` y devuelve un resultado en lugar de lanzar dentro de la transacción. Así la revocación de la familia se confirma antes de responder `401`.
 - **Concurrencia:** `marcarRotado` es un `updateMany` condicionado a `revocadoEn IS NULL`. Si dos peticiones rotan el mismo token, solo una lo logra y la otra se trata como reutilización.
 
