@@ -15,7 +15,7 @@ Registro de cada interacción con herramientas de IA durante el desarrollo, seg�
 | `chore/seed-usuario-admin` | Seed con usuario de prueba `admin` | `develop` | [#5](https://github.com/nestordgt27/SimulacionCredito/pull/5) | Fusionada |
 | `feature/auth-login` | Módulos de dominio y autenticación (login, refresh rotativo, logout, guard global) | `develop` | [#6](https://github.com/nestordgt27/SimulacionCredito/pull/6) | Fusionada |
 | `feature/solicitudes-crear-solicitud` | Registro y listado de solicitudes con cuota recalculada y regla de edad | `develop` | [#7](https://github.com/nestordgt27/SimulacionCredito/pull/7) | Fusionada |
-| `feature/comite-aprobar-solicitud` | Módulo de comité: vista reducida, aprobación atómica con crédito y plan, rechazo | `develop` | Pendiente | En curso |
+| `feature/comite-aprobar-solicitud` | Módulo de comité: vista reducida, aprobación atómica con crédito y plan, rechazo | `develop` | [#8](https://github.com/nestordgt27/SimulacionCredito/pull/8) | En revisión |
 
 ---
 
@@ -299,4 +299,5 @@ Registro de cada interacción con herramientas de IA durante el desarrollo, seg�
   - **Verificación final:**
     - typecheck, lint, Prettier y build en verde;
     - flujo manual sobre `dev.db`: vista reducida, 422 sin observaciones, aprobación con `CR-2026-000001` y 24 cuotas que suman el monto con saldo final 0 y primer vencimiento 15 días después, y 409 al aprobar de nuevo.
-- **Commits:** `feat(solicitudes): agregar máquina de estados y dictamen de aprobación o rechazo`, `feat(creditos): otorgar crédito con número incremental y plan de pagos`, `feat(comite): vista reducida, aprobación atómica y rechazo de solicitudes`, `docs: documentar el módulo de comité y la aprobación atómica`
+- **Commits:** `feat(solicitudes): agregar máquina de estados y dictamen de aprobación o rechazo`, `feat(creditos): otorgar crédito con número incremental y plan de pagos`, `feat(comite): vista reducida, aprobación atómica y rechazo de solicitudes`, `docs: documentar el módulo de comité y la aprobación atómica`, `docs(ai-log): registrar pr de comité`
+- **PR:** [#8](https://github.com/nestordgt27/SimulacionCredito/pull/8) → `develop`
