@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { envFilePath, validateEnv } from './core/config/env';
 import { CoreModule } from './core/core.module';
+import { AuthModule } from './modules/auth/auth.module';
 import { ComiteModule } from './modules/comite/comite.module';
 import { CreditosModule } from './modules/creditos/creditos.module';
 import { DesembolsosModule } from './modules/desembolsos/desembolsos.module';
@@ -17,6 +18,7 @@ import { PrismaModule } from './prisma/prisma.module';
     }),
     CoreModule,
     PrismaModule,
+    AuthModule,
     SolicitudesModule,
     ComiteModule,
     DesembolsosModule,
