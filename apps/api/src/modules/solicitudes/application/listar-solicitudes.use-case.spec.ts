@@ -13,7 +13,7 @@ describe('ListarSolicitudesUseCase', () => {
       crear: jest.fn(),
       listar: jest.fn().mockResolvedValue([]),
       buscarPorId: jest.fn(),
-      registrarEvaluacion: jest.fn(),
+      registrarTransicion: jest.fn(),
     };
     useCase = new ListarSolicitudesUseCase(solicitudes, new FakeClock(HOY));
   });

@@ -1,5 +1,5 @@
 import { EstadoSolicitud } from '@simulacion-credito/shared';
-import { crearPuertosComite } from '../../../../test/support/comite-puertos';
+import { crearPuertosSolicitudYCredito } from '../../../../test/support/puertos-solicitud-credito';
 import { unaSolicitud } from '../../../../test/support/solicitud-builders';
 import type { Credito } from '../../creditos/domain/credito';
 import {
@@ -10,11 +10,11 @@ import {
 import { AprobarSolicitudUseCase } from './aprobar-solicitud.use-case';
 
 describe('AprobarSolicitudUseCase', () => {
-  let puertos: ReturnType<typeof crearPuertosComite>;
+  let puertos: ReturnType<typeof crearPuertosSolicitudYCredito>;
   let useCase: AprobarSolicitudUseCase;
 
   beforeEach(() => {
-    puertos = crearPuertosComite();
+    puertos = crearPuertosSolicitudYCredito();
     useCase = new AprobarSolicitudUseCase(
       puertos.solicitudes,
       puertos.creditos,
@@ -31,7 +31,7 @@ describe('AprobarSolicitudUseCase', () => {
   const creditoCreado = (): Credito => puertos.creditos.crear.mock.calls[0][0];
 
   const expectSinEscrituras = () => {
-    expect(puertos.solicitudes.registrarEvaluacion).not.toHaveBeenCalled();
+    expect(puertos.solicitudes.registrarTransicion).not.toHaveBeenCalled();
     expect(puertos.numeros.generar).not.toHaveBeenCalled();
     expect(puertos.creditos.crear).not.toHaveBeenCalled();
   };
@@ -58,9 +58,14 @@ describe('AprobarSolicitudUseCase', () => {
   it('debe registrar la evaluación condicionada a que la solicitud siga PENDIENTE', async () => {
     await aprobar();
 
-    expect(puertos.solicitudes.registrarEvaluacion).toHaveBeenCalledWith(
+    expect(puertos.solicitudes.registrarTransicion).toHaveBeenCalledWith(
       expect.objectContaining({ estado: EstadoSolicitud.APROBADA, evaluadaPorId: 9 }),
-      EstadoSolicitud.PENDIENTE,
+      {
+        estadoAnterior: EstadoSolicitud.PENDIENTE,
+        usuarioId: 9,
+        fecha: puertos.clock.ahora(),
+        comentario: 'Cumple con los requisitos',
+      },
     );
   });
 
@@ -103,7 +108,7 @@ describe('AprobarSolicitudUseCase', () => {
   );
 
   it('debe lanzar TransicionInvalidaError sin crear crédito cuando otra petición la evaluó antes', async () => {
-    puertos.solicitudes.registrarEvaluacion.mockResolvedValue(false);
+    puertos.solicitudes.registrarTransicion.mockResolvedValue(false);
 
     await expect(aprobar()).rejects.toThrow(TransicionInvalidaError);
     expect(puertos.numeros.generar).not.toHaveBeenCalled();

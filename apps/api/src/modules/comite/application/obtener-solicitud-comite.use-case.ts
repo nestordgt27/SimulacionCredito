@@ -4,7 +4,7 @@ import {
   SOLICITUD_REPOSITORY,
   type SolicitudRepository,
 } from '../../solicitudes/domain/solicitud.repository';
-import { buscarSolicitud } from './evaluacion';
+import { buscarSolicitud } from '../../solicitudes/application/transiciones';
 import { aSolicitudComiteVista, type SolicitudComiteVista } from './solicitud-comite-vista';
 
 @Injectable()

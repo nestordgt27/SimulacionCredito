@@ -33,7 +33,7 @@ describe('CrearSolicitudUseCase', () => {
       ),
       listar: jest.fn(),
       buscarPorId: jest.fn(),
-      registrarEvaluacion: jest.fn(),
+      registrarTransicion: jest.fn(),
     };
     useCase = new CrearSolicitudUseCase(solicitudes, new FakeUnitOfWork(), new FakeClock(HOY));
   });

@@ -4,7 +4,11 @@ import type { EstadoSolicitud, Periodicidad, TipoEmpleo } from '@simulacion-cred
 import { PrismaTransactionContext } from '../../../prisma/prisma-transaction-context';
 import { Cliente } from '../domain/cliente';
 import { Solicitud } from '../domain/solicitud';
-import type { FiltroSolicitudes, SolicitudRepository } from '../domain/solicitud.repository';
+import type {
+  FiltroSolicitudes,
+  SolicitudRepository,
+  Transicion,
+} from '../domain/solicitud.repository';
 
 type SolicitudConCliente = Prisma.SolicitudGetPayload<{ include: { cliente: true } }>;
 
@@ -107,12 +111,9 @@ export class PrismaSolicitudRepository implements SolicitudRepository {
     return registro ? aDominio(registro) : null;
   }
 
-  async registrarEvaluacion(
-    solicitud: Solicitud,
-    estadoAnterior: EstadoSolicitud,
-  ): Promise<boolean> {
+  async registrarTransicion(solicitud: Solicitud, transicion: Transicion): Promise<boolean> {
     const { count } = await this.contexto.cliente.solicitud.updateMany({
-      where: { id: solicitud.id, estado: estadoAnterior },
+      where: { id: solicitud.id, estado: transicion.estadoAnterior },
       data: {
         estado: solicitud.estado,
         observaciones: solicitud.observaciones,
@@ -127,11 +128,11 @@ export class PrismaSolicitudRepository implements SolicitudRepository {
     await this.contexto.cliente.solicitudHistorial.create({
       data: {
         solicitudId: solicitud.id,
-        estadoAnterior,
+        estadoAnterior: transicion.estadoAnterior,
         estadoNuevo: solicitud.estado,
-        usuarioId: solicitud.evaluadaPorId ?? solicitud.creadaPorId,
-        comentario: solicitud.observaciones,
-        fecha: solicitud.fechaEvaluacion ?? solicitud.creadaEn,
+        usuarioId: transicion.usuarioId,
+        comentario: transicion.comentario,
+        fecha: transicion.fecha,
       },
     });
     return true;
