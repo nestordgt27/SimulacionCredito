@@ -23,3 +23,10 @@ export function calcularEdad(fechaNacimiento: Date, fechaReferencia: Date): numb
 
   return yaCumplioEsteAnio ? anios : anios - 1;
 }
+
+/** Edad máxima permitida para solicitar un crédito (CLAUDE.md §4): se rechaza a partir de 81. */
+export const EDAD_MAXIMA = 80;
+
+export function esEdadPermitida(fechaNacimiento: Date, fechaReferencia: Date): boolean {
+  return calcularEdad(fechaNacimiento, fechaReferencia) <= EDAD_MAXIMA;
+}
