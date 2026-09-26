@@ -205,6 +205,7 @@ apps/web/src/
 ### Desembolsos
 
 - **Bandeja:** `useSolicitudesAprobadas` usa `GET /solicitudes?estado=APROBADA` con la clave `['solicitudes', { estado: 'APROBADA' }]`.
+- **Tasa anual:** la bandeja (columna) y el resumen de la ejecución la muestran con `formatearPorcentaje`. Viene en `credito.tasaAnual` de la misma lista, sin cambios en la API. El resumen usa 2 columnas en móvil, 3 desde `sm` y 6 desde `lg`.
 - **Resumen sin endpoint nuevo:** la página de desembolso toma la solicitud de esa misma lista (ya en caché si se llega desde la bandeja). Si no está entre las aprobadas, muestra un aviso en lugar del formulario. Así también evita desembolsar una solicitud ya desembolsada.
 - **Validación con reglas compartidas:** `desembolsoSchema` usa `Banco` y `FORMATO_NUMERO_CUENTA` de `packages/shared`, igual que el DTO de la API.
 - **Confirmación explícita:** el formulario tiene dos pasos (datos, luego confirmación) porque el desembolso mueve dinero y es irreversible. Los errores del backend (por ejemplo, `409`) se muestran en el paso de confirmación.
@@ -233,7 +234,10 @@ apps/web/src/
   - se cierra al elegir una sección y con Escape (el foco vuelve al botón);
   - es un solo árbol de navegación que se muestra u oculta con CSS, no una copia para móvil.
 - **Tablas de bandeja** (comité y desembolsos): prioridad de columnas.
-  - Por debajo de `sm` (640 px) se ven Cliente, Monto y la acción. N.º, cédula, cuota, cuotas y fecha se ocultan con `hidden sm:table-cell`.
+  - Por debajo de `sm` (640 px) se ven Cliente, Monto y la acción.
+  - **Comité:** N.º, cédula, cuotas y fecha aparecen desde `sm`.
+  - **Desembolsos:** tiene una columna más (Tasa anual), así que se escalona: N.º y Tasa anual desde `sm`, Cuota y Cuotas desde `md` y Cédula desde `lg`. Así la tabla cabe sin desplazamiento en cada corte (medido con un monto de 12 millones).
+  - **Tasa en móvil:** por debajo de `sm`, la tasa se muestra debajo del monto (`sm:hidden`). Es la única excepción al árbol DOM único: el texto existe dos veces, pero en cada ancho solo una copia es visible y accesible (`display: none` saca la otra del árbol de accesibilidad). La tasa se ve en todos los anchos.
   - Esos datos siguen en el detalle de cada solicitud, y el N.º va en el nombre accesible del enlace.
   - Se conservan la semántica de tabla y un único árbol DOM. El contenedor con `overflow-x-auto` queda como respaldo para montos muy grandes.
 - **Plan de pagos:** mantiene sus 6 columnas con desplazamiento dentro de la tarjeta. Es una tabla de datos donde todas las columnas importan.

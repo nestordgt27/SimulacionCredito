@@ -12,7 +12,13 @@ const APROBADA: SolicitudAprobada = {
   id: 5,
   observaciones: 'Ingresos estables',
   cliente: { cedula: '001-010190-0001A', nombreCompleto: 'Ana Pérez' },
-  credito: { monto: 10000, cantidadCuotas: 12, periodicidad: 'MENSUAL', cuotaNivelada: 888.49 },
+  credito: {
+    monto: 10000,
+    tasaAnual: 18.5,
+    cantidadCuotas: 12,
+    periodicidad: 'MENSUAL',
+    cuotaNivelada: 888.49,
+  },
 };
 
 // Imita al backend: lista de aprobadas y desembolso de la solicitud 5.
@@ -71,6 +77,7 @@ describe('DesembolsarPage', () => {
 
     expect(screen.getByText('Ana Pérez')).toBeInTheDocument();
     expect(screen.getByText('C$ 10,000.00')).toBeInTheDocument();
+    expect(screen.getByText('Tasa anual').nextElementSibling).toHaveTextContent(/^18.5 %$/);
     expect(screen.getByText('Observaciones del comité: Ingresos estables')).toBeInTheDocument();
   });
 

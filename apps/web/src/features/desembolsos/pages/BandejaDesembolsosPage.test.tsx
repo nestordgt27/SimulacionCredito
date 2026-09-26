@@ -10,7 +10,13 @@ const APROBADA: SolicitudAprobada = {
   id: 5,
   observaciones: 'Cumple',
   cliente: { cedula: '001-010190-0001A', nombreCompleto: 'Ana Pérez' },
-  credito: { monto: 10000, cantidadCuotas: 12, periodicidad: 'MENSUAL', cuotaNivelada: 888.49 },
+  credito: {
+    monto: 10000,
+    tasaAnual: 18.5,
+    cantidadCuotas: 12,
+    periodicidad: 'MENSUAL',
+    cuotaNivelada: 888.49,
+  },
 };
 
 function aprobadasQueDevuelve(solicitudes: SolicitudAprobada[]) {
@@ -52,6 +58,40 @@ describe('BandejaDesembolsosPage', () => {
     expect(fila).toHaveTextContent('C$ 10,000.00');
     expect(fila).toHaveTextContent('C$ 888.49');
     expect(fila).toHaveTextContent('12 (mensual)');
+  });
+
+  // Celda de la fila bajo el encabezado indicado (la tabla tiene columnas que se ocultan en móvil).
+  const celdaDe = (tabla: HTMLElement, fila: HTMLElement, encabezado: string) => {
+    const indice = within(tabla)
+      .getAllByRole('columnheader')
+      .findIndex((th) => th.textContent === encabezado);
+    return within(fila).getAllByRole('cell')[indice];
+  };
+
+  it('debe mostrar la tasa anual del crédito aprobado en su columna', async () => {
+    aprobadasQueDevuelve([APROBADA]);
+
+    renderApp('/desembolsos');
+
+    const tabla = await screen.findByRole('table', {
+      name: 'Solicitudes aprobadas pendientes de desembolso',
+    });
+    const [, fila] = within(tabla).getAllByRole('row');
+    expect(celdaDe(tabla, fila!, 'Tasa anual')).toHaveTextContent(/^18.5 %$/);
+  });
+
+  it('debe mostrar la tasa bajo el monto para pantallas angostas, donde su columna se oculta', async () => {
+    aprobadasQueDevuelve([APROBADA]);
+
+    renderApp('/desembolsos');
+
+    const tabla = await screen.findByRole('table', {
+      name: 'Solicitudes aprobadas pendientes de desembolso',
+    });
+    const [, fila] = within(tabla).getAllByRole('row');
+    const monto = celdaDe(tabla, fila!, 'Monto')!;
+    expect(monto).toHaveTextContent('C$ 10,000.00');
+    expect(within(monto).getByText('Tasa anual: 18.5 %')).toBeInTheDocument();
   });
 
   it('debe abrir el desembolso de la solicitud elegida', async () => {

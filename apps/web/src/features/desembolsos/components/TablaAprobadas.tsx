@@ -1,8 +1,10 @@
 import { Link } from 'react-router';
 import { ETIQUETAS_PERIODICIDAD } from '../../../shared/lib/etiquetas';
-import { formatearMonto } from '../../../shared/lib/formato';
+import { formatearMonto, formatearPorcentaje } from '../../../shared/lib/formato';
 import type { SolicitudAprobada } from '../api/desembolsos.api';
 
+// Columnas por prioridad: siempre Cliente, Monto (con la tasa debajo) y la acción; desde sm
+// N.º y Tasa anual; desde md Cuota y Cuotas; desde lg Cédula (docs/ARCHITECTURE.md).
 export function TablaAprobadas({ solicitudes }: { solicitudes: SolicitudAprobada[] }) {
   return (
     <div className="overflow-x-auto rounded-lg bg-white shadow-sm ring-1 ring-slate-200">
@@ -16,7 +18,7 @@ export function TablaAprobadas({ solicitudes }: { solicitudes: SolicitudAprobada
             <th scope="col" className="px-3 py-3 sm:px-4 font-medium">
               Cliente
             </th>
-            <th scope="col" className="hidden sm:table-cell px-3 py-3 sm:px-4 font-medium">
+            <th scope="col" className="hidden lg:table-cell px-3 py-3 sm:px-4 font-medium">
               Cédula
             </th>
             <th scope="col" className="px-3 py-3 sm:px-4 text-right font-medium">
@@ -24,11 +26,17 @@ export function TablaAprobadas({ solicitudes }: { solicitudes: SolicitudAprobada
             </th>
             <th
               scope="col"
-              className="hidden sm:table-cell px-3 py-3 sm:px-4 text-right font-medium"
+              className="hidden sm:table-cell px-3 py-3 sm:px-4 text-right font-medium whitespace-nowrap"
+            >
+              Tasa anual
+            </th>
+            <th
+              scope="col"
+              className="hidden md:table-cell px-3 py-3 sm:px-4 text-right font-medium"
             >
               Cuota
             </th>
-            <th scope="col" className="hidden sm:table-cell px-3 py-3 sm:px-4 font-medium">
+            <th scope="col" className="hidden md:table-cell px-3 py-3 sm:px-4 font-medium">
               Cuotas
             </th>
             <th scope="col" className="px-3 py-3 sm:px-4">
@@ -43,14 +51,21 @@ export function TablaAprobadas({ solicitudes }: { solicitudes: SolicitudAprobada
               <td className="px-3 py-3 sm:px-4 font-medium text-slate-900">
                 {cliente.nombreCompleto}
               </td>
-              <td className="hidden sm:table-cell px-3 py-3 sm:px-4">{cliente.cedula}</td>
+              <td className="hidden lg:table-cell px-3 py-3 sm:px-4">{cliente.cedula}</td>
               <td className="px-3 py-3 sm:px-4 text-right whitespace-nowrap">
                 {formatearMonto(credito.monto)}
+                {/* En pantallas angostas la columna de la tasa se oculta: se muestra aquí. */}
+                <span className="block text-xs text-slate-500 sm:hidden">
+                  Tasa anual: {formatearPorcentaje(credito.tasaAnual)}
+                </span>
               </td>
               <td className="hidden sm:table-cell px-3 py-3 sm:px-4 text-right whitespace-nowrap">
+                {formatearPorcentaje(credito.tasaAnual)}
+              </td>
+              <td className="hidden md:table-cell px-3 py-3 sm:px-4 text-right whitespace-nowrap">
                 {formatearMonto(credito.cuotaNivelada)}
               </td>
-              <td className="hidden sm:table-cell px-3 py-3 sm:px-4">
+              <td className="hidden md:table-cell px-3 py-3 sm:px-4">
                 {credito.cantidadCuotas} (
                 {ETIQUETAS_PERIODICIDAD[credito.periodicidad].toLowerCase()})
               </td>
