@@ -23,7 +23,8 @@ Registro de cada interacción con herramientas de IA durante el desarrollo, seg�
 | `feature/web-comite` | Pantallas del comité: bandeja de pendientes, revisión y dictamen | `develop` | [#13](https://github.com/nestordgt27/SimulacionCredito/pull/13) | Fusionada |
 | `feature/web-desembolsos` | Pantallas de desembolso: bandeja de aprobadas, datos bancarios con confirmación | `develop` | [#14](https://github.com/nestordgt27/SimulacionCredito/pull/14) | Fusionada |
 | `feature/web-consulta-creditos` | Pantalla de consulta de créditos por cédula con plan de pagos | `develop` | [#15](https://github.com/nestordgt27/SimulacionCredito/pull/15) | Fusionada |
-| `feature/web-consulta-paginacion` | Paginación de la consulta de créditos (más de 5) y ruta protegida con parámetros | `develop` | [#16](https://github.com/nestordgt27/SimulacionCredito/pull/16) | En revisión |
+| `feature/web-consulta-paginacion` | Paginación de la consulta de créditos (más de 5) y ruta protegida con parámetros | `develop` | [#16](https://github.com/nestordgt27/SimulacionCredito/pull/16) | Fusionada |
+| `feature/web-desembolsos-paginacion` | Paginación de la bandeja de desembolsos (más de 5) | `develop` | Pendiente | En curso |
 
 ---
 
@@ -617,3 +618,23 @@ Registro de cada interacción con herramientas de IA durante el desarrollo, seg�
   - **Verificación final:** typecheck, lint, Prettier y build en verde; pruebas de shared (95), api (151) y web (164).
 - **Commits:** `feat(web): agregar paginación reutilizable`, `feat(consulta): paginar el listado de créditos cuando supera 5`, `fix(web): conservar los parámetros de la url al volver del login`, `docs: documentar la paginación de la consulta`, `docs(ai-log): registrar pr de la paginación de la consulta`
 - **PR:** [#16](https://github.com/nestordgt27/SimulacionCredito/pull/16) → `develop`
+
+### [019] 2026-09-26 — Paginación de la bandeja de desembolsos
+
+- **Herramienta:** Claude Code
+- **Rama:** `feature/web-desembolsos-paginacion`
+- **Prompt (resumen fiel):** En la sección de desembolsos, agregar paginación al listado de créditos cuando la cantidad supere 5.
+- **Resultado:**
+  - **`shared/lib/usePaginaEnUrl.ts`:** hook que lee y escribe `?pagina=N` conservando los demás parámetros de la URL, y no escribe la página 1.
+  - **`shared/lib/paginacion.ts`:** `ELEMENTOS_POR_PAGINA = 5`, compartido por las dos pantallas (reemplaza `CREDITOS_POR_PAGINA` de la consulta).
+  - **`BandejaDesembolsosPage`:** 5 por página con `paginar`, resumen "Mostrando X–Y de N créditos" (`aria-live`) y `Paginacion` (`nav` "Paginación de desembolsos") solo con más de 5; desplaza la vista al inicio al cambiar de página.
+  - **Refactor de `ConsultaCreditosPage`:** usa `usePaginaEnUrl` en lugar de su lógica propia. Sin cambio de comportamiento: sus pruebas, incluidas las de URL, siguen pasando.
+  - **Pruebas web:** 172 (8 nuevas). Exactamente 5 sin controles; 7 con las primeras 5 y la página 1 activa; siguiente con `?pagina=2` y **sin nueva petición**; anterior que vuelve a la URL sin parámetros; `pagina` 99, 0 y abc ajustadas; enlace correcto desde la segunda página. Cobertura de la web: 99 % de líneas.
+  - **Documentación:** README (bandeja de desembolsos) y `docs/ARCHITECTURE.md` (sección "Paginación (consulta y desembolsos)").
+- **Decisiones y ajustes manuales:**
+  - **Mismas reglas que en la consulta** ([018]): paginación en el cliente, página en la URL y controles solo con más de 5.
+  - **`usePaginaEnUrl` y `ELEMENTOS_POR_PAGINA` compartidos:** con la segunda pantalla, la lógica de la página en la URL ya se repetía (duplicación real, `CLAUDE.md` §3.1).
+  - **Prueba de mutación:** mostrar los controles siempre rompe la prueba "exactamente 5 sin paginación". La página se restauró.
+  - **Verificación manual en el navegador** (servidores levantados para la prueba y detenidos al terminar): con las 9 aprobadas de `dev.db` (los 7 créditos de prueba de [018] y 2 del usuario), la página 1 muestra 5 ("Mostrando 1–5 de 9 créditos") y la página 2 muestra 4, con la URL `?pagina=2` y sin nueva petición. No se crearon datos nuevos.
+  - **Verificación final:** typecheck, lint, Prettier y build en verde; pruebas de shared (95), api (151) y web (172).
+- **Commits:** `refactor(web): extraer la página en la url a un hook compartido`, `feat(desembolsos): paginar la bandeja cuando supera 5 créditos`, `docs: documentar la paginación de desembolsos`
