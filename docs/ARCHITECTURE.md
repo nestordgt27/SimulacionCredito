@@ -170,12 +170,13 @@ apps/web/src/
 ├── app/                  # App, providers, QueryClient, rutas, RutaProtegida, layout
 ├── features/
 │   ├── auth/             # api/ hooks/ components/ pages/ schemas/ (login y logout)
-│   └── solicitudes/      # formulario de registro con cuota en vivo y bloqueo por edad
+│   ├── solicitudes/      # formulario de registro con cuota en vivo y bloqueo por edad
+│   └── comite/           # bandeja de pendientes, revisión (7 campos) y dictamen
 ├── shared/
 │   ├── api/              # clienteHttp (Axios + interceptores) y mensajeDeError
 │   ├── auth/             # sesionStore y useSesion
-│   ├── lib/              # formatearMonto (C$) y formatearMeses
-│   └── ui/               # Boton, Campo, Selector, Seccion, Alerta, Tarjeta (Tailwind)
+│   ├── lib/              # formatearMonto (C$), formatearMeses, formatearFecha y etiquetas de enums
+│   └── ui/               # Boton, Campo, AreaTexto, Selector, Seccion, Alerta, Tarjeta (Tailwind)
 └── test/                 # setup, servidor MSW con handlers y renderApp
 ```
 
@@ -189,6 +190,14 @@ apps/web/src/
 - **`useCuotaEstimada`:** valida las condiciones del crédito con el sub-esquema y, si son válidas, calcula la cuota y el plazo con shared. Mientras estén incompletas o sean inválidas devuelve `null` (se muestra "—").
 - **Bloqueo por edad:** el formulario calcula la edad con la fecha de nacimiento observada (`useWatch`). Si supera 80 años, muestra un aviso (`role="alert"`) y deshabilita el envío; el esquema también lo rechaza. La regla real sigue en el backend (422 `EDAD_NO_PERMITIDA`).
 - **Envío:** `useCrearSolicitud` hace el POST con los datos normalizados (cédula en mayúsculas, correo en minúsculas) y sin cuota. Al terminar invalida las consultas `['solicitudes']`.
+
+### Comité
+
+- **Bandeja:** `useSolicitudesPendientes` usa `GET /solicitudes?estado=PENDIENTE` con la clave `['solicitudes', { estado: 'PENDIENTE' }]`, y muestra estados de carga, lista vacía y error.
+- **Revisión:** `useSolicitudComite(id)` usa `GET /comite/solicitudes/:id`. Un id no numérico redirige a la bandeja.
+- **Dictamen:** es un solo campo de observaciones con dos acciones de reglas distintas (`aprobacionSchema` exige texto; `rechazoSchema` lo deja opcional y envía `{}` si está vacío). Por eso cada botón valida con su esquema, en lugar de usar un resolver único.
+- **Consistencia:** `useAprobarSolicitud` y `useRechazarSolicitud` invalidan el prefijo `['solicitudes']`, así la bandeja no muestra solicitudes ya evaluadas.
+- **Limitación conocida:** la vista del comité no incluye el estado, porque el enunciado pide solo 7 campos. Si se abre una solicitud ya evaluada, el formulario de dictamen aparece, pero el backend responde `409` y se muestra su mensaje.
 
 ### Sesión e interceptores
 

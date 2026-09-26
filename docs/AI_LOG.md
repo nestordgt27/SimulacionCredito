@@ -19,7 +19,8 @@ Registro de cada interacción con herramientas de IA durante el desarrollo, seg�
 | `feature/desembolsos-desembolsar-credito` | Módulo de desembolsos: APROBADA → DESEMBOLSADA con banco y cuenta en una transacción | `develop` | [#9](https://github.com/nestordgt27/SimulacionCredito/pull/9) | Fusionada |
 | `feature/creditos-consultar-credito` | Consulta de créditos por cédula con plan de pagos | `develop` | [#10](https://github.com/nestordgt27/SimulacionCredito/pull/10) | Fusionada |
 | `feature/web-auth-login` | Base del frontend (Axios con refresh, sesión, rutas protegidas, UI) y pantalla de login | `develop` | [#11](https://github.com/nestordgt27/SimulacionCredito/pull/11) | Fusionada |
-| `feature/web-solicitudes-registrar` | Pantalla de registro de solicitudes con cuota en vivo y bloqueo por edad | `develop` | [#12](https://github.com/nestordgt27/SimulacionCredito/pull/12) | En revisión |
+| `feature/web-solicitudes-registrar` | Pantalla de registro de solicitudes con cuota en vivo y bloqueo por edad | `develop` | [#12](https://github.com/nestordgt27/SimulacionCredito/pull/12) | Fusionada |
+| `feature/web-comite` | Pantallas del comité: bandeja de pendientes, revisión y dictamen | `develop` | Pendiente | En curso |
 
 ---
 
@@ -473,3 +474,40 @@ Registro de cada interacción con herramientas de IA durante el desarrollo, seg�
   - **Servidores del usuario detenidos:** para levantar la API recompilada se detuvieron los procesos de API y Vite que el usuario tenía en los puertos 3000 y 5173.
 - **Commits:** `feat(shared): compartir límites de captura y formato de cédula`, `feat(web): agregar selector, secciones y formato de montos`, `feat(solicitudes): pantalla de registro con cuota en vivo y bloqueo por edad`, `docs: documentar la pantalla de registro de solicitudes`, `docs(ai-log): registrar pr del registro de solicitudes`
 - **PR:** [#12](https://github.com/nestordgt27/SimulacionCredito/pull/12) → `develop`
+
+### [015] 2026-09-25 — Frontend: comité
+
+- **Herramienta:** Claude Code
+- **Rama:** `feature/web-comite`
+- **Prompt (resumen fiel):** Implementar la pantalla del comité.
+- **Resultado:**
+  - **`shared/lib/etiquetas.ts`:** `ETIQUETAS_PERIODICIDAD`, `ETIQUETAS_TIPO_EMPLEO` y `opcionesDe`. El formulario de solicitudes y `ResultadoSolicitud` las reutilizan (antes tenían listas propias).
+  - **`shared/lib/formato.ts`:** `formatearFecha` (dd/mm/aaaa en UTC).
+  - **`shared/ui`:** `AreaTexto`, con etiqueta, ayuda y error accesibles.
+  - **`features/comite`:**
+    - `comite.api` (listar pendientes, obtener la vista reducida, aprobar, rechazar);
+    - hooks en `useComite` (`useSolicitudesPendientes`, `useSolicitudComite`, `useAprobarSolicitud`, `useRechazarSolicitud`, que invalidan `['solicitudes']`);
+    - esquemas `aprobacionSchema` y `rechazoSchema`;
+    - componentes `TablaPendientes`, `FichaSolicitud` (7 campos), `DictamenForm` y `ResultadoDictamen`;
+    - páginas `BandejaComitePage` (`/comite`) y `RevisionSolicitudPage` (`/comite/:id`).
+  - **`app`:** rutas del comité, el enlace "Comité" en la navegación, y `end` solo en "Inicio", para que "Comité" quede activo también en `/comite/:id`.
+  - **Pruebas web:** 105 (18 nuevas).
+    - Bandeja (6): pide solo PENDIENTE, filas con los datos formateados, navegación a la revisión, lista vacía, error y enlace del menú.
+    - Revisión (10): exactamente los 7 campos, 404, id inválido; aprobar sin observaciones o con solo espacios, sin petición; aprobar con el número de crédito y observaciones recortadas; 409 del backend; bandeja actualizada después de aprobar; rechazar sin observaciones (envía `{}`) y con observaciones.
+    - `formatearFecha` (1) y `opcionesDe` (1).
+    - Cobertura de la web: 98,8 % de líneas.
+  - **Documentación:** README (pantallas Comité y Revisión) y `docs/ARCHITECTURE.md` (sección Comité, con la limitación conocida).
+- **Decisiones y ajustes manuales:**
+  - **Bandeja y revisión en rutas separadas** (`/comite` y `/comite/:id`): cada solicitud tiene su URL y las pruebas navegan como una persona.
+  - **Dos esquemas para un solo campo:** aprobar exige observaciones y rechazar no, así que cada botón valida con su esquema en vez de usar un resolver único de React Hook Form.
+  - **Invalidación por prefijo `['solicitudes']`:** después de un dictamen (y después de registrar una solicitud) la bandeja se recarga sola.
+  - **Tipos propios en `comite.api`,** con solo los campos que usa, en lugar de importar tipos de otra feature: las features quedan independientes.
+  - **Limitación conocida:** la vista del comité no incluye el estado, porque el enunciado pide exactamente 7 campos. Al abrir una solicitud ya evaluada, el formulario aparece, pero el backend responde 409 y se muestra su mensaje. Una mejora posible es agregar el estado a esa vista, si se acepta ampliar el enunciado.
+  - **Prueba de mutación:** hacer que "Aprobar" valide con el esquema de rechazo rompe exactamente las 2 pruebas de observaciones obligatorias. El componente se restauró.
+  - **Verificación manual en el navegador,** con los servidores de `npm run dev` que el usuario tenía levantados (esta vez no se detuvieron):
+    - la bandeja mostró las 3 pendientes;
+    - en la **#39 de prueba creada para esto**, "Aprobar" sin observaciones mostró el error sin petición; con observaciones se otorgó **CR-2026-000002**; la bandeja se actualizó; un segundo intento mostró el 409 del backend;
+    - la **#40 de prueba** se rechazó con observaciones.
+    - Las pendientes del usuario (#37 y #38) no se tocaron.
+  - **Verificación final:** typecheck, lint, Prettier y build en verde; pruebas de shared (87), api (151) y web (105).
+- **Commits:** `refactor(web): compartir etiquetas de enums y formato de fechas`, `feat(comite): bandeja de pendientes, revisión y dictamen del comité`, `docs: documentar las pantallas del comité`
