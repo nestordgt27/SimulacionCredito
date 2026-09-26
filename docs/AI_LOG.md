@@ -30,7 +30,7 @@ Registro de cada interacción con herramientas de IA durante el desarrollo, seg�
 | `feature/comite-revision-detallada` | Revisión del comité con información personal, laboral y financiera e indicadores de viabilidad | `develop` | [#20](https://github.com/nestordgt27/SimulacionCredito/pull/20) | Fusionada |
 | `fix/web-layout-movil` | Interfaz responsiva: menú plegable, prioridad de columnas y sin desbordamiento en móvil | `develop` | [#21](https://github.com/nestordgt27/SimulacionCredito/pull/21) | Fusionada |
 | `feature/web-desembolsos-tasa` | Tasa anual en la bandeja de desembolsos y en el resumen de la ejecución, responsiva | `develop` | [#22](https://github.com/nestordgt27/SimulacionCredito/pull/22) | Fusionada |
-| `fix/web-desembolso-campos` | Pantalla de desembolso con únicamente los campos del enunciado | `develop` | — | En curso |
+| `fix/web-desembolso-campos` | Pantalla de desembolso con únicamente los campos del enunciado | `develop` | [#23](https://github.com/nestordgt27/SimulacionCredito/pull/23) | En revisión |
 
 ---
 
@@ -840,5 +840,5 @@ Registro de cada interacción con herramientas de IA durante el desarrollo, seg�
     - a 375 px quedan en 3 filas, sin desbordar;
     - no se desembolsó nada.
   - **Verificación final:** typecheck, lint, Prettier y build en verde; pruebas web (196), cobertura 99 % de líneas.
-- **Commits:** `fix(desembolsos): mostrar solo los campos del enunciado en el resumen`, `docs: documentar los campos de la pantalla de desembolso`
-- **PR:** pendiente → `develop`
+- **Commits:** `fix(desembolsos): mostrar solo los campos del enunciado en el resumen`, `docs: documentar los campos de la pantalla de desembolso`, `docs(ai-log): registrar pr de los campos del desembolso`
+- **PR:** [#23](https://github.com/nestordgt27/SimulacionCredito/pull/23) → `develop`
