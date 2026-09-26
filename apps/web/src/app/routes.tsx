@@ -1,5 +1,6 @@
 import { Navigate, type RouteObject } from 'react-router';
 import { LoginPage } from '../features/auth/pages/LoginPage';
+import { NuevaSolicitudPage } from '../features/solicitudes/pages/NuevaSolicitudPage';
 import { AppLayout } from './AppLayout';
 import { InicioPage } from './InicioPage';
 import { RutaProtegida } from './RutaProtegida';
@@ -12,7 +13,10 @@ export const routes: RouteObject[] = [
     children: [
       {
         element: <AppLayout />,
-        children: [{ index: true, element: <InicioPage /> }],
+        children: [
+          { index: true, element: <InicioPage /> },
+          { path: 'solicitudes/nueva', element: <NuevaSolicitudPage /> },
+        ],
       },
     ],
   },
