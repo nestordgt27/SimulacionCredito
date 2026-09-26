@@ -1,4 +1,4 @@
-import { Banco } from '@simulacion-credito/shared';
+import { Banco, FORMATO_NUMERO_CUENTA } from '@simulacion-credito/shared';
 import { Transform, type TransformFnParams } from 'class-transformer';
 import { IsIn, Matches } from 'class-validator';
 
@@ -12,6 +12,6 @@ export class DesembolsarDto {
   @Transform(({ value }: TransformFnParams): unknown =>
     typeof value === 'string' ? value.trim() : value,
   )
-  @Matches(/^\d{6,20}$/, { message: 'numeroCuenta debe tener entre 6 y 20 dígitos' })
+  @Matches(FORMATO_NUMERO_CUENTA, { message: 'numeroCuenta debe tener entre 6 y 20 dígitos' })
   numeroCuenta: string;
 }

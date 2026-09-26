@@ -171,7 +171,8 @@ apps/web/src/
 ├── features/
 │   ├── auth/             # api/ hooks/ components/ pages/ schemas/ (login y logout)
 │   ├── solicitudes/      # formulario de registro con cuota en vivo y bloqueo por edad
-│   └── comite/           # bandeja de pendientes, revisión (7 campos) y dictamen
+│   ├── comite/           # bandeja de pendientes, revisión (7 campos) y dictamen
+│   └── desembolsos/      # bandeja de aprobadas, datos bancarios, confirmación y resultado
 ├── shared/
 │   ├── api/              # clienteHttp (Axios + interceptores) y mensajeDeError
 │   ├── auth/             # sesionStore y useSesion
@@ -198,6 +199,14 @@ apps/web/src/
 - **Dictamen:** es un solo campo de observaciones con dos acciones de reglas distintas (`aprobacionSchema` exige texto; `rechazoSchema` lo deja opcional y envía `{}` si está vacío). Por eso cada botón valida con su esquema, en lugar de usar un resolver único.
 - **Consistencia:** `useAprobarSolicitud` y `useRechazarSolicitud` invalidan el prefijo `['solicitudes']`, así la bandeja no muestra solicitudes ya evaluadas.
 - **Limitación conocida:** la vista del comité no incluye el estado, porque el enunciado pide solo 7 campos. Si se abre una solicitud ya evaluada, el formulario de dictamen aparece, pero el backend responde `409` y se muestra su mensaje.
+
+### Desembolsos
+
+- **Bandeja:** `useSolicitudesAprobadas` usa `GET /solicitudes?estado=APROBADA` con la clave `['solicitudes', { estado: 'APROBADA' }]`.
+- **Resumen sin endpoint nuevo:** la página de desembolso toma la solicitud de esa misma lista (ya en caché si se llega desde la bandeja). Si no está entre las aprobadas, muestra un aviso en lugar del formulario. Así también evita desembolsar una solicitud ya desembolsada.
+- **Validación con reglas compartidas:** `desembolsoSchema` usa `Banco` y `FORMATO_NUMERO_CUENTA` de `packages/shared`, igual que el DTO de la API.
+- **Confirmación explícita:** el formulario tiene dos pasos (datos, luego confirmación) porque el desembolso mueve dinero y es irreversible. Los errores del backend (por ejemplo, `409`) se muestran en el paso de confirmación.
+- **Invalidación:** `useDesembolsar` invalida `['solicitudes']` y `['creditos']`.
 
 ### Sesión e interceptores
 

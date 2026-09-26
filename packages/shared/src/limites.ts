@@ -15,6 +15,9 @@ export const LIMITES_SOLICITUD = {
 /** Cédula nicaragüense normalizada: 000-000000-0000X. */
 export const FORMATO_CEDULA = /^\d{3}-\d{6}-\d{4}[A-Z]$/;
 
+/** Número de cuenta bancaria para el desembolso: solo dígitos, de 6 a 20 (texto: conserva ceros). */
+export const FORMATO_NUMERO_CUENTA = /^\d{6,20}$/;
+
 export function tieneMaximoDecimales(valor: number, decimales: number): boolean {
   return Number.isFinite(valor) && new Decimal(valor).decimalPlaces() <= decimales;
 }

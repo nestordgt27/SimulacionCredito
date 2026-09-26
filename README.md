@@ -87,6 +87,13 @@ Pantallas disponibles:
   - **Dictamen:** **Aprobar** exige observaciones; **Rechazar** las deja opcionales.
   - **Resultado:** al aprobar se muestra el número de crédito otorgado y la cuota. Después de cualquier dictamen, la bandeja se actualiza sola.
   - **Conflictos:** si la solicitud ya no estaba pendiente, se muestra el mensaje del backend (`409`).
+- **Desembolsos** (`/desembolsos`): créditos aprobados pendientes de desembolso, con monto y cuota. Cada fila tiene un enlace para desembolsar.
+- **Desembolso** (`/desembolsos/:solicitudId`):
+  - **Resumen del crédito aprobado.**
+  - **Datos bancarios:** banco (LAFISE, FICOHSA, BAC Credomatic o Banpro) y número de cuenta (6 a 20 dígitos).
+  - **Confirmación:** antes de enviar se muestra "Vas a desembolsar C$ … a … en …, cuenta …", con opción de corregir.
+  - **Resultado:** se muestran el número de crédito, el banco, la cuenta y la fecha.
+  - **Solicitud no disponible:** si no está aprobada o ya se desembolsó, se muestra un aviso en lugar del formulario.
 
 **Sesión:**
 
