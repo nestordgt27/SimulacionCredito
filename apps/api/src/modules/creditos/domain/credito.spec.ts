@@ -11,13 +11,12 @@ function condiciones(cambios: Partial<CondicionesAprobadas> = {}): CondicionesAp
     tasaAnualBps: 1200,
     periodicidad: Periodicidad.MENSUAL,
     cantidadCuotas: 12,
-    cuotaNiveladaCentavos: 88_849,
     ...cambios,
   };
 }
 
 describe('Credito.otorgar', () => {
-  it('debe copiar las condiciones aprobadas y el número de crédito', () => {
+  it('debe copiar las condiciones aprobadas, el número de crédito y la cuota calculada', () => {
     const credito = Credito.otorgar(condiciones(), 'CR-2026-000001', APROBACION);
 
     expect(credito).toMatchObject({
@@ -49,6 +48,27 @@ describe('Credito.otorgar', () => {
       );
       expect(cuotas.reduce((total, cuota) => total + cuota.capitalCentavos, 0)).toBe(1_000_000);
       expect(cuotas.at(-1)?.saldoCentavos).toBe(0);
+    },
+  );
+
+  it.each([
+    { periodicidad: Periodicidad.MENSUAL, cantidadCuotas: 12, esperada: 88_849 },
+    { periodicidad: Periodicidad.QUINCENAL, cantidadCuotas: 24, esperada: 44_321 },
+  ])(
+    'debe calcular la cuota nivelada al otorgar (,  cuotas)',
+    ({ periodicidad, cantidadCuotas, esperada }) => {
+      // Aunque la solicitud traiga otra cuota, el crédito la calcula con shared.
+      const credito = Credito.otorgar(
+        {
+          ...condiciones({ periodicidad, cantidadCuotas }),
+          cuotaNiveladaCentavos: 1,
+        } as CondicionesAprobadas,
+        'CR-2026-000001',
+        APROBACION,
+      );
+
+      expect(credito.cuotaNiveladaCentavos).toBe(esperada);
+      expect(credito.cuotas[0]?.cuotaCentavos).toBe(esperada);
     },
   );
 
