@@ -18,7 +18,8 @@ Registro de cada interacción con herramientas de IA durante el desarrollo, seg�
 | `feature/comite-aprobar-solicitud` | Módulo de comité: vista reducida, aprobación atómica con crédito y plan, rechazo | `develop` | [#8](https://github.com/nestordgt27/SimulacionCredito/pull/8) | Fusionada |
 | `feature/desembolsos-desembolsar-credito` | Módulo de desembolsos: APROBADA → DESEMBOLSADA con banco y cuenta en una transacción | `develop` | [#9](https://github.com/nestordgt27/SimulacionCredito/pull/9) | Fusionada |
 | `feature/creditos-consultar-credito` | Consulta de créditos por cédula con plan de pagos | `develop` | [#10](https://github.com/nestordgt27/SimulacionCredito/pull/10) | Fusionada |
-| `feature/web-auth-login` | Base del frontend (Axios con refresh, sesión, rutas protegidas, UI) y pantalla de login | `develop` | [#11](https://github.com/nestordgt27/SimulacionCredito/pull/11) | En revisión |
+| `feature/web-auth-login` | Base del frontend (Axios con refresh, sesión, rutas protegidas, UI) y pantalla de login | `develop` | [#11](https://github.com/nestordgt27/SimulacionCredito/pull/11) | Fusionada |
+| `feature/web-solicitudes-registrar` | Pantalla de registro de solicitudes con cuota en vivo y bloqueo por edad | `develop` | Pendiente | En curso |
 
 ---
 
@@ -423,3 +424,51 @@ Registro de cada interacción con herramientas de IA durante el desarrollo, seg�
   - **Verificación final:** typecheck, lint, Prettier y build en verde; pruebas de shared (74), api (151) y web (44).
 - **Commits:** `feat(web): agregar cliente http con refresh automático y almacén de sesión`, `feat(web): agregar componentes base de ui con tailwind`, `feat(auth): pantalla de login con rutas protegidas y cierre de sesión`, `docs: documentar el frontend y la sesión`, `docs(ai-log): registrar pr del frontend y login`
 - **PR:** [#11](https://github.com/nestordgt27/SimulacionCredito/pull/11) → `develop`
+
+### [014] 2026-09-25 — Frontend: registro de solicitudes
+
+- **Herramienta:** Claude Code
+- **Rama:** `feature/web-solicitudes-registrar`
+- **Prompt (resumen fiel):** Implementar la pantalla de solicitudes con tres secciones (personal, laboral y crédito), con la cuota nivelada recalculada en vivo desde shared y un bloqueo claro si la edad supera 80.
+- **Resultado:**
+  - **`packages/shared`:**
+    - `LIMITES_SOLICITUD` (monto máximo, tasa máxima, cuotas máximas, antigüedad máxima, decimales);
+    - `FORMATO_CEDULA` y `tieneMaximoDecimales`, que también reutiliza la validación interna de shared;
+    - 87 pruebas, 100 % de cobertura.
+  - **API:** `CrearSolicitudDto` y `ConsultarCreditosQuery` toman los límites y el formato de cédula de shared en lugar de constantes propias. Sin cambio de comportamiento: 151 unitarias y 84 e2e en verde.
+  - **Web — `shared`:** `Selector`, `Seccion` (fieldset + legend) y `formatearMonto` / `formatearMeses`.
+  - **Web — `features/solicitudes`:**
+    - `crearSolicitudSchema(hoy)` y `creditoSchema` (Zod);
+    - `edadSegunFecha`;
+    - hooks `useCuotaEstimada` y `useCrearSolicitud`;
+    - componentes `SolicitudForm` (tres secciones, cuota en vivo, aviso de edad y botón deshabilitado), `ResumenCuota` y `ResultadoSolicitud`;
+    - página `NuevaSolicitudPage` en `/solicitudes/nueva`.
+  - **Web — `app`:** navegación principal (Inicio y Nueva solicitud) y enlace desde el inicio.
+  - **Pruebas web:** 87 (43 nuevas).
+    - Esquema (23): válido, normalización, 80 frente a 81 años, 14 reglas, `edadSegunFecha`.
+    - Formato (6).
+    - Página (14): tres secciones, enlace desde el inicio, cuota en vivo (guion, 888,49, recálculo a quincenal 443,21, vuelta al guion con un dato inválido), bloqueo de 81 años sin petición, 80 años permitido, quitar el bloqueo al corregir, cuerpo enviado sin cuota, resultado con la cuota del servidor, "Registrar otra", validaciones y error 422 del backend.
+    - Cobertura de la web: 99 % de líneas.
+  - **Documentación:** README (pantalla Nueva solicitud), `docs/ARCHITECTURE.md` (registro de solicitudes, pruebas con fecha fija) y `CLAUDE.md` §4 (límites compartidos).
+- **Decisiones y ajustes manuales:**
+  - **Límites en shared:** `CLAUDE.md` §2.5 pide validar "reutilizando reglas de shared (edad máxima, rangos)". Los límites estaban solo en el DTO de la API; ahora ambos lados usan la misma fuente.
+  - **Cuota en vivo sin enviarla:** el cálculo usa las mismas funciones de shared que el backend. El POST no incluye la cuota, y el resultado muestra la que confirmó el servidor.
+  - **Bloqueo por edad en tres niveles:**
+    - aviso visible con la edad y el máximo;
+    - botón deshabilitado;
+    - validación de Zod.
+
+    El backend sigue siendo la regla real (422).
+  - **Hoy fijo al abrir la página,** para que la edad no cambie mientras se llena el formulario.
+  - **Correcciones durante la iteración:**
+    - **Defecto del esquema detectado por una prueba:** con la fecha vacía, Zod ejecutaba igual el `superRefine` y mostraba dos mensajes en el mismo campo. Se corrigió en el código.
+    - **Pruebas lentas e intermitentes:** llenar el formulario tecla por tecla tardaba unos 3 s por prueba, y con cobertura se superaban los 5 s. Se cambió a `paste` (las fechas se siguen escribiendo, porque `input type="date"` no admite pegado) y se fijó `testTimeout` de 15 s con `vi.setConfig` al cargar el módulo, solo en ese archivo. Primero se probó en `beforeAll` y no funcionó, porque Vitest asigna el límite al recolectar las pruebas. Estable en dos corridas seguidas con cobertura.
+    - **Escapes de la shell:** el reemplazo de la expresión regular de la cédula en los DTO falló porque la shell se comió una barra invertida; se aplicó con un script en archivo (`String.raw`).
+  - **Verificación manual en el navegador** (API sobre `dev.db` y Vite):
+    - navegación a "Nueva solicitud";
+    - cuota en vivo de C$ 2,289.98 en 12 meses para 50 000 al 18,5 % en 24 cuotas quincenales, el mismo valor que calcula el servidor;
+    - con la fecha 1940-01-01 aparece "El cliente tiene 86 años y la edad máxima permitida es 80 años" y el botón queda deshabilitado;
+    - al corregir la fecha el aviso desaparece ("Edad: 41 años");
+    - registro con 201: solicitud **#37 creada en `dev.db`** (María López, `001-150385-0008K`).
+  - **Servidores del usuario detenidos:** para levantar la API recompilada se detuvieron los procesos de API y Vite que el usuario tenía en los puertos 3000 y 5173.
+- **Commits:** `feat(shared): compartir límites de captura y formato de cédula`, `feat(web): agregar selector, secciones y formato de montos`, `feat(solicitudes): pantalla de registro con cuota en vivo y bloqueo por edad`, `docs: documentar la pantalla de registro de solicitudes`
