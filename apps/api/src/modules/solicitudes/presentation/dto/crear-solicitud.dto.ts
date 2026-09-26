@@ -1,4 +1,9 @@
-import { Periodicidad, TipoEmpleo } from '@simulacion-credito/shared';
+import {
+  FORMATO_CEDULA,
+  LIMITES_SOLICITUD,
+  Periodicidad,
+  TipoEmpleo,
+} from '@simulacion-credito/shared';
 import { Transform, Type, type TransformFnParams } from 'class-transformer';
 import {
   IsDefined,
@@ -18,9 +23,9 @@ import {
   ValidateNested,
 } from 'class-validator';
 
-/** Máximo que cabe en un Int de 32 bits expresado en centavos (CLAUDE.md §4). */
-export const MONTO_MAXIMO = 21_474_836.47;
-export const CUOTAS_MAXIMAS = 360;
+// Límites compartidos con el formulario de la web (packages/shared, CLAUDE.md §4).
+const { MONTO_MAXIMO, TASA_ANUAL_MAXIMA, CUOTAS_MAXIMAS, ANTIGUEDAD_LABORAL_MAXIMA, DECIMALES } =
+  LIMITES_SOLICITUD;
 
 const recortar = ({ value }: TransformFnParams): unknown =>
   typeof value === 'string' ? value.trim() : value;
@@ -29,11 +34,11 @@ const recortarEnMayusculas = ({ value }: TransformFnParams): unknown =>
 const recortarEnMinusculas = ({ value }: TransformFnParams): unknown =>
   typeof value === 'string' ? value.trim().toLowerCase() : value;
 
-const DOS_DECIMALES = { maxDecimalPlaces: 2, allowNaN: false, allowInfinity: false };
+const DOS_DECIMALES = { maxDecimalPlaces: DECIMALES, allowNaN: false, allowInfinity: false };
 
 export class ClienteDto {
   @Transform(recortarEnMayusculas)
-  @Matches(/^\d{3}-\d{6}-\d{4}[A-Z]$/, {
+  @Matches(FORMATO_CEDULA, {
     message: 'cedula debe tener el formato 000-000000-0000X',
   })
   cedula: string;
@@ -71,7 +76,7 @@ export class EmpleoDto {
 
   @IsInt()
   @Min(0)
-  @Max(80)
+  @Max(ANTIGUEDAD_LABORAL_MAXIMA)
   antiguedadLaboralAnios: number;
 
   @IsNumber(DOS_DECIMALES)
@@ -89,7 +94,7 @@ export class CreditoDto {
   /** Porcentaje anual con máximo 2 decimales (se guarda en puntos básicos). */
   @IsNumber(DOS_DECIMALES)
   @Min(0)
-  @Max(100)
+  @Max(TASA_ANUAL_MAXIMA)
   tasaAnual: number;
 
   @IsInt()

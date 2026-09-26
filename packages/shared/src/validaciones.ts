@@ -1,4 +1,4 @@
-import Decimal from 'decimal.js';
+import { LIMITES_SOLICITUD, tieneMaximoDecimales } from './limites';
 
 export interface ParametrosCredito {
   monto: number;
@@ -10,7 +10,7 @@ export function validarParametrosCredito({ monto, tasaAnual, cuotas }: Parametro
   if (!Number.isFinite(monto) || monto <= 0) {
     throw new RangeError('El monto debe ser un número mayor que 0');
   }
-  if (new Decimal(monto).decimalPlaces() > 2) {
+  if (!tieneMaximoDecimales(monto, LIMITES_SOLICITUD.DECIMALES)) {
     throw new RangeError('El monto no puede tener más de 2 decimales');
   }
   if (!Number.isFinite(tasaAnual) || tasaAnual < 0) {
