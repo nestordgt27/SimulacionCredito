@@ -161,7 +161,7 @@ apps/web/src/
 | Edad (implementación) | `EDAD_MAXIMA = 80` y `esEdadPermitida` en `shared`. El backend la aplica en `Solicitud.crear` con el `Clock` (422 `EDAD_NO_PERMITIDA`); una fecha de nacimiento futura da 422 `FECHA_NACIMIENTO_INVALIDA` |
 | Cuota enviada por el frontend | Se acepta en `credito.cuotaNivelada` para no romper clientes, pero se ignora siempre |
 | Cliente | Identificado por cédula (`000-000000-0000X`, en mayúsculas). Una solicitud nueva de una cédula existente actualiza los datos del cliente (gana la última captura) |
-| Límites compartidos | `LIMITES_SOLICITUD`, `FORMATO_CEDULA` y `tieneMaximoDecimales` en `packages/shared`: los usan el DTO de la API y el esquema Zod de la web |
+| Límites compartidos | `LIMITES_SOLICITUD`, `FORMATO_CEDULA`, `FORMATO_NUMERO_CUENTA` y `tieneMaximoDecimales` en `packages/shared`: los usan el DTO de la API y el esquema Zod de la web |
 | Límites de captura | Monto mayor que 0 hasta 21 474 836,47; tasa de 0 a 100 %; montos y tasa con máximo 2 decimales; de 1 a 360 cuotas |
 | Edad (detalle) | `calcularEdad(fechaNacimiento, fechaReferencia)`: la referencia es un parámetro para mantener la función pura (backend la toma del `Clock`). Nacidos un 29/02 cumplen el 01/03 en años no bisiestos |
 | Desembolso | Solo desde APROBADA. Requiere banco (LAFISE, FICOHSA, BAC Credomatic, Banpro) y número de cuenta |

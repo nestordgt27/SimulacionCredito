@@ -20,7 +20,8 @@ Registro de cada interacción con herramientas de IA durante el desarrollo, seg�
 | `feature/creditos-consultar-credito` | Consulta de créditos por cédula con plan de pagos | `develop` | [#10](https://github.com/nestordgt27/SimulacionCredito/pull/10) | Fusionada |
 | `feature/web-auth-login` | Base del frontend (Axios con refresh, sesión, rutas protegidas, UI) y pantalla de login | `develop` | [#11](https://github.com/nestordgt27/SimulacionCredito/pull/11) | Fusionada |
 | `feature/web-solicitudes-registrar` | Pantalla de registro de solicitudes con cuota en vivo y bloqueo por edad | `develop` | [#12](https://github.com/nestordgt27/SimulacionCredito/pull/12) | Fusionada |
-| `feature/web-comite` | Pantallas del comité: bandeja de pendientes, revisión y dictamen | `develop` | [#13](https://github.com/nestordgt27/SimulacionCredito/pull/13) | En revisión |
+| `feature/web-comite` | Pantallas del comité: bandeja de pendientes, revisión y dictamen | `develop` | [#13](https://github.com/nestordgt27/SimulacionCredito/pull/13) | Fusionada |
+| `feature/web-desembolsos` | Pantallas de desembolso: bandeja de aprobadas, datos bancarios con confirmación | `develop` | Pendiente | En curso |
 
 ---
 
@@ -512,3 +513,38 @@ Registro de cada interacción con herramientas de IA durante el desarrollo, seg�
   - **Verificación final:** typecheck, lint, Prettier y build en verde; pruebas de shared (87), api (151) y web (105).
 - **Commits:** `refactor(web): compartir etiquetas de enums y formato de fechas`, `feat(comite): bandeja de pendientes, revisión y dictamen del comité`, `docs: documentar las pantallas del comité`, `docs(ai-log): registrar pr de las pantallas del comité`
 - **PR:** [#13](https://github.com/nestordgt27/SimulacionCredito/pull/13) → `develop`
+
+### [016] 2026-09-25 — Frontend: desembolsos
+
+- **Herramienta:** Claude Code
+- **Rama:** `feature/web-desembolsos`
+- **Prompt (resumen fiel):** Implementar la pantalla de desembolsos.
+- **Resultado:**
+  - **`packages/shared`:** `FORMATO_NUMERO_CUENTA` (6 a 20 dígitos), con pruebas (95 en total, 100 % de cobertura). El `DesembolsarDto` de la API lo usa en lugar de su expresión propia; las 18 e2e de desembolsos siguen en verde.
+  - **`shared/lib/etiquetas.ts`:** `ETIQUETAS_BANCO` (LAFISE, FICOHSA, BAC Credomatic, Banpro).
+  - **`features/desembolsos`:**
+    - `desembolsos.api` (listar aprobadas, desembolsar);
+    - hooks `useSolicitudesAprobadas` y `useDesembolsar` (invalidan `['solicitudes']` y `['creditos']`);
+    - `desembolsoSchema` (banco del enum y cuenta con el formato compartido);
+    - componentes `TablaAprobadas`, `ResumenCredito`, `DesembolsoForm` (datos bancarios y confirmación) y `ResultadoDesembolso`;
+    - páginas `BandejaDesembolsosPage` (`/desembolsos`) y `DesembolsarPage` (`/desembolsos/:solicitudId`).
+  - **`app`:** rutas y enlace "Desembolsos" en la navegación.
+  - **Pruebas web:** 121 (16 nuevas), con MSW.
+    - Bandeja (5): pide solo APROBADA, fila con monto y cuota, navegación, error y enlace del menú.
+    - Desembolso (11): resumen, exactamente 4 bancos, validación sin petición, cuenta con letras, confirmación con el resumen y sin petición, corregir datos, envío con cuenta recortada y ceros conservados, bandeja actualizada, 409 en la confirmación, solicitud no aprobada e id inválido.
+    - Cobertura de la web: 99 % de líneas.
+  - **Documentación:** README (pantallas Desembolsos y Desembolso), `docs/ARCHITECTURE.md` (sección Desembolsos) y `CLAUDE.md` §4 (formato de cuenta compartido).
+- **Decisiones y ajustes manuales:**
+  - **Paso de confirmación** antes de enviar: el desembolso mueve dinero y no se puede deshacer. Se muestra el monto, el cliente, el banco y la cuenta completa, para que quien opera la verifique.
+  - **Resumen tomado de la lista de aprobadas** en lugar de un endpoint nuevo. Además, si la solicitud no está aprobada o ya se desembolsó, se muestra un aviso en lugar del formulario; así se evita la limitación que tiene la pantalla del comité.
+  - **Formato de cuenta en shared,** igual que la cédula en [014]: el front y el back no pueden divergir.
+  - **Prueba de mutación:** hacer que el formulario envíe sin pasar por la confirmación rompe 5 pruebas. El componente se restauró.
+  - **Verificación manual en el navegador,** con los servidores de `npm run dev` del usuario (la API se recompiló sola en modo watch tras el cambio del DTO):
+    - la bandeja mostró las aprobadas;
+    - en la **#39 de prueba**, una cuenta `12AB5678` sin banco mostró los dos errores;
+    - con BAC Credomatic y `0012345678`, la confirmación mostró el resumen sin hacer ninguna petición;
+    - al confirmar, el POST respondió 201 y **CR-2026-000002** quedó DESEMBOLSADA, con la cuenta intacta;
+    - la bandeja se actualizó, y al reabrir la #39 se mostró el aviso.
+    - La aprobada #38 del usuario no se tocó.
+  - **Verificación final:** typecheck, lint, Prettier y build en verde; pruebas de shared (95), api (151) y web (121).
+- **Commits:** `feat(shared): compartir el formato del número de cuenta`, `feat(desembolsos): bandeja de aprobadas y desembolso con confirmación`, `docs: documentar las pantallas de desembolso`
