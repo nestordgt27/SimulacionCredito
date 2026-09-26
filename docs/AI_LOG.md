@@ -20,7 +20,7 @@ Registro de cada interacción con herramientas de IA durante el desarrollo, seg�
 | `feature/creditos-consultar-credito` | Consulta de créditos por cédula con plan de pagos | `develop` | [#10](https://github.com/nestordgt27/SimulacionCredito/pull/10) | Fusionada |
 | `feature/web-auth-login` | Base del frontend (Axios con refresh, sesión, rutas protegidas, UI) y pantalla de login | `develop` | [#11](https://github.com/nestordgt27/SimulacionCredito/pull/11) | Fusionada |
 | `feature/web-solicitudes-registrar` | Pantalla de registro de solicitudes con cuota en vivo y bloqueo por edad | `develop` | [#12](https://github.com/nestordgt27/SimulacionCredito/pull/12) | Fusionada |
-| `feature/web-comite` | Pantallas del comité: bandeja de pendientes, revisión y dictamen | `develop` | Pendiente | En curso |
+| `feature/web-comite` | Pantallas del comité: bandeja de pendientes, revisión y dictamen | `develop` | [#13](https://github.com/nestordgt27/SimulacionCredito/pull/13) | En revisión |
 
 ---
 
@@ -510,4 +510,5 @@ Registro de cada interacción con herramientas de IA durante el desarrollo, seg�
     - la **#40 de prueba** se rechazó con observaciones.
     - Las pendientes del usuario (#37 y #38) no se tocaron.
   - **Verificación final:** typecheck, lint, Prettier y build en verde; pruebas de shared (87), api (151) y web (105).
-- **Commits:** `refactor(web): compartir etiquetas de enums y formato de fechas`, `feat(comite): bandeja de pendientes, revisión y dictamen del comité`, `docs: documentar las pantallas del comité`
+- **Commits:** `refactor(web): compartir etiquetas de enums y formato de fechas`, `feat(comite): bandeja de pendientes, revisión y dictamen del comité`, `docs: documentar las pantallas del comité`, `docs(ai-log): registrar pr de las pantallas del comité`
+- **PR:** [#13](https://github.com/nestordgt27/SimulacionCredito/pull/13) → `develop`
