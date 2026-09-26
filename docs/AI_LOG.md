@@ -25,7 +25,7 @@ Registro de cada interacción con herramientas de IA durante el desarrollo, seg�
 | `feature/web-consulta-creditos` | Pantalla de consulta de créditos por cédula con plan de pagos | `develop` | [#15](https://github.com/nestordgt27/SimulacionCredito/pull/15) | Fusionada |
 | `feature/web-consulta-paginacion` | Paginación de la consulta de créditos (más de 5) y ruta protegida con parámetros | `develop` | [#16](https://github.com/nestordgt27/SimulacionCredito/pull/16) | Fusionada |
 | `feature/web-desembolsos-paginacion` | Paginación de la bandeja de desembolsos (más de 5) | `develop` | [#17](https://github.com/nestordgt27/SimulacionCredito/pull/17) | Fusionada |
-| `feature/web-comite-paginacion` | Paginación de la bandeja del comité (más de 5) y listado paginado compartido | `develop` | — | En curso |
+| `feature/web-comite-paginacion` | Paginación de la bandeja del comité (más de 5) y listado paginado compartido | `develop` | [#18](https://github.com/nestordgt27/SimulacionCredito/pull/18) | En revisión |
 
 ---
 
@@ -662,5 +662,5 @@ Registro de cada interacción con herramientas de IA durante el desarrollo, seg�
     - desembolsos (`?pagina=2`, 6–9 de 9) y consulta (`?cedula=…&pagina=2`, 6–7 de 7) siguen paginando igual tras el refactor;
     - al terminar, las 6 solicitudes de prueba se **rechazaron** vía API ("Datos de prueba de paginación del comité"); la bandeja quedó solo con la #51.
   - **Verificación final:** typecheck, lint, Prettier y build en verde; pruebas de shared (95), api (151) y web (180).
-- **Commits:** `refactor(web): extraer el listado paginado a un componente compartido`, `feat(comite): paginar la bandeja cuando supera 5 solicitudes`, `docs: documentar la paginación del comité`
-- **PR:** pendiente → `develop`
+- **Commits:** `refactor(web): extraer el listado paginado a un componente compartido`, `feat(comite): paginar la bandeja cuando supera 5 solicitudes`, `docs: documentar la paginación del comité`, `docs(ai-log): registrar pr de la paginación del comité`
+- **PR:** [#18](https://github.com/nestordgt27/SimulacionCredito/pull/18) → `develop`
