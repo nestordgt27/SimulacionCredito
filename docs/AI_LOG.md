@@ -28,7 +28,7 @@ Registro de cada interacción con herramientas de IA durante el desarrollo, seg�
 | `feature/web-comite-paginacion` | Paginación de la bandeja del comité (más de 5) y listado paginado compartido | `develop` | [#18](https://github.com/nestordgt27/SimulacionCredito/pull/18) | Fusionada |
 | `feature/web-comite-revision-requisitos` | Revisión del comité alineada al enunciado y cuota nivelada calculada al otorgar el crédito | `develop` | [#19](https://github.com/nestordgt27/SimulacionCredito/pull/19) | Fusionada |
 | `feature/comite-revision-detallada` | Revisión del comité con información personal, laboral y financiera e indicadores de viabilidad | `develop` | [#20](https://github.com/nestordgt27/SimulacionCredito/pull/20) | Fusionada |
-| `fix/web-layout-movil` | Interfaz responsiva: menú plegable, prioridad de columnas y sin desbordamiento en móvil | `develop` | — | En curso |
+| `fix/web-layout-movil` | Interfaz responsiva: menú plegable, prioridad de columnas y sin desbordamiento en móvil | `develop` | [#21](https://github.com/nestordgt27/SimulacionCredito/pull/21) | En revisión |
 
 ---
 
@@ -777,5 +777,6 @@ Registro de cada interacción con herramientas de IA durante el desarrollo, seg�
     - no se pudieron tomar capturas (el panel del navegador no dibujaba), así que la verificación fue por mediciones del DOM.
   - **Incidente al verificar:** un primer intento de medición abrió 28 iframes en paralelo. Todos refrescaron la sesión con el mismo refresh token, así que la detección de reutilización revocó la familia y cerró la sesión del navegador de prueba. Es el comportamiento esperado del backend. Se volvió a iniciar sesión con el usuario de prueba del seed y se midió en serie, navegando dentro de la app.
   - **Verificación final:** typecheck, lint, Prettier y build en verde; pruebas web (194), cobertura 99 % de líneas.
-- **Commits:** `fix(web): plegar la navegación en un menú en pantallas angostas`, `fix(web): ajustar bandejas, tarjetas y encabezados a pantallas angostas`, `docs: documentar el diseño responsivo`
-- **PR:** pendiente → `develop`
+  - **Verificación por commit:** no se aislaron los commits con stash (ese paso fue rechazado por permisos en [022]). El commit del menú toca solo `AppLayout` y su prueba, y el de las bandejas solo clases de CSS que jsdom no evalúa. Queda indicado en el PR.
+- **Commits:** `fix(web): plegar la navegación en un menú en pantallas angostas`, `fix(web): ajustar bandejas, tarjetas y encabezados a pantallas angostas`, `docs: documentar el diseño responsivo`, `docs(ai-log): registrar pr del diseño responsivo`
+- **PR:** [#21](https://github.com/nestordgt27/SimulacionCredito/pull/21) → `develop`
