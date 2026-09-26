@@ -1,5 +1,6 @@
 import { mensajeDeError } from '../../../shared/api/errores';
 import { Alerta } from '../../../shared/ui/Alerta';
+import { ListadoPaginado } from '../../../shared/ui/ListadoPaginado';
 import { Tarjeta } from '../../../shared/ui/Tarjeta';
 import { TablaPendientes } from '../components/TablaPendientes';
 import { useSolicitudesPendientes } from '../hooks/useComite';
@@ -23,7 +24,14 @@ export function BandejaComitePage() {
             <p className="text-sm text-slate-600">No hay solicitudes pendientes de revisión.</p>
           </Tarjeta>
         ) : (
-          <TablaPendientes solicitudes={pendientes.data} />
+          <ListadoPaginado
+            elementos={pendientes.data}
+            unidad="solicitudes"
+            etiquetaRegion="Solicitudes pendientes"
+            etiquetaNavegacion="Paginación de solicitudes"
+          >
+            {(enPagina) => <TablaPendientes solicitudes={enPagina} />}
+          </ListadoPaginado>
         ))}
     </div>
   );
