@@ -19,7 +19,7 @@ Registro de cada interacción con herramientas de IA durante el desarrollo, seg�
 | `feature/desembolsos-desembolsar-credito` | Módulo de desembolsos: APROBADA → DESEMBOLSADA con banco y cuenta en una transacción | `develop` | [#9](https://github.com/nestordgt27/SimulacionCredito/pull/9) | Fusionada |
 | `feature/creditos-consultar-credito` | Consulta de créditos por cédula con plan de pagos | `develop` | [#10](https://github.com/nestordgt27/SimulacionCredito/pull/10) | Fusionada |
 | `feature/web-auth-login` | Base del frontend (Axios con refresh, sesión, rutas protegidas, UI) y pantalla de login | `develop` | [#11](https://github.com/nestordgt27/SimulacionCredito/pull/11) | Fusionada |
-| `feature/web-solicitudes-registrar` | Pantalla de registro de solicitudes con cuota en vivo y bloqueo por edad | `develop` | Pendiente | En curso |
+| `feature/web-solicitudes-registrar` | Pantalla de registro de solicitudes con cuota en vivo y bloqueo por edad | `develop` | [#12](https://github.com/nestordgt27/SimulacionCredito/pull/12) | En revisión |
 
 ---
 
@@ -471,4 +471,5 @@ Registro de cada interacción con herramientas de IA durante el desarrollo, seg�
     - al corregir la fecha el aviso desaparece ("Edad: 41 años");
     - registro con 201: solicitud **#37 creada en `dev.db`** (María López, `001-150385-0008K`).
   - **Servidores del usuario detenidos:** para levantar la API recompilada se detuvieron los procesos de API y Vite que el usuario tenía en los puertos 3000 y 5173.
-- **Commits:** `feat(shared): compartir límites de captura y formato de cédula`, `feat(web): agregar selector, secciones y formato de montos`, `feat(solicitudes): pantalla de registro con cuota en vivo y bloqueo por edad`, `docs: documentar la pantalla de registro de solicitudes`
+- **Commits:** `feat(shared): compartir límites de captura y formato de cédula`, `feat(web): agregar selector, secciones y formato de montos`, `feat(solicitudes): pantalla de registro con cuota en vivo y bloqueo por edad`, `docs: documentar la pantalla de registro de solicitudes`, `docs(ai-log): registrar pr del registro de solicitudes`
+- **PR:** [#12](https://github.com/nestordgt27/SimulacionCredito/pull/12) → `develop`
