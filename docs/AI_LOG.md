@@ -24,7 +24,7 @@ Registro de cada interacción con herramientas de IA durante el desarrollo, seg�
 | `feature/web-desembolsos` | Pantallas de desembolso: bandeja de aprobadas, datos bancarios con confirmación | `develop` | [#14](https://github.com/nestordgt27/SimulacionCredito/pull/14) | Fusionada |
 | `feature/web-consulta-creditos` | Pantalla de consulta de créditos por cédula con plan de pagos | `develop` | [#15](https://github.com/nestordgt27/SimulacionCredito/pull/15) | Fusionada |
 | `feature/web-consulta-paginacion` | Paginación de la consulta de créditos (más de 5) y ruta protegida con parámetros | `develop` | [#16](https://github.com/nestordgt27/SimulacionCredito/pull/16) | Fusionada |
-| `feature/web-desembolsos-paginacion` | Paginación de la bandeja de desembolsos (más de 5) | `develop` | Pendiente | En curso |
+| `feature/web-desembolsos-paginacion` | Paginación de la bandeja de desembolsos (más de 5) | `develop` | [#17](https://github.com/nestordgt27/SimulacionCredito/pull/17) | En revisión |
 
 ---
 
@@ -637,4 +637,5 @@ Registro de cada interacción con herramientas de IA durante el desarrollo, seg�
   - **Prueba de mutación:** mostrar los controles siempre rompe la prueba "exactamente 5 sin paginación". La página se restauró.
   - **Verificación manual en el navegador** (servidores levantados para la prueba y detenidos al terminar): con las 9 aprobadas de `dev.db` (los 7 créditos de prueba de [018] y 2 del usuario), la página 1 muestra 5 ("Mostrando 1–5 de 9 créditos") y la página 2 muestra 4, con la URL `?pagina=2` y sin nueva petición. No se crearon datos nuevos.
   - **Verificación final:** typecheck, lint, Prettier y build en verde; pruebas de shared (95), api (151) y web (172).
-- **Commits:** `refactor(web): extraer la página en la url a un hook compartido`, `feat(desembolsos): paginar la bandeja cuando supera 5 créditos`, `docs: documentar la paginación de desembolsos`
+- **Commits:** `refactor(web): extraer la página en la url a un hook compartido`, `feat(desembolsos): paginar la bandeja cuando supera 5 créditos`, `docs: documentar la paginación de desembolsos`, `docs(ai-log): registrar pr de la paginación de desembolsos`
+- **PR:** [#17](https://github.com/nestordgt27/SimulacionCredito/pull/17) → `develop`
