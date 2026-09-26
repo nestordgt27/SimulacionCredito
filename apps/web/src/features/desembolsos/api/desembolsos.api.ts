@@ -5,12 +5,12 @@ import type { DatosBancarios } from '../schemas/desembolso.schema';
 /** Elemento de GET /solicitudes?estado=APROBADA (solo los campos que usa la pantalla). */
 export interface SolicitudAprobada {
   id: number;
-  observaciones: string | null;
   cliente: { cedula: string; nombreCompleto: string };
   credito: {
     monto: number;
     tasaAnual: number;
     cantidadCuotas: number;
+    plazoMeses: number;
     periodicidad: Periodicidad;
     cuotaNivelada: number;
   };

@@ -8,12 +8,12 @@ import type { SolicitudAprobada } from '../api/desembolsos.api';
 
 const APROBADA: SolicitudAprobada = {
   id: 5,
-  observaciones: 'Cumple',
   cliente: { cedula: '001-010190-0001A', nombreCompleto: 'Ana Pérez' },
   credito: {
     monto: 10000,
     tasaAnual: 18.5,
     cantidadCuotas: 12,
+    plazoMeses: 12,
     periodicidad: 'MENSUAL',
     cuotaNivelada: 888.49,
   },

@@ -1,4 +1,4 @@
-import { screen } from '@testing-library/react';
+import { screen, within } from '@testing-library/react';
 import { http, HttpResponse } from 'msw';
 import { errorApi } from '../../../test/msw/handlers';
 import { server } from '../../../test/msw/server';
@@ -10,12 +10,12 @@ type Usuario = ReturnType<typeof renderApp>['usuario'];
 
 const APROBADA: SolicitudAprobada = {
   id: 5,
-  observaciones: 'Ingresos estables',
   cliente: { cedula: '001-010190-0001A', nombreCompleto: 'Ana Pérez' },
   credito: {
     monto: 10000,
     tasaAnual: 18.5,
     cantidadCuotas: 12,
+    plazoMeses: 12,
     periodicidad: 'MENSUAL',
     cuotaNivelada: 888.49,
   },
@@ -70,15 +70,25 @@ describe('DesembolsarPage', () => {
     conSesion();
   });
 
-  it('debe mostrar el resumen del crédito aprobado', async () => {
+  it('debe mostrar únicamente cédula, nombre, monto, tasa, periodicidad y plazo', async () => {
     apiDeDesembolsos();
 
     await abrirDesembolso();
 
-    expect(screen.getByText('Ana Pérez')).toBeInTheDocument();
-    expect(screen.getByText('C$ 10,000.00')).toBeInTheDocument();
-    expect(screen.getByText('Tasa anual').nextElementSibling).toHaveTextContent(/^18.5 %$/);
-    expect(screen.getByText('Observaciones del comité: Ingresos estables')).toBeInTheDocument();
+    const resumen = screen.getByRole('heading', { name: 'Crédito aprobado' }).closest('section')!;
+    const valores = within(resumen).getAllByRole('definition');
+    const pares = within(resumen)
+      .getAllByRole('term')
+      .map((termino, indice) => [termino.textContent, valores[indice]?.textContent]);
+    expect(pares).toEqual([
+      ['Cédula', '001-010190-0001A'],
+      ['Nombre Completo', 'Ana Pérez'],
+      ['Monto', 'C$ 10,000.00'],
+      ['Tasa anual', '18.5 %'],
+      ['Periodicidad', 'Mensual'],
+      ['Plazo', '12 meses'],
+    ]);
+    expect(resumen.querySelectorAll('p')).toHaveLength(0);
   });
 
   it('debe ofrecer exactamente los 4 bancos permitidos', async () => {

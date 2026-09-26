@@ -1,20 +1,19 @@
 import { ETIQUETAS_PERIODICIDAD } from '../../../shared/lib/etiquetas';
-import { formatearMonto, formatearPorcentaje } from '../../../shared/lib/formato';
+import { formatearMeses, formatearMonto, formatearPorcentaje } from '../../../shared/lib/formato';
 import { Tarjeta } from '../../../shared/ui/Tarjeta';
 import type { SolicitudAprobada } from '../api/desembolsos.api';
 
+// Pantalla limpia del desembolso: únicamente los campos que pide el enunciado
+// (cédula, nombre completo, monto, tasa, periodicidad y plazo).
 export function ResumenCredito({ solicitud }: { solicitud: SolicitudAprobada }) {
   const { cliente, credito } = solicitud;
   const datos: [string, string][] = [
-    ['Cliente', cliente.nombreCompleto],
     ['Cédula', cliente.cedula],
-    ['Monto a desembolsar', formatearMonto(credito.monto)],
+    ['Nombre Completo', cliente.nombreCompleto],
+    ['Monto', formatearMonto(credito.monto)],
     ['Tasa anual', formatearPorcentaje(credito.tasaAnual)],
-    ['Cuota nivelada', formatearMonto(credito.cuotaNivelada)],
-    [
-      'Cuotas',
-      `${credito.cantidadCuotas} (${ETIQUETAS_PERIODICIDAD[credito.periodicidad].toLowerCase()})`,
-    ],
+    ['Periodicidad', ETIQUETAS_PERIODICIDAD[credito.periodicidad]],
+    ['Plazo', formatearMeses(credito.plazoMeses)],
   ];
 
   return (
@@ -28,11 +27,6 @@ export function ResumenCredito({ solicitud }: { solicitud: SolicitudAprobada }) 
           </div>
         ))}
       </dl>
-      {solicitud.observaciones && (
-        <p className="mt-4 text-sm text-slate-600">
-          Observaciones del comité: {solicitud.observaciones}
-        </p>
-      )}
     </Tarjeta>
   );
 }
