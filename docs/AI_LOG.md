@@ -26,7 +26,7 @@ Registro de cada interacción con herramientas de IA durante el desarrollo, seg�
 | `feature/web-consulta-paginacion` | Paginación de la consulta de créditos (más de 5) y ruta protegida con parámetros | `develop` | [#16](https://github.com/nestordgt27/SimulacionCredito/pull/16) | Fusionada |
 | `feature/web-desembolsos-paginacion` | Paginación de la bandeja de desembolsos (más de 5) | `develop` | [#17](https://github.com/nestordgt27/SimulacionCredito/pull/17) | Fusionada |
 | `feature/web-comite-paginacion` | Paginación de la bandeja del comité (más de 5) y listado paginado compartido | `develop` | [#18](https://github.com/nestordgt27/SimulacionCredito/pull/18) | Fusionada |
-| `feature/web-comite-revision-requisitos` | Revisión del comité alineada al enunciado y cuota nivelada calculada al otorgar el crédito | `develop` | — | En curso |
+| `feature/web-comite-revision-requisitos` | Revisión del comité alineada al enunciado y cuota nivelada calculada al otorgar el crédito | `develop` | [#19](https://github.com/nestordgt27/SimulacionCredito/pull/19) | En revisión |
 
 ---
 
@@ -700,5 +700,5 @@ Registro de cada interacción con herramientas de IA durante el desarrollo, seg�
     - en `/comite/51` se ven los dos grupos con las etiquetas del enunciado y los botones "Rechazar Crédito" y "Aprobar Crédito";
     - no se aprobó ni rechazó la solicitud (es del usuario) y no se crearon datos.
   - **Verificación final:** typecheck, lint, Prettier y build en verde; pruebas de shared (95), api (153 + 45 + 84) y web (182).
-- **Commits:** `refactor(creditos): calcular la cuota nivelada al otorgar el crédito`, `feat(comite): alinear la pantalla de revisión con el enunciado`, `docs: documentar la revisión del comité y el cálculo de la cuota`
-- **PR:** pendiente → `develop`
+- **Commits:** `refactor(creditos): calcular la cuota nivelada al otorgar el crédito`, `feat(comite): alinear la pantalla de revisión con el enunciado`, `docs: documentar la revisión del comité y el cálculo de la cuota`, `docs(ai-log): registrar pr de la revisión del comité`
+- **PR:** [#19](https://github.com/nestordgt27/SimulacionCredito/pull/19) → `develop`
