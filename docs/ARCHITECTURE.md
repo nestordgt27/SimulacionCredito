@@ -206,6 +206,7 @@ apps/web/src/
 
 - **Bandeja:** `useSolicitudesAprobadas` usa `GET /solicitudes?estado=APROBADA` con la clave `['solicitudes', { estado: 'APROBADA' }]`.
 - **Tasa anual:** la bandeja (columna) y el resumen de la ejecución la muestran con `formatearPorcentaje`. Viene en `credito.tasaAnual` de la misma lista, sin cambios en la API. El resumen usa 2 columnas en móvil, 3 desde `sm` y 6 desde `lg`.
+- **Pantalla limpia:** `ResumenCredito` muestra únicamente los 6 campos del enunciado (Cédula, Nombre Completo, Monto, Tasa anual, Periodicidad y Plazo). El plazo viene en `credito.plazoMeses` de la misma lista; no muestra la cuota, la cantidad de cuotas ni las observaciones del comité.
 - **Resumen sin endpoint nuevo:** la página de desembolso toma la solicitud de esa misma lista (ya en caché si se llega desde la bandeja). Si no está entre las aprobadas, muestra un aviso en lugar del formulario. Así también evita desembolsar una solicitud ya desembolsada.
 - **Validación con reglas compartidas:** `desembolsoSchema` usa `Banco` y `FORMATO_NUMERO_CUENTA` de `packages/shared`, igual que el DTO de la API.
 - **Confirmación explícita:** el formulario tiene dos pasos (datos, luego confirmación) porque el desembolso mueve dinero y es irreversible. Los errores del backend (por ejemplo, `409`) se muestran en el paso de confirmación.

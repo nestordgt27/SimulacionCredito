@@ -94,7 +94,7 @@ Pantallas disponibles:
   - **Conflictos:** si la solicitud ya no estaba pendiente, se muestra el mensaje del backend (`409`).
 - **Desembolsos** (`/desembolsos`): créditos aprobados pendientes de desembolso, con monto, tasa anual y cuota. En pantallas angostas la tasa aparece debajo del monto. Cada fila tiene un enlace para desembolsar. Con más de 5 créditos, la lista se pagina de 5 en 5, con la página en la URL (`?pagina=2`), igual que en la consulta.
 - **Desembolso** (`/desembolsos/:solicitudId`):
-  - **Resumen del crédito aprobado,** con la tasa anual.
+  - **Resumen del crédito aprobado** con únicamente los campos del enunciado: Cédula, Nombre Completo, Monto, Tasa anual, Periodicidad y Plazo.
   - **Datos bancarios:** banco (LAFISE, FICOHSA, BAC Credomatic o Banpro) y número de cuenta (6 a 20 dígitos).
   - **Confirmación:** antes de enviar se muestra "Vas a desembolsar C$ … a … en …, cuenta …", con opción de corregir.
   - **Resultado:** se muestran el número de crédito, el banco, la cuenta y la fecha.

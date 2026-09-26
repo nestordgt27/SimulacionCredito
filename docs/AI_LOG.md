@@ -29,7 +29,8 @@ Registro de cada interacción con herramientas de IA durante el desarrollo, seg�
 | `feature/web-comite-revision-requisitos` | Revisión del comité alineada al enunciado y cuota nivelada calculada al otorgar el crédito | `develop` | [#19](https://github.com/nestordgt27/SimulacionCredito/pull/19) | Fusionada |
 | `feature/comite-revision-detallada` | Revisión del comité con información personal, laboral y financiera e indicadores de viabilidad | `develop` | [#20](https://github.com/nestordgt27/SimulacionCredito/pull/20) | Fusionada |
 | `fix/web-layout-movil` | Interfaz responsiva: menú plegable, prioridad de columnas y sin desbordamiento en móvil | `develop` | [#21](https://github.com/nestordgt27/SimulacionCredito/pull/21) | Fusionada |
-| `feature/web-desembolsos-tasa` | Tasa anual en la bandeja de desembolsos y en el resumen de la ejecución, responsiva | `develop` | [#22](https://github.com/nestordgt27/SimulacionCredito/pull/22) | En revisión |
+| `feature/web-desembolsos-tasa` | Tasa anual en la bandeja de desembolsos y en el resumen de la ejecución, responsiva | `develop` | [#22](https://github.com/nestordgt27/SimulacionCredito/pull/22) | Fusionada |
+| `fix/web-desembolso-campos` | Pantalla de desembolso con únicamente los campos del enunciado | `develop` | — | En curso |
 
 ---
 
@@ -814,3 +815,30 @@ Registro de cada interacción con herramientas de IA durante el desarrollo, seg�
   - **Verificación final:** typecheck, lint, Prettier y build en verde; pruebas web (196), cobertura 99 % de líneas.
 - **Commits:** `feat(desembolsos): mostrar la tasa anual en la bandeja y en el resumen`, `docs: documentar la tasa anual en desembolsos`, `docs(ai-log): registrar pr de la tasa en desembolsos`
 - **PR:** [#22](https://github.com/nestordgt27/SimulacionCredito/pull/22) → `develop`
+
+### [025] 2026-09-26 — Pantalla de desembolso con los campos del enunciado
+
+- **Herramienta:** Claude Code
+- **Rama:** `fix/web-desembolso-campos`
+- **Prompt (resumen fiel):** Corregir la pantalla de desembolso según el enunciado.
+- **Resultado:**
+  - **Brecha corregida:** el enunciado pide que muestre únicamente Cédula, Nombre Completo, Monto, Tasa, Periodicidad y Plazo.
+    - Faltaba el plazo.
+    - La periodicidad iba dentro de "Cuotas".
+    - Sobraban la cuota nivelada, la cantidad de cuotas y las observaciones del comité.
+  - **`ResumenCredito`:** muestra exactamente esos 6 campos, en ese orden: "Cédula", "Nombre Completo", "Monto", "Tasa anual", "Periodicidad" y "Plazo".
+  - **API sin cambios:** `GET /solicitudes?estado=APROBADA` ya devuelve `credito.plazoMeses`. En la web, `SolicitudAprobada` agrega `plazoMeses` y quita `observaciones`, que ya no usa ninguna pantalla.
+  - **Pruebas web:** 196. La prueba del resumen ahora exige exactamente los 6 pares término → valor y ningún párrafo adicional; los datos de prueba se actualizaron.
+  - **Documentación:** README (pantalla de desembolso) y `docs/ARCHITECTURE.md` (Desembolsos).
+- **Decisiones y ajustes manuales:**
+  - **Etiqueta "Tasa anual"** en lugar de "Tasa", por coherencia con la columna de la bandeja ([024]) y porque la tasa es anual.
+  - **La bandeja no cambia:** es la lista para elegir el crédito; la regla de "únicamente" se aplicó a la pantalla de ejecución del desembolso.
+  - **Pruebas primero:** la prueba del resumen falló antes del cambio. Prueba de mutación: quitar el plazo la rompe. Se restauró.
+  - **Verificación en el navegador:**
+    - se usó el Vite que el usuario ya tenía levantado; la API se levantó para la prueba y se detuvo al terminar;
+    - en `/desembolsos/58` se ven exactamente los 6 campos con datos reales (plazo 122 meses);
+    - a 375 px quedan en 3 filas, sin desbordar;
+    - no se desembolsó nada.
+  - **Verificación final:** typecheck, lint, Prettier y build en verde; pruebas web (196), cobertura 99 % de líneas.
+- **Commits:** `fix(desembolsos): mostrar solo los campos del enunciado en el resumen`, `docs: documentar los campos de la pantalla de desembolso`
+- **PR:** pendiente → `develop`
