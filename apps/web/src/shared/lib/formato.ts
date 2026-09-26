@@ -12,3 +12,13 @@ export function formatearMonto(monto: number): string {
 export function formatearMeses(meses: number): string {
   return `${meses.toLocaleString('es-NI')} ${meses === 1 ? 'mes' : 'meses'}`;
 }
+
+/** "2026-09-25T17:14:57.578Z" → "25/09/2026" (fecha en UTC, igual que en el backend). */
+export function formatearFecha(iso: string): string {
+  return new Date(iso).toLocaleDateString('es-NI', {
+    timeZone: 'UTC',
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  });
+}
