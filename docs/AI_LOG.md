@@ -25,7 +25,8 @@ Registro de cada interacción con herramientas de IA durante el desarrollo, seg�
 | `feature/web-consulta-creditos` | Pantalla de consulta de créditos por cédula con plan de pagos | `develop` | [#15](https://github.com/nestordgt27/SimulacionCredito/pull/15) | Fusionada |
 | `feature/web-consulta-paginacion` | Paginación de la consulta de créditos (más de 5) y ruta protegida con parámetros | `develop` | [#16](https://github.com/nestordgt27/SimulacionCredito/pull/16) | Fusionada |
 | `feature/web-desembolsos-paginacion` | Paginación de la bandeja de desembolsos (más de 5) | `develop` | [#17](https://github.com/nestordgt27/SimulacionCredito/pull/17) | Fusionada |
-| `feature/web-comite-paginacion` | Paginación de la bandeja del comité (más de 5) y listado paginado compartido | `develop` | [#18](https://github.com/nestordgt27/SimulacionCredito/pull/18) | En revisión |
+| `feature/web-comite-paginacion` | Paginación de la bandeja del comité (más de 5) y listado paginado compartido | `develop` | [#18](https://github.com/nestordgt27/SimulacionCredito/pull/18) | Fusionada |
+| `feature/web-comite-revision-requisitos` | Revisión del comité alineada al enunciado y cuota nivelada calculada al otorgar el crédito | `develop` | — | En curso |
 
 ---
 
@@ -664,3 +665,40 @@ Registro de cada interacción con herramientas de IA durante el desarrollo, seg�
   - **Verificación final:** typecheck, lint, Prettier y build en verde; pruebas de shared (95), api (151) y web (180).
 - **Commits:** `refactor(web): extraer el listado paginado a un componente compartido`, `feat(comite): paginar la bandeja cuando supera 5 solicitudes`, `docs: documentar la paginación del comité`, `docs(ai-log): registrar pr de la paginación del comité`
 - **PR:** [#18](https://github.com/nestordgt27/SimulacionCredito/pull/18) → `develop`
+
+### [021] 2026-09-26 — Pantalla de revisión del comité según el enunciado
+
+- **Herramienta:** Claude Code
+- **Rama:** `feature/web-comite-revision-requisitos`
+- **Prompt (resumen fiel):** Asegurar que la pantalla de revisión de una solicitud cumpla el enunciado:
+  - solo lectura, con la información organizada para el dictamen;
+  - solo Cédula / Identificación, Nombre Completo, Edad, Cantidad de cuotas, Periodicidad de Pago, Plazo y Monto solicitado;
+  - Observaciones obligatorias al aprobar;
+  - botones Aprobar Crédito y Rechazar Crédito;
+  - al aprobar, crear el crédito con número aleatorio o incremental, relacionado con la solicitud, y generar su plan de pagos (cuota nivelada y tantas cuotas como indique el plazo).
+- **Resultado (revisión punto por punto):**
+  - **Ya se cumplía:**
+    - la vista de solo lectura con exactamente los 7 campos (el backend devuelve solo esos);
+    - Observaciones obligatorias al aprobar (Zod en la web, `422` en la API);
+    - número de crédito incremental `CR-AAAA-NNNNNN` relacionado con la solicitud;
+    - plan con exactamente `cantidadCuotas` cuotas, todo en una transacción.
+  - **Ajustado en la web:**
+    - `FichaSolicitud` usa las etiquetas exactas del enunciado y agrupa los datos en "Datos personales" y "Datos del crédito" (`role="group"` con nombre accesible);
+    - los botones ahora dicen "Aprobar Crédito" y "Rechazar Crédito".
+  - **Ajustado en la API:** `Credito.otorgar` calcula la cuota nivelada con `calcularCuotaNivelada` al crear el crédito. Antes la copiaba de la solicitud. `CondicionesAprobadas` ya no recibe la cuota.
+  - **Pruebas:**
+    - api: 153 unitarias (2 nuevas: la cuota se calcula al otorgar aunque la solicitud traiga otra, mensual y quincenal), 45 de integración y 84 e2e;
+    - web: 182 (2 nuevas: datos agrupados; solo lectura, con Observaciones como único campo editable). Las pruebas existentes se actualizaron a las etiquetas y botones nuevos.
+  - **Documentación:** README (pantalla de revisión y aprobación atómica) y `docs/ARCHITECTURE.md` (`Credito.otorgar`, solicitud vs. crédito).
+- **Decisiones y ajustes manuales:**
+  - **Sin datos laborales en la ficha:** el enunciado pide organizar la información personal, laboral y financiera, pero también limita la vista a esos 7 campos, y ninguno es laboral. Se respetó la lista cerrada (la regla más específica) y se agrupó en personales y del crédito.
+  - **Cuota calculada al otorgar:** el enunciado dice que al crear el crédito se calcula la cuota nivelada. Además, así la cuota del crédito siempre coincide con la primera cuota de su plan. El valor es el mismo que ya guardaba la solicitud, porque ambos usan la misma función de `shared`.
+  - **Número incremental** (no aleatorio): se mantiene el generador existente, porque es legible, único por año y su consumo se revierte con la transacción.
+  - **Pruebas primero:** las nuevas pruebas de la API y de la web fallaron antes del cambio (2 y 10 casos) y pasaron después.
+  - **Prueba de mutación:** tomar la cuota de la última fila del plan (ajustada por redondeo) en lugar de calcularla rompe 3 pruebas. Se restauró.
+  - **Verificación manual en el navegador,** con los servidores que el usuario ya tenía levantados:
+    - en `/comite/51` se ven los dos grupos con las etiquetas del enunciado y los botones "Rechazar Crédito" y "Aprobar Crédito";
+    - no se aprobó ni rechazó la solicitud (es del usuario) y no se crearon datos.
+  - **Verificación final:** typecheck, lint, Prettier y build en verde; pruebas de shared (95), api (153 + 45 + 84) y web (182).
+- **Commits:** `refactor(creditos): calcular la cuota nivelada al otorgar el crédito`, `feat(comite): alinear la pantalla de revisión con el enunciado`, `docs: documentar la revisión del comité y el cálculo de la cuota`
+- **PR:** pendiente → `develop`
