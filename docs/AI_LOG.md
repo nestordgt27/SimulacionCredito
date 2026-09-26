@@ -21,7 +21,8 @@ Registro de cada interacción con herramientas de IA durante el desarrollo, seg�
 | `feature/web-auth-login` | Base del frontend (Axios con refresh, sesión, rutas protegidas, UI) y pantalla de login | `develop` | [#11](https://github.com/nestordgt27/SimulacionCredito/pull/11) | Fusionada |
 | `feature/web-solicitudes-registrar` | Pantalla de registro de solicitudes con cuota en vivo y bloqueo por edad | `develop` | [#12](https://github.com/nestordgt27/SimulacionCredito/pull/12) | Fusionada |
 | `feature/web-comite` | Pantallas del comité: bandeja de pendientes, revisión y dictamen | `develop` | [#13](https://github.com/nestordgt27/SimulacionCredito/pull/13) | Fusionada |
-| `feature/web-desembolsos` | Pantallas de desembolso: bandeja de aprobadas, datos bancarios con confirmación | `develop` | [#14](https://github.com/nestordgt27/SimulacionCredito/pull/14) | En revisión |
+| `feature/web-desembolsos` | Pantallas de desembolso: bandeja de aprobadas, datos bancarios con confirmación | `develop` | [#14](https://github.com/nestordgt27/SimulacionCredito/pull/14) | Fusionada |
+| `feature/web-consulta-creditos` | Pantalla de consulta de créditos por cédula con plan de pagos | `develop` | Pendiente | En curso |
 
 ---
 
@@ -549,3 +550,37 @@ Registro de cada interacción con herramientas de IA durante el desarrollo, seg�
   - **Verificación final:** typecheck, lint, Prettier y build en verde; pruebas de shared (95), api (151) y web (121).
 - **Commits:** `feat(shared): compartir el formato del número de cuenta`, `feat(desembolsos): bandeja de aprobadas y desembolso con confirmación`, `docs: documentar las pantallas de desembolso`, `docs(ai-log): registrar pr de las pantallas de desembolso`
 - **PR:** [#14](https://github.com/nestordgt27/SimulacionCredito/pull/14) → `develop`
+
+### [017] 2026-09-25 — Frontend: consulta de créditos
+
+- **Herramienta:** Claude Code
+- **Rama:** `feature/web-consulta-creditos`
+- **Prompt (resumen fiel):** Implementar la consulta de créditos.
+- **Resultado:**
+  - **`shared/lib/montos.ts`:** `sumarMontos`, que suma en centavos enteros.
+  - **`features/consulta`:**
+    - `creditos.api` (`GET /creditos?cedula=`);
+    - `useCreditosPorCedula` (clave `['creditos', cedula]`, solo con una cédula válida);
+    - `busquedaSchema` y `cedulaValida` (formato de cédula de shared);
+    - componentes `BuscadorCedula` (`role="search"`), `EstadoCredito`, `TarjetaCredito` (condiciones, desembolso y plan desplegable) y `TablaPlanPagos` (con fila de totales);
+    - página `ConsultaCreditosPage` (`/creditos`), con la cédula en la URL.
+  - **`app`:** ruta `/creditos` y enlace "Consulta" en la navegación.
+  - **Pruebas web:** 138 (17 nuevas), con MSW.
+    - `sumarMontos` (3): 0,1 + 0,2 y el capital de un plan real de shared, que suma exactamente el monto.
+    - Página (14): validación sin petición, búsqueda normalizada guardada en la URL, URL precargada, URL con cédula inválida ignorada sin petición, condiciones y estado, desembolsado con banco y fecha, varios créditos, plan oculto hasta pedirlo, 12 filas con la primera y la última exactas, totales, volver a ocultarlo, sin resultados, error y enlace del menú.
+    - El plan de prueba se genera con `generarPlanPagos` de shared (datos reales, sin valores inventados).
+    - Cobertura de la web: 99 % de líneas.
+  - **Documentación:** README (pantalla Consulta) y `docs/ARCHITECTURE.md` (sección Consulta de créditos).
+- **Decisiones y ajustes manuales:**
+  - **Cédula en la URL** en lugar de estado local: la búsqueda se puede compartir, sobrevive al recargo y funciona con atrás y adelante (el formulario se reinicia con `key` al cambiar la URL). Una cédula manipulada en la URL se valida y se ignora.
+  - **Totales en centavos enteros** (`sumarMontos`), con el mismo criterio que la persistencia del backend: la suma del capital coincide exactamente con el monto.
+  - **Plan desplegable a pedido,** con `aria-expanded` y `aria-controls`: un cliente puede tener varios créditos con cientos de cuotas.
+  - **Número de cuenta no mostrado:** la API de consulta no lo expone, así que la pantalla solo muestra banco y fecha del desembolso.
+  - **Prueba de mutación:** si `cedulaValida` deja pasar cualquier valor, falla la prueba "cédula inválida en la URL sin petición". El archivo se restauró.
+  - **Verificación manual en el navegador** (servidores levantados para la prueba y detenidos al terminar, porque los del usuario no estaban corriendo):
+    - el panel del navegador no aceptaba clics por no estar visible, así que se verificó con la URL y con clics disparados desde el DOM;
+    - `/creditos?cedula=001-200390-0042c` normalizó la cédula en la petición y mostró **CR-2026-000002** (desembolsado, BAC Credomatic);
+    - el registro de red mostró el refresh del interceptor tras el recargo (401 y reintento con 200);
+    - el plan real tiene 12 filas: primera cuota con interés 187,50, última de 1353,93 con saldo 0, y totales C$ 16,246.50 / C$ 15,000.00 / C$ 1,246.50, que coinciden con el cálculo independiente.
+  - **Verificación final:** typecheck, lint, Prettier y build en verde; pruebas de shared (95), api (151) y web (138).
+- **Commits:** `feat(web): sumar montos en centavos enteros`, `feat(consulta): consulta de créditos por cédula con plan de pagos`, `docs: documentar la pantalla de consulta de créditos`

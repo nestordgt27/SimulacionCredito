@@ -94,6 +94,11 @@ Pantallas disponibles:
   - **Confirmación:** antes de enviar se muestra "Vas a desembolsar C$ … a … en …, cuenta …", con opción de corregir.
   - **Resultado:** se muestran el número de crédito, el banco, la cuenta y la fecha.
   - **Solicitud no disponible:** si no está aprobada o ya se desembolsó, se muestra un aviso en lugar del formulario.
+- **Consulta** (`/creditos`): búsqueda de créditos por cédula.
+  - **Cédula normalizada:** se aceptan minúsculas.
+  - **Búsqueda en la URL** (`/creditos?cedula=…`): se puede compartir, sobrevive al recargo y funciona con "atrás".
+  - **Una tarjeta por crédito:** número, estado (aprobado o desembolsado), monto, tasa, cuotas, plazo, cuota nivelada, fecha de aprobación y banco y fecha del desembolso.
+  - **Plan de pagos desplegable:** número, vencimiento, cuota, capital, interés y saldo, con totales. La suma del capital coincide exactamente con el monto.
 
 **Sesión:**
 

@@ -172,11 +172,12 @@ apps/web/src/
 │   ├── auth/             # api/ hooks/ components/ pages/ schemas/ (login y logout)
 │   ├── solicitudes/      # formulario de registro con cuota en vivo y bloqueo por edad
 │   ├── comite/           # bandeja de pendientes, revisión (7 campos) y dictamen
-│   └── desembolsos/      # bandeja de aprobadas, datos bancarios, confirmación y resultado
+│   ├── desembolsos/      # bandeja de aprobadas, datos bancarios, confirmación y resultado
+│   └── consulta/         # búsqueda por cédula, tarjetas de crédito y plan de pagos
 ├── shared/
 │   ├── api/              # clienteHttp (Axios + interceptores) y mensajeDeError
 │   ├── auth/             # sesionStore y useSesion
-│   ├── lib/              # formatearMonto (C$), formatearMeses, formatearFecha y etiquetas de enums
+│   ├── lib/              # formatearMonto (C$), formatearMeses, formatearFecha, sumarMontos y etiquetas
 │   └── ui/               # Boton, Campo, AreaTexto, Selector, Seccion, Alerta, Tarjeta (Tailwind)
 └── test/                 # setup, servidor MSW con handlers y renderApp
 ```
@@ -207,6 +208,12 @@ apps/web/src/
 - **Validación con reglas compartidas:** `desembolsoSchema` usa `Banco` y `FORMATO_NUMERO_CUENTA` de `packages/shared`, igual que el DTO de la API.
 - **Confirmación explícita:** el formulario tiene dos pasos (datos, luego confirmación) porque el desembolso mueve dinero y es irreversible. Los errores del backend (por ejemplo, `409`) se muestran en el paso de confirmación.
 - **Invalidación:** `useDesembolsar` invalida `['solicitudes']` y `['creditos']`.
+
+### Consulta de créditos
+
+- **Estado en la URL:** la cédula buscada vive en `?cedula=` (`useSearchParams`); `cedulaValida` la normaliza con el mismo formato de shared. Una cédula inválida en la URL se ignora y no genera ninguna petición.
+- **Consulta:** `useCreditosPorCedula(cedula)` usa `GET /creditos?cedula=` con la clave `['creditos', cedula]`, solo con una cédula válida (`enabled`). El desembolso invalida `['creditos']`.
+- **Plan de pagos:** usa los mismos nombres que `generarPlanPagos` y se despliega a pedido (`aria-expanded` y `aria-controls`). Los totales se calculan con `sumarMontos`, en centavos enteros, para que el capital sume exactamente el monto.
 
 ### Sesión e interceptores
 
