@@ -54,19 +54,38 @@ describe('Comité (e2e)', () => {
     conToken(e2e.http().post(`/api/comite/solicitudes/${id}/rechazar`)).send(cuerpo);
 
   describe('GET /api/comite/solicitudes/:id', () => {
-    it('debe devolver solo los 7 campos del enunciado', async () => {
+    it('debe devolver la información personal, laboral y financiera para el dictamen', async () => {
       const id = await crearSolicitud();
 
       const respuesta = await obtener(id).expect(200);
 
       expect(respuesta.body).toStrictEqual({
-        cedula: '001-010190-0001A',
-        nombreCompleto: 'Ana Pérez',
-        edad: 36,
-        cantidadCuotas: 24,
-        periodicidad: 'QUINCENAL',
-        plazoMeses: 12,
-        monto: 10000,
+        personal: {
+          cedula: '001-010190-0001A',
+          nombreCompleto: 'Ana Pérez',
+          edad: 36,
+          fechaNacimiento: '1990-01-01',
+          correo: 'ana@correo.com',
+          telefono: '88887777',
+        },
+        laboral: {
+          tipoEmpleo: 'ASALARIADO',
+          empresa: 'Empresa S.A.',
+          antiguedadLaboralAnios: 5,
+          ingresoMensual: 25000,
+        },
+        financiero: {
+          monto: 10000,
+          tasaAnual: 12,
+          cantidadCuotas: 24,
+          periodicidad: 'QUINCENAL',
+          plazoMeses: 12,
+          cuotaNivelada: 443.21,
+          cuotaMensualEquivalente: 886.42,
+          relacionCuotaIngreso: 3.55,
+          totalAPagar: 10636.94,
+          totalIntereses: 636.94,
+        },
       });
     });
 

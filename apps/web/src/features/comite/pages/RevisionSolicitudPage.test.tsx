@@ -7,13 +7,32 @@ import { conSesion } from '../../../test/sesion';
 import type { SolicitudComite, SolicitudPendiente } from '../api/comite.api';
 
 const SOLICITUD: SolicitudComite = {
-  cedula: '001-010190-0001A',
-  nombreCompleto: 'Ana Pérez',
-  edad: 36,
-  cantidadCuotas: 24,
-  periodicidad: 'QUINCENAL',
-  plazoMeses: 12,
-  monto: 10000,
+  personal: {
+    cedula: '001-010190-0001A',
+    nombreCompleto: 'Ana Pérez',
+    edad: 36,
+    fechaNacimiento: '1990-01-01',
+    correo: 'ana@correo.com',
+    telefono: '88887777',
+  },
+  laboral: {
+    tipoEmpleo: 'ASALARIADO',
+    empresa: 'Empresa S.A.',
+    antiguedadLaboralAnios: 5,
+    ingresoMensual: 25000,
+  },
+  financiero: {
+    monto: 10000,
+    tasaAnual: 12,
+    cantidadCuotas: 24,
+    periodicidad: 'QUINCENAL',
+    plazoMeses: 12,
+    cuotaNivelada: 443.21,
+    cuotaMensualEquivalente: 886.42,
+    relacionCuotaIngreso: 3.55,
+    totalAPagar: 10636.94,
+    totalIntereses: 636.94,
+  },
 };
 
 // Imita al backend del comité para la solicitud 5 y registra lo que recibe.
@@ -24,7 +43,7 @@ function apiDelComite() {
     {
       id: 5,
       creadaEn: '2026-09-25T12:00:00.000Z',
-      cliente: { cedula: SOLICITUD.cedula, nombreCompleto: SOLICITUD.nombreCompleto },
+      cliente: { cedula: '001-010190-0001A', nombreCompleto: 'Ana Pérez' },
       credito: { monto: 10000, cantidadCuotas: 24, periodicidad: 'QUINCENAL' },
     },
   ];
@@ -79,55 +98,79 @@ describe('RevisionSolicitudPage', () => {
     conSesion();
   });
 
-  it('debe mostrar solo los 7 campos de la vista del comité', async () => {
+  // Pares término → valor de un grupo de la ficha, en el orden en que se muestran.
+  const datosDe = (nombre: string) => {
+    const grupo = screen.getByRole('group', { name: nombre });
+    const valores = within(grupo).getAllByRole('definition');
+    return within(grupo)
+      .getAllByRole('term')
+      .map((termino, indice) => [termino.textContent, valores[indice]?.textContent]);
+  };
+
+  it('debe mostrar la información personal', async () => {
     apiDelComite();
 
     await abrirRevision();
 
-    const ficha = screen.getByText('Datos de la solicitud').closest('section')!;
-    const terminos = within(ficha)
-      .getAllByRole('term')
-      .map((termino) => termino.textContent);
-    const valores = within(ficha)
-      .getAllByRole('definition')
-      .map((valor) => valor.textContent);
-    expect(terminos).toEqual([
-      'Cédula / Identificación',
-      'Nombre Completo',
-      'Edad',
-      'Cantidad de cuotas',
-      'Periodicidad de Pago',
-      'Plazo',
-      'Monto solicitado',
-    ]);
-    expect(valores).toEqual([
-      '001-010190-0001A',
-      'Ana Pérez',
-      '36 años',
-      '24',
-      'Quincenal',
-      '12 meses',
-      'C$ 10,000.00',
+    expect(datosDe('Información personal')).toEqual([
+      ['Cédula / Identificación', '001-010190-0001A'],
+      ['Nombre Completo', 'Ana Pérez'],
+      ['Edad', '36 años'],
+      ['Fecha de nacimiento', '01/01/1990'],
+      ['Correo', 'ana@correo.com'],
+      ['Teléfono', '88887777'],
     ]);
   });
 
-  it('debe agrupar los datos personales y los del crédito', async () => {
+  it('debe mostrar la información laboral', async () => {
     apiDelComite();
 
     await abrirRevision();
 
-    const personales = screen.getByRole('group', { name: 'Datos personales' });
-    const credito = screen.getByRole('group', { name: 'Datos del crédito' });
-    const terminos = (grupo: HTMLElement) =>
-      within(grupo)
-        .getAllByRole('term')
-        .map((termino) => termino.textContent);
-    expect(terminos(personales)).toEqual(['Cédula / Identificación', 'Nombre Completo', 'Edad']);
-    expect(terminos(credito)).toEqual([
-      'Cantidad de cuotas',
-      'Periodicidad de Pago',
-      'Plazo',
-      'Monto solicitado',
+    expect(datosDe('Información laboral')).toEqual([
+      ['Tipo de empleo', 'Asalariado'],
+      ['Empresa', 'Empresa S.A.'],
+      ['Antigüedad laboral', '5 años'],
+      ['Ingreso mensual', 'C$ 25,000.00'],
+    ]);
+  });
+
+  it('debe mostrar la información financiera con los indicadores de viabilidad', async () => {
+    apiDelComite();
+
+    await abrirRevision();
+
+    expect(datosDe('Información financiera')).toEqual([
+      ['Monto solicitado', 'C$ 10,000.00'],
+      ['Tasa anual', '12 %'],
+      ['Cantidad de cuotas', '24'],
+      ['Periodicidad de Pago', 'Quincenal'],
+      ['Plazo', '12 meses'],
+      ['Cuota nivelada', 'C$ 443.21'],
+      ['Cuota mensual equivalente', 'C$ 886.42'],
+      ['Relación cuota / ingreso', '3.55 %'],
+      ['Total a pagar', 'C$ 10,636.94'],
+      ['Total de intereses', 'C$ 636.94'],
+    ]);
+  });
+
+  it('debe indicar que la relación cuota / ingreso no aplica cuando no hay ingresos', async () => {
+    apiDelComite();
+    server.use(
+      http.get('*/api/comite/solicitudes/5', () =>
+        HttpResponse.json({
+          ...SOLICITUD,
+          laboral: { ...SOLICITUD.laboral, ingresoMensual: 0 },
+          financiero: { ...SOLICITUD.financiero, relacionCuotaIngreso: null },
+        }),
+      ),
+    );
+
+    await abrirRevision();
+
+    expect(datosDe('Información financiera')).toContainEqual([
+      'Relación cuota / ingreso',
+      'No aplica (sin ingresos)',
     ]);
   });
 
@@ -204,8 +247,8 @@ describe('RevisionSolicitudPage', () => {
       const resultado = await screen.findByRole('status');
       expect(resultado).toHaveTextContent('Solicitud #5 aprobada');
       expect(resultado).toHaveTextContent('Observaciones: Ingresos estables');
-      expect(screen.getByText('CR-2026-000001')).toBeInTheDocument();
-      expect(screen.getByText('C$ 443.21')).toBeInTheDocument();
+      const credito = screen.getByText('CR-2026-000001').closest('dl')!;
+      expect(within(credito).getByText('C$ 443.21')).toBeInTheDocument();
       expect(aprobaciones).toEqual([{ observaciones: 'Ingresos estables' }]);
       expect(screen.queryByRole('button', { name: 'Aprobar Crédito' })).not.toBeInTheDocument();
     });

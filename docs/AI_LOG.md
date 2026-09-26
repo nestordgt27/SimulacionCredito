@@ -26,7 +26,8 @@ Registro de cada interacción con herramientas de IA durante el desarrollo, seg�
 | `feature/web-consulta-paginacion` | Paginación de la consulta de créditos (más de 5) y ruta protegida con parámetros | `develop` | [#16](https://github.com/nestordgt27/SimulacionCredito/pull/16) | Fusionada |
 | `feature/web-desembolsos-paginacion` | Paginación de la bandeja de desembolsos (más de 5) | `develop` | [#17](https://github.com/nestordgt27/SimulacionCredito/pull/17) | Fusionada |
 | `feature/web-comite-paginacion` | Paginación de la bandeja del comité (más de 5) y listado paginado compartido | `develop` | [#18](https://github.com/nestordgt27/SimulacionCredito/pull/18) | Fusionada |
-| `feature/web-comite-revision-requisitos` | Revisión del comité alineada al enunciado y cuota nivelada calculada al otorgar el crédito | `develop` | [#19](https://github.com/nestordgt27/SimulacionCredito/pull/19) | En revisión |
+| `feature/web-comite-revision-requisitos` | Revisión del comité alineada al enunciado y cuota nivelada calculada al otorgar el crédito | `develop` | [#19](https://github.com/nestordgt27/SimulacionCredito/pull/19) | Fusionada |
+| `feature/comite-revision-detallada` | Revisión del comité con información personal, laboral y financiera e indicadores de viabilidad | `develop` | [#20](https://github.com/nestordgt27/SimulacionCredito/pull/20) | En revisión |
 
 ---
 
@@ -702,3 +703,46 @@ Registro de cada interacción con herramientas de IA durante el desarrollo, seg�
   - **Verificación final:** typecheck, lint, Prettier y build en verde; pruebas de shared (95), api (153 + 45 + 84) y web (182).
 - **Commits:** `refactor(creditos): calcular la cuota nivelada al otorgar el crédito`, `feat(comite): alinear la pantalla de revisión con el enunciado`, `docs: documentar la revisión del comité y el cálculo de la cuota`, `docs(ai-log): registrar pr de la revisión del comité`
 - **PR:** [#19](https://github.com/nestordgt27/SimulacionCredito/pull/19) → `develop`
+
+### [022] 2026-09-26 — Revisión del comité con información personal, laboral y financiera
+
+- **Herramienta:** Claude Code
+- **Rama:** `feature/comite-revision-detallada`
+- **Prompt (resumen fiel):** El propósito de la revisión es decidir si es viable aprobar; la información actual no alcanza. Agregar la visualización organizada de la información personal, laboral y financiera para el dictamen.
+- **Resultado:**
+  - **`shared/indicadores.ts`:** `calcularIndicadoresFinancieros`, función pura que devuelve:
+    - la cuota nivelada;
+    - la cuota mensual equivalente (`cuota · n / 12`);
+    - la relación cuota / ingreso en % (`null` si el ingreso es 0);
+    - el total a pagar (suma del plan) y el total de intereses.
+  - **API:** `GET /comite/solicitudes/:id` devuelve `{ personal, laboral, financiero }`.
+    - Personal: los 3 campos del enunciado más fecha de nacimiento, correo y teléfono.
+    - Laboral: tipo de empleo, empresa, antigüedad e ingreso mensual.
+    - Financiero: los 4 campos del enunciado más tasa e indicadores.
+    - Los datos ya estaban en la solicitud: sin migración.
+  - **Web:** `FichaSolicitud` con tres grupos accesibles ("Información personal", "Información laboral" e "Información financiera"). Se agregan `formatearPorcentaje` (también lo usa `TarjetaCredito`) y `formatearAnios`.
+  - **Pruebas:**
+    - shared: 103 (8 nuevas, valores obtenidos con un cálculo independiente);
+    - api: 153 unitarias, 45 de integración y 84 e2e (vista nueva en el caso de uso y en e2e);
+    - web: 190 (4 grupos y el caso sin ingresos, más 6 de formato). Cobertura de la web: 99 % de líneas.
+  - **Documentación:**
+    - `CLAUDE.md` §4: la fila "Comité" se amplía y se agrega "Indicadores del comité";
+    - README: pantalla, ejemplo de `GET` y supuestos;
+    - `docs/ARCHITECTURE.md`: tabla de `shared` y sección Comité.
+- **Decisiones y ajustes manuales:**
+  - **Contradicción señalada:** el enunciado y `CLAUDE.md` §4 limitaban la vista a 7 campos. Se avisó al usuario antes de implementar y se siguió su instrucción explícita; los 7 campos siguen presentes. Se actualizó `CLAUDE.md` para que la regla no quede desfasada.
+  - **Indicadores en `shared`, no en la web:** son cálculos financieros (`CLAUDE.md` §2.4). La API los calcula y la web solo los formatea.
+  - **Informativos, sin umbral:** no se inventó una regla de negocio (por ejemplo, un porcentaje máximo de endeudamiento). El dictamen lo decide el comité.
+  - **Contrato de la API anidado** (`personal`, `laboral`, `financiero`): refleja la organización pedida. El único consumidor es la web, que se actualizó en la misma rama.
+  - **Total a pagar = suma del plan,** no `cuota × cantidad`, porque la última cuota se ajusta por redondeo.
+  - **Pruebas primero:** las de `shared`, del caso de uso y de la web fallaron antes de implementar. Una prueba existente del resultado de la aprobación se acotó a su tarjeta, porque la cuota ahora también aparece en la ficha.
+  - **Pruebas de mutación:** calcular el total como `cuota × cantidad` rompe 3 pruebas; calcular la relación sin llevar la cuota a mensual rompe 2. Se restauró.
+  - **Verificación manual en el navegador** (servidores levantados para la prueba y detenidos al terminar):
+    - en `/comite/51` se ven los tres grupos;
+    - los valores coinciden con un cálculo independiente (cuota 10 661,85; relación 8,88 %; total 127 942,26; intereses 7 942,26);
+    - no se aprobó ni rechazó la solicitud.
+  - **Hallazgo fuera de alcance:** a 375 px de ancho, la barra de navegación del layout provoca desplazamiento horizontal (ya existía; la ficha cabe). Se propuso como tarea aparte.
+  - **Verificación final:** typecheck, lint, Prettier y build en verde; pruebas de shared (95 → 103), api (153 + 45 + 84) y web (190).
+  - **Verificación por commit:** solo el commit de `shared` se verificó aislado. Al intentar aislar el de la API, el sistema de permisos rechazó el comando. Por decisión del usuario, los demás commits se verificaron sobre la rama completa. Queda indicado en el PR: entre el commit de la API y el de la web, la web aún espera la forma anterior de la respuesta.
+- **Commits:** `feat(shared): calcular indicadores financieros para el comité`, `feat(comite): exponer información personal, laboral y financiera en la revisión`, `feat(web): mostrar la revisión del comité por información personal, laboral y financiera`, `docs: documentar la revisión detallada del comité`, `docs(ai-log): registrar pr de la revisión detallada del comité`
+- **PR:** [#20](https://github.com/nestordgt27/SimulacionCredito/pull/20) → `develop`
