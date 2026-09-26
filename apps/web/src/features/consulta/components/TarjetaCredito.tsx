@@ -1,6 +1,11 @@
 import { useId, useState } from 'react';
 import { ETIQUETAS_BANCO, ETIQUETAS_PERIODICIDAD } from '../../../shared/lib/etiquetas';
-import { formatearFecha, formatearMeses, formatearMonto } from '../../../shared/lib/formato';
+import {
+  formatearFecha,
+  formatearMeses,
+  formatearMonto,
+  formatearPorcentaje,
+} from '../../../shared/lib/formato';
 import { Boton } from '../../../shared/ui/Boton';
 import type { CreditoConsultado } from '../api/creditos.api';
 import { EstadoCredito } from './EstadoCredito';
@@ -13,7 +18,7 @@ export function TarjetaCredito({ credito }: { credito: CreditoConsultado }) {
 
   const datos: [string, string][] = [
     ['Monto', formatearMonto(credito.monto)],
-    ['Tasa anual', `${credito.tasaAnual.toLocaleString('es-NI')} %`],
+    ['Tasa anual', formatearPorcentaje(credito.tasaAnual)],
     [
       'Cuotas',
       `${credito.cantidadCuotas} (${ETIQUETAS_PERIODICIDAD[credito.periodicidad].toLowerCase()})`,

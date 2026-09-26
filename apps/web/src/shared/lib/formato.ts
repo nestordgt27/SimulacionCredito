@@ -22,3 +22,13 @@ export function formatearFecha(iso: string): string {
     year: 'numeric',
   });
 }
+
+/** 3.55 → "3.55 %", 12 → "12 %". */
+export function formatearPorcentaje(valor: number): string {
+  return `${valor.toLocaleString('es-NI')} %`;
+}
+
+/** 5 → "5 años", 1 → "1 año". */
+export function formatearAnios(anios: number): string {
+  return `${anios.toLocaleString('es-NI')} ${anios === 1 ? 'año' : 'años'}`;
+}

@@ -1,4 +1,10 @@
-import { formatearFecha, formatearMeses, formatearMonto } from './formato';
+import {
+  formatearAnios,
+  formatearFecha,
+  formatearMeses,
+  formatearMonto,
+  formatearPorcentaje,
+} from './formato';
 
 describe('formatearMonto', () => {
   it.each([
@@ -23,5 +29,25 @@ describe('formatearMeses', () => {
 describe('formatearFecha', () => {
   it('debe mostrar la fecha en UTC como dd/mm/aaaa', () => {
     expect(formatearFecha('2026-09-25T23:30:00.000Z')).toBe('25/09/2026');
+  });
+});
+
+describe('formatearPorcentaje', () => {
+  it.each([
+    [3.55, '3.55 %'],
+    [12, '12 %'],
+    [18.5, '18.5 %'],
+  ])('debe mostrar %p como %p', (valor, texto) => {
+    expect(formatearPorcentaje(valor)).toBe(texto);
+  });
+});
+
+describe('formatearAnios', () => {
+  it.each([
+    [5, '5 años'],
+    [1, '1 año'],
+    [0, '0 años'],
+  ])('debe mostrar %p como %p', (anios, texto) => {
+    expect(formatearAnios(anios)).toBe(texto);
   });
 });

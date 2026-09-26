@@ -1,4 +1,4 @@
-import type { EstadoSolicitud, Periodicidad } from '@simulacion-credito/shared';
+import type { EstadoSolicitud, Periodicidad, TipoEmpleo } from '@simulacion-credito/shared';
 import { clienteHttp } from '../../../shared/api/cliente-http';
 
 /** Elemento de GET /solicitudes?estado=PENDIENTE (solo los campos que usa la bandeja). */
@@ -9,15 +9,36 @@ export interface SolicitudPendiente {
   credito: { monto: number; cantidadCuotas: number; periodicidad: Periodicidad };
 }
 
-/** GET /comite/solicitudes/:id: vista reducida con los 7 campos del enunciado. */
+/** GET /comite/solicitudes/:id: información personal, laboral y financiera para el dictamen. */
 export interface SolicitudComite {
-  cedula: string;
-  nombreCompleto: string;
-  edad: number;
-  cantidadCuotas: number;
-  periodicidad: Periodicidad;
-  plazoMeses: number;
-  monto: number;
+  personal: {
+    cedula: string;
+    nombreCompleto: string;
+    edad: number;
+    /** YYYY-MM-DD */
+    fechaNacimiento: string;
+    correo: string;
+    telefono: string;
+  };
+  laboral: {
+    tipoEmpleo: TipoEmpleo;
+    empresa: string;
+    antiguedadLaboralAnios: number;
+    ingresoMensual: number;
+  };
+  financiero: {
+    monto: number;
+    tasaAnual: number;
+    cantidadCuotas: number;
+    periodicidad: Periodicidad;
+    plazoMeses: number;
+    cuotaNivelada: number;
+    cuotaMensualEquivalente: number;
+    /** Porcentaje del ingreso mensual; null si el ingreso es 0. */
+    relacionCuotaIngreso: number | null;
+    totalAPagar: number;
+    totalIntereses: number;
+  };
 }
 
 export interface ResultadoAprobacion {
