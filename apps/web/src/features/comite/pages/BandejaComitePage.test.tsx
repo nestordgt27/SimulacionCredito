@@ -84,6 +84,99 @@ describe('BandejaComitePage', () => {
     expect(screen.queryByRole('table')).not.toBeInTheDocument();
   });
 
+  describe('paginación', () => {
+    // Solicitudes pendientes #N..#1, de la más reciente a la más antigua como las devuelve la API.
+    const varias = (cantidad: number) =>
+      Array.from({ length: cantidad }, (_, indice) =>
+        unaSolicitudPendiente({ id: cantidad - indice }),
+      );
+
+    const idsVisibles = () => {
+      const tabla = screen.getByRole('table', { name: 'Solicitudes pendientes de revisión' });
+      return within(tabla)
+        .getAllByRole('row')
+        .slice(1)
+        .map((fila) => within(fila).getAllByRole('cell')[0]?.textContent);
+    };
+
+    const paginacion = () => screen.getByRole('navigation', { name: 'Paginación de solicitudes' });
+
+    it('debe mostrar todas sin paginación cuando son exactamente 5', async () => {
+      pendientesQueDevuelve(varias(5));
+
+      renderApp('/comite');
+
+      await screen.findByRole('table');
+      expect(idsVisibles()).toEqual(['5', '4', '3', '2', '1']);
+      expect(
+        screen.queryByRole('navigation', { name: 'Paginación de solicitudes' }),
+      ).not.toBeInTheDocument();
+      expect(screen.queryByText(/^Mostrando/)).not.toBeInTheDocument();
+    });
+
+    it('debe mostrar solo las primeras 5 y la paginación cuando son más de 5', async () => {
+      pendientesQueDevuelve(varias(8));
+
+      renderApp('/comite');
+
+      expect(await screen.findByText('Mostrando 1–5 de 8 solicitudes')).toBeInTheDocument();
+      expect(idsVisibles()).toEqual(['8', '7', '6', '5', '4']);
+      expect(within(paginacion()).getByRole('button', { name: 'Página 1' })).toHaveAttribute(
+        'aria-current',
+        'page',
+      );
+      expect(within(paginacion()).getByRole('button', { name: 'Anterior' })).toBeDisabled();
+    });
+
+    it('debe ir a la página siguiente guardándola en la URL y sin volver a consultar la API', async () => {
+      const consultas = pendientesQueDevuelve(varias(8));
+      const { usuario, router } = renderApp('/comite');
+      await screen.findByText('Mostrando 1–5 de 8 solicitudes');
+
+      await usuario.click(within(paginacion()).getByRole('button', { name: 'Siguiente' }));
+
+      expect(await screen.findByText('Mostrando 6–8 de 8 solicitudes')).toBeInTheDocument();
+      expect(idsVisibles()).toEqual(['3', '2', '1']);
+      expect(router.state.location.search).toBe('?pagina=2');
+      expect(within(paginacion()).getByRole('button', { name: 'Siguiente' })).toBeDisabled();
+      expect(consultas).toHaveLength(1);
+    });
+
+    it('debe volver a la página 1 sin escribirla en la URL', async () => {
+      pendientesQueDevuelve(varias(8));
+      const { usuario, router } = renderApp('/comite?pagina=2');
+      await screen.findByText('Mostrando 6–8 de 8 solicitudes');
+
+      await usuario.click(within(paginacion()).getByRole('button', { name: 'Página 1' }));
+
+      expect(await screen.findByText('Mostrando 1–5 de 8 solicitudes')).toBeInTheDocument();
+      expect(router.state.location.search).toBe('');
+    });
+
+    it.each([
+      ['99', 'Mostrando 6–8 de 8 solicitudes'],
+      ['0', 'Mostrando 1–5 de 8 solicitudes'],
+      ['abc', 'Mostrando 1–5 de 8 solicitudes'],
+    ])('debe ajustar pagina=%p de la URL al rango válido', async (pagina, resumen) => {
+      pendientesQueDevuelve(varias(8));
+
+      renderApp(`/comite?pagina=${pagina}`);
+
+      expect(await screen.findByText(resumen)).toBeInTheDocument();
+    });
+
+    it('debe llevar a la revisión correcta desde la segunda página', async () => {
+      pendientesQueDevuelve(varias(8));
+      const { usuario, router } = renderApp('/comite?pagina=2');
+
+      await usuario.click(
+        await screen.findByRole('link', { name: 'Revisar la solicitud 2 de Ana Pérez' }),
+      );
+
+      expect(router.state.location.pathname).toBe('/comite/2');
+    });
+  });
+
   it('debe mostrar el error cuando no se pueden cargar las solicitudes', async () => {
     server.use(
       http.get('*/api/solicitudes', () => errorApi(500, 'ERROR', 'Error interno del servidor')),

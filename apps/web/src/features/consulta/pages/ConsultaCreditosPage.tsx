@@ -1,6 +1,5 @@
 import { useSearchParams } from 'react-router';
 import { mensajeDeError } from '../../../shared/api/errores';
-import { usePaginaEnUrl } from '../../../shared/lib/usePaginaEnUrl';
 import { Alerta } from '../../../shared/ui/Alerta';
 import { Tarjeta } from '../../../shared/ui/Tarjeta';
 import { BuscadorCedula } from '../components/BuscadorCedula';
@@ -13,7 +12,6 @@ export function ConsultaCreditosPage() {
   // compartir y sobrevive al recargo.
   const [parametros, setParametros] = useSearchParams();
   const cedula = cedulaValida(parametros.get('cedula'));
-  const [pagina, irAPagina] = usePaginaEnUrl();
   const creditos = useCreditosPorCedula(cedula);
 
   return (
@@ -45,9 +43,7 @@ export function ConsultaCreditosPage() {
           </p>
         </Tarjeta>
       )}
-      {creditos.isSuccess && creditos.data.length > 0 && (
-        <ListaCreditos creditos={creditos.data} pagina={pagina} onCambiarPagina={irAPagina} />
-      )}
+      {creditos.isSuccess && creditos.data.length > 0 && <ListaCreditos creditos={creditos.data} />}
     </div>
   );
 }
