@@ -1,5 +1,5 @@
 import { ETIQUETAS_PERIODICIDAD } from '../../../shared/lib/etiquetas';
-import { formatearMonto } from '../../../shared/lib/formato';
+import { formatearMonto, formatearPorcentaje } from '../../../shared/lib/formato';
 import { Tarjeta } from '../../../shared/ui/Tarjeta';
 import type { SolicitudAprobada } from '../api/desembolsos.api';
 
@@ -9,6 +9,7 @@ export function ResumenCredito({ solicitud }: { solicitud: SolicitudAprobada }) 
     ['Cliente', cliente.nombreCompleto],
     ['Cédula', cliente.cedula],
     ['Monto a desembolsar', formatearMonto(credito.monto)],
+    ['Tasa anual', formatearPorcentaje(credito.tasaAnual)],
     ['Cuota nivelada', formatearMonto(credito.cuotaNivelada)],
     [
       'Cuotas',
@@ -19,7 +20,7 @@ export function ResumenCredito({ solicitud }: { solicitud: SolicitudAprobada }) 
   return (
     <Tarjeta>
       <h3 className="mb-4 text-base font-semibold text-slate-900">Crédito aprobado</h3>
-      <dl className="grid grid-cols-2 gap-4 text-sm md:grid-cols-5">
+      <dl className="grid grid-cols-2 gap-4 text-sm sm:grid-cols-3 lg:grid-cols-6">
         {datos.map(([termino, valor]) => (
           <div key={termino}>
             <dt className="text-slate-500">{termino}</dt>

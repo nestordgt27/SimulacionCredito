@@ -9,6 +9,7 @@ export interface SolicitudAprobada {
   cliente: { cedula: string; nombreCompleto: string };
   credito: {
     monto: number;
+    tasaAnual: number;
     cantidadCuotas: number;
     periodicidad: Periodicidad;
     cuotaNivelada: number;
