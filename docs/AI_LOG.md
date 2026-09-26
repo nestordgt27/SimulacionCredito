@@ -29,7 +29,7 @@ Registro de cada interacción con herramientas de IA durante el desarrollo, seg�
 | `feature/web-comite-revision-requisitos` | Revisión del comité alineada al enunciado y cuota nivelada calculada al otorgar el crédito | `develop` | [#19](https://github.com/nestordgt27/SimulacionCredito/pull/19) | Fusionada |
 | `feature/comite-revision-detallada` | Revisión del comité con información personal, laboral y financiera e indicadores de viabilidad | `develop` | [#20](https://github.com/nestordgt27/SimulacionCredito/pull/20) | Fusionada |
 | `fix/web-layout-movil` | Interfaz responsiva: menú plegable, prioridad de columnas y sin desbordamiento en móvil | `develop` | [#21](https://github.com/nestordgt27/SimulacionCredito/pull/21) | Fusionada |
-| `feature/web-desembolsos-tasa` | Tasa anual en la bandeja de desembolsos y en el resumen de la ejecución, responsiva | `develop` | — | En curso |
+| `feature/web-desembolsos-tasa` | Tasa anual en la bandeja de desembolsos y en el resumen de la ejecución, responsiva | `develop` | [#22](https://github.com/nestordgt27/SimulacionCredito/pull/22) | En revisión |
 
 ---
 
@@ -812,5 +812,5 @@ Registro de cada interacción con herramientas de IA durante el desarrollo, seg�
     - resumen de la ejecución a 375, 640 y 1280 px: 3, 2 y 1 filas;
     - solo se abrió la pantalla de ejecución, no se desembolsó nada.
   - **Verificación final:** typecheck, lint, Prettier y build en verde; pruebas web (196), cobertura 99 % de líneas.
-- **Commits:** `feat(desembolsos): mostrar la tasa anual en la bandeja y en el resumen`, `docs: documentar la tasa anual en desembolsos`
-- **PR:** pendiente → `develop`
+- **Commits:** `feat(desembolsos): mostrar la tasa anual en la bandeja y en el resumen`, `docs: documentar la tasa anual en desembolsos`, `docs(ai-log): registrar pr de la tasa en desembolsos`
+- **PR:** [#22](https://github.com/nestordgt27/SimulacionCredito/pull/22) → `develop`
