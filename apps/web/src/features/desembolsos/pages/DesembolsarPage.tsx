@@ -23,7 +23,7 @@ function Desembolso({ solicitudId }: { solicitudId: number }) {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex items-baseline justify-between">
+      <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
         <h2 className="text-xl font-semibold text-slate-900">
           Desembolso de la solicitud #{solicitudId}
         </h2>

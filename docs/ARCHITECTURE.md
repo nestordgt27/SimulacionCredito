@@ -225,6 +225,21 @@ apps/web/src/
 - **Accesibilidad:** `Paginacion` es un `nav` con nombre, la página actual lleva `aria-current="page"`, y el resumen "Mostrando X–Y de N" es `aria-live="polite"`.
 - **Ruta protegida con parámetros:** `RutaProtegida` recuerda `pathname + search`, así un enlace compartido con cédula y página llega a su destino después del login.
 
+### Diseño responsivo
+
+- **Objetivo:** ninguna pantalla desplaza la página en horizontal, de 375 px (teléfono) a escritorio. Verificado en todas las rutas a 375, 768, 1024 y 1280 px.
+- **Barra superior (`AppLayout`):** desde `lg` (1024 px) va en una fila. A 768 px tampoco cabría, por eso el corte es `lg` y no `md`. Por debajo, la navegación y la sesión se pliegan en un panel que abre el botón "Menú":
+  - `aria-expanded` y `aria-controls`;
+  - se cierra al elegir una sección y con Escape (el foco vuelve al botón);
+  - es un solo árbol de navegación que se muestra u oculta con CSS, no una copia para móvil.
+- **Tablas de bandeja** (comité y desembolsos): prioridad de columnas.
+  - Por debajo de `sm` (640 px) se ven Cliente, Monto y la acción. N.º, cédula, cuota, cuotas y fecha se ocultan con `hidden sm:table-cell`.
+  - Esos datos siguen en el detalle de cada solicitud, y el N.º va en el nombre accesible del enlace.
+  - Se conservan la semántica de tabla y un único árbol DOM. El contenedor con `overflow-x-auto` queda como respaldo para montos muy grandes.
+- **Plan de pagos:** mantiene sus 6 columnas con desplazamiento dentro de la tarjeta. Es una tabla de datos donde todas las columnas importan.
+- **Tarjetas:** relleno `p-4` en móvil y `p-6` desde `sm`. Los encabezados con enlace "Volver" hacen salto de línea.
+- **Pruebas:** jsdom no aplica el CSS de Tailwind, así que se prueba el comportamiento accesible del menú (estado, cierre y foco). El ajuste visual se verificó midiendo `scrollWidth` en el navegador.
+
 ### Sesión e interceptores
 
 - **`sesionStore`** (`shared/auth`) es un almacén fuera de React, porque lo usan el interceptor y los componentes (vía `useSesion`, con `useSyncExternalStore`).

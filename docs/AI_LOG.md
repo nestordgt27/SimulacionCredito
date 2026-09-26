@@ -27,7 +27,8 @@ Registro de cada interacción con herramientas de IA durante el desarrollo, seg�
 | `feature/web-desembolsos-paginacion` | Paginación de la bandeja de desembolsos (más de 5) | `develop` | [#17](https://github.com/nestordgt27/SimulacionCredito/pull/17) | Fusionada |
 | `feature/web-comite-paginacion` | Paginación de la bandeja del comité (más de 5) y listado paginado compartido | `develop` | [#18](https://github.com/nestordgt27/SimulacionCredito/pull/18) | Fusionada |
 | `feature/web-comite-revision-requisitos` | Revisión del comité alineada al enunciado y cuota nivelada calculada al otorgar el crédito | `develop` | [#19](https://github.com/nestordgt27/SimulacionCredito/pull/19) | Fusionada |
-| `feature/comite-revision-detallada` | Revisión del comité con información personal, laboral y financiera e indicadores de viabilidad | `develop` | [#20](https://github.com/nestordgt27/SimulacionCredito/pull/20) | En revisión |
+| `feature/comite-revision-detallada` | Revisión del comité con información personal, laboral y financiera e indicadores de viabilidad | `develop` | [#20](https://github.com/nestordgt27/SimulacionCredito/pull/20) | Fusionada |
+| `fix/web-layout-movil` | Interfaz responsiva: menú plegable, prioridad de columnas y sin desbordamiento en móvil | `develop` | [#21](https://github.com/nestordgt27/SimulacionCredito/pull/21) | En revisión |
 
 ---
 
@@ -746,3 +747,36 @@ Registro de cada interacción con herramientas de IA durante el desarrollo, seg�
   - **Verificación por commit:** solo el commit de `shared` se verificó aislado. Al intentar aislar el de la API, el sistema de permisos rechazó el comando. Por decisión del usuario, los demás commits se verificaron sobre la rama completa. Queda indicado en el PR: entre el commit de la API y el de la web, la web aún espera la forma anterior de la respuesta.
 - **Commits:** `feat(shared): calcular indicadores financieros para el comité`, `feat(comite): exponer información personal, laboral y financiera en la revisión`, `feat(web): mostrar la revisión del comité por información personal, laboral y financiera`, `docs: documentar la revisión detallada del comité`, `docs(ai-log): registrar pr de la revisión detallada del comité`
 - **PR:** [#20](https://github.com/nestordgt27/SimulacionCredito/pull/20) → `develop`
+
+### [023] 2026-09-26 — Interfaz responsiva sin desbordamiento en móvil
+
+- **Herramienta:** Claude Code
+- **Rama:** `fix/web-layout-movil`
+- **Prompt (resumen fiel):** Corregir el desbordamiento de la web en móvil y hacer la página responsiva.
+- **Resultado:**
+  - **Auditoría previa a 375 px,** en todas las rutas:
+    - la barra superior desbordaba en todas (704 px de ancho);
+    - las tablas del comité (616 px) y de desembolsos (648 px) necesitaban desplazamiento interno, y el enlace de acción quedaba fuera de la vista;
+    - el plan de pagos de la consulta ocupaba 444 px en una tarjeta de 295 px;
+    - el login, el formulario, la revisión y el desembolso ya cabían.
+  - **`AppLayout`:** por debajo de `lg`, la navegación y la sesión se pliegan detrás de un botón "Menú" accesible (`aria-expanded`, `aria-controls`). Se cierra al elegir una sección o con Escape (el foco vuelve al botón). El nombre del usuario se trunca si es largo.
+  - **`TablaPendientes` y `TablaAprobadas`:** en móvil se ven Cliente, Monto y la acción. El resto aparece desde `sm`. El relleno horizontal baja a `px-3` y los montos no se parten.
+  - **`Tarjeta`:** `p-4 sm:p-6`. Los encabezados de revisión y desembolso hacen salto de línea.
+  - **Pruebas web:** 194 (4 nuevas del menú: estado inicial y panel controlado, abrir y cerrar, cierre al navegar y cierre con Escape devolviendo el foco).
+  - **Documentación:** README (sección Frontend) y `docs/ARCHITECTURE.md` (nueva sección "Diseño responsivo").
+- **Decisiones y ajustes manuales:**
+  - **Corte en `lg` y no en `md`:** a 768 px la barra en una fila tampoco cabe.
+  - **Un solo árbol DOM** para la navegación y las tablas. No se duplicó el marcado para móvil: eso rompería la semántica y haría ambiguas las consultas de las pruebas.
+  - **Prioridad de columnas en lugar de convertir las filas en tarjetas:** cambiar el `display` de una tabla hace que algunos lectores de pantalla pierdan su semántica. El N.º se ocultó en móvil porque, con él, desembolsos seguía necesitando 386 px de 343. El N.º sigue en el nombre accesible del enlace y en el título del detalle.
+  - **Plan de pagos con desplazamiento interno:** es una tabla de datos donde las 6 columnas importan; ocultarlas quitaría información.
+  - **Pruebas primero:** las 4 del menú fallaron antes de implementar. Pruebas de mutación: quitar el cierre al navegar rompe 1 y no devolver el foco con Escape rompe 1. Se restauró.
+  - **Verificación en el navegador** (servidores levantados para la prueba y detenidos al terminar):
+    - `scrollWidth` igual al ancho de la ventana en las 7 rutas a 375, 768, 1024 y 1280 px, y en el login a 375 px;
+    - a 1024 px la barra ocupa una fila;
+    - a 375 px el menú abierto muestra los 5 enlaces a todo el ancho;
+    - no se pudieron tomar capturas (el panel del navegador no dibujaba), así que la verificación fue por mediciones del DOM.
+  - **Incidente al verificar:** un primer intento de medición abrió 28 iframes en paralelo. Todos refrescaron la sesión con el mismo refresh token, así que la detección de reutilización revocó la familia y cerró la sesión del navegador de prueba. Es el comportamiento esperado del backend. Se volvió a iniciar sesión con el usuario de prueba del seed y se midió en serie, navegando dentro de la app.
+  - **Verificación final:** typecheck, lint, Prettier y build en verde; pruebas web (194), cobertura 99 % de líneas.
+  - **Verificación por commit:** no se aislaron los commits con stash (ese paso fue rechazado por permisos en [022]). El commit del menú toca solo `AppLayout` y su prueba, y el de las bandejas solo clases de CSS que jsdom no evalúa. Queda indicado en el PR.
+- **Commits:** `fix(web): plegar la navegación en un menú en pantallas angostas`, `fix(web): ajustar bandejas, tarjetas y encabezados a pantallas angostas`, `docs: documentar el diseño responsivo`, `docs(ai-log): registrar pr del diseño responsivo`
+- **PR:** [#21](https://github.com/nestordgt27/SimulacionCredito/pull/21) → `develop`
