@@ -22,7 +22,7 @@ Registro de cada interacción con herramientas de IA durante el desarrollo, seg�
 | `feature/web-solicitudes-registrar` | Pantalla de registro de solicitudes con cuota en vivo y bloqueo por edad | `develop` | [#12](https://github.com/nestordgt27/SimulacionCredito/pull/12) | Fusionada |
 | `feature/web-comite` | Pantallas del comité: bandeja de pendientes, revisión y dictamen | `develop` | [#13](https://github.com/nestordgt27/SimulacionCredito/pull/13) | Fusionada |
 | `feature/web-desembolsos` | Pantallas de desembolso: bandeja de aprobadas, datos bancarios con confirmación | `develop` | [#14](https://github.com/nestordgt27/SimulacionCredito/pull/14) | Fusionada |
-| `feature/web-consulta-creditos` | Pantalla de consulta de créditos por cédula con plan de pagos | `develop` | Pendiente | En curso |
+| `feature/web-consulta-creditos` | Pantalla de consulta de créditos por cédula con plan de pagos | `develop` | [#15](https://github.com/nestordgt27/SimulacionCredito/pull/15) | En revisión |
 
 ---
 
@@ -583,4 +583,5 @@ Registro de cada interacción con herramientas de IA durante el desarrollo, seg�
     - el registro de red mostró el refresh del interceptor tras el recargo (401 y reintento con 200);
     - el plan real tiene 12 filas: primera cuota con interés 187,50, última de 1353,93 con saldo 0, y totales C$ 16,246.50 / C$ 15,000.00 / C$ 1,246.50, que coinciden con el cálculo independiente.
   - **Verificación final:** typecheck, lint, Prettier y build en verde; pruebas de shared (95), api (151) y web (138).
-- **Commits:** `feat(web): sumar montos en centavos enteros`, `feat(consulta): consulta de créditos por cédula con plan de pagos`, `docs: documentar la pantalla de consulta de créditos`
+- **Commits:** `feat(web): sumar montos en centavos enteros`, `feat(consulta): consulta de créditos por cédula con plan de pagos`, `docs: documentar la pantalla de consulta de créditos`, `docs(ai-log): registrar pr de la consulta de créditos`
+- **PR:** [#15](https://github.com/nestordgt27/SimulacionCredito/pull/15) → `develop`
