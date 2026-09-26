@@ -1,17 +1,27 @@
 import { useSearchParams } from 'react-router';
 import { mensajeDeError } from '../../../shared/api/errores';
+import { leerPagina } from '../../../shared/lib/paginacion';
 import { Alerta } from '../../../shared/ui/Alerta';
 import { Tarjeta } from '../../../shared/ui/Tarjeta';
 import { BuscadorCedula } from '../components/BuscadorCedula';
-import { TarjetaCredito } from '../components/TarjetaCredito';
+import { ListaCreditos } from '../components/ListaCreditos';
 import { useCreditosPorCedula } from '../hooks/useCreditosPorCedula';
 import { cedulaValida } from '../schemas/busqueda.schema';
 
 export function ConsultaCreditosPage() {
-  // La cédula vive en la URL (?cedula=…): la búsqueda se puede compartir y sobrevive al recargo.
+  // La cédula y la página viven en la URL (?cedula=…&pagina=…): la búsqueda se puede
+  // compartir y sobrevive al recargo.
   const [parametros, setParametros] = useSearchParams();
   const cedula = cedulaValida(parametros.get('cedula'));
+  const pagina = leerPagina(parametros.get('pagina'));
   const creditos = useCreditosPorCedula(cedula);
+
+  function irAPagina(nueva: number) {
+    // La página 1 no se escribe en la URL para mantenerla limpia.
+    setParametros(
+      nueva > 1 ? { cedula: cedula ?? '', pagina: String(nueva) } : { cedula: cedula ?? '' },
+    );
+  }
 
   return (
     <div className="flex flex-col gap-6">
@@ -27,6 +37,7 @@ export function ConsultaCreditosPage() {
         key={cedula ?? ''}
         cedulaInicial={cedula ?? ''}
         buscando={creditos.isFetching}
+        // Una búsqueda nueva siempre empieza en la página 1.
         onBuscar={(nueva) => setParametros({ cedula: nueva })}
       />
 
@@ -42,16 +53,7 @@ export function ConsultaCreditosPage() {
         </Tarjeta>
       )}
       {creditos.isSuccess && creditos.data.length > 0 && (
-        <section aria-label="Resultados" className="flex flex-col gap-4">
-          <p className="text-sm text-slate-600">
-            {creditos.data.length === 1
-              ? '1 crédito encontrado'
-              : `${creditos.data.length} créditos encontrados`}
-          </p>
-          {creditos.data.map((credito) => (
-            <TarjetaCredito key={credito.numeroCredito} credito={credito} />
-          ))}
-        </section>
+        <ListaCreditos creditos={creditos.data} pagina={pagina} onCambiarPagina={irAPagina} />
       )}
     </div>
   );

@@ -211,6 +211,128 @@ describe('ConsultaCreditosPage', () => {
     });
   });
 
+  describe('paginación', () => {
+    // Créditos CR-2026-000001..N, del más reciente al más antiguo como los devuelve la API.
+    const varios = (cantidad: number) =>
+      Array.from({ length: cantidad }, (_, indice) => {
+        const numero = cantidad - indice;
+        return unCredito({
+          numeroCredito: `CR-2026-${String(numero).padStart(6, '0')}`,
+          solicitudId: numero,
+        });
+      });
+
+    const numerosVisibles = () =>
+      screen
+        .getAllByRole('article')
+        .map((articulo) => within(articulo).getByRole('heading').textContent);
+
+    const paginacion = () => screen.getByRole('navigation', { name: 'Paginación de créditos' });
+
+    it('debe mostrar todos sin paginación cuando son exactamente 5', async () => {
+      creditosQueDevuelve(varios(5));
+
+      renderApp(`/creditos?cedula=${CEDULA}`);
+
+      expect(await screen.findByText('5 créditos encontrados')).toBeInTheDocument();
+      expect(screen.getAllByRole('article')).toHaveLength(5);
+      expect(
+        screen.queryByRole('navigation', { name: 'Paginación de créditos' }),
+      ).not.toBeInTheDocument();
+    });
+
+    it('debe mostrar solo los primeros 5 y la paginación cuando son más de 5', async () => {
+      creditosQueDevuelve(varios(7));
+
+      renderApp(`/creditos?cedula=${CEDULA}`);
+
+      expect(await screen.findByText('Mostrando 1–5 de 7 créditos')).toBeInTheDocument();
+      expect(numerosVisibles()).toEqual([
+        'CR-2026-000007',
+        'CR-2026-000006',
+        'CR-2026-000005',
+        'CR-2026-000004',
+        'CR-2026-000003',
+      ]);
+      expect(within(paginacion()).getByRole('button', { name: 'Página 1' })).toHaveAttribute(
+        'aria-current',
+        'page',
+      );
+      expect(within(paginacion()).getByRole('button', { name: 'Anterior' })).toBeDisabled();
+    });
+
+    it('debe ir a la página siguiente guardándola en la URL y sin volver a consultar la API', async () => {
+      const consultas = creditosQueDevuelve(varios(7));
+      const { usuario, router } = renderApp(`/creditos?cedula=${CEDULA}`);
+      await screen.findByText('Mostrando 1–5 de 7 créditos');
+
+      await usuario.click(within(paginacion()).getByRole('button', { name: 'Siguiente' }));
+
+      expect(await screen.findByText('Mostrando 6–7 de 7 créditos')).toBeInTheDocument();
+      expect(numerosVisibles()).toEqual(['CR-2026-000002', 'CR-2026-000001']);
+      expect(router.state.location.search).toBe(`?cedula=${CEDULA}&pagina=2`);
+      expect(within(paginacion()).getByRole('button', { name: 'Siguiente' })).toBeDisabled();
+      expect(consultas).toHaveLength(1);
+    });
+
+    it('debe volver a la página anterior', async () => {
+      creditosQueDevuelve(varios(12));
+      const { usuario, router } = renderApp(`/creditos?cedula=${CEDULA}&pagina=3`);
+      await screen.findByText('Mostrando 11–12 de 12 créditos');
+
+      await usuario.click(within(paginacion()).getByRole('button', { name: 'Anterior' }));
+
+      expect(await screen.findByText('Mostrando 6–10 de 12 créditos')).toBeInTheDocument();
+      expect(router.state.location.search).toBe(`?cedula=${CEDULA}&pagina=2`);
+    });
+
+    it('debe volver a la página 1 sin escribirla en la URL', async () => {
+      creditosQueDevuelve(varios(7));
+      const { usuario, router } = renderApp(`/creditos?cedula=${CEDULA}&pagina=2`);
+      await screen.findByText('Mostrando 6–7 de 7 créditos');
+
+      await usuario.click(within(paginacion()).getByRole('button', { name: 'Página 1' }));
+
+      expect(await screen.findByText('Mostrando 1–5 de 7 créditos')).toBeInTheDocument();
+      expect(router.state.location.search).toBe(`?cedula=${CEDULA}`);
+    });
+
+    it('debe abrir directamente la página indicada en la URL', async () => {
+      creditosQueDevuelve(varios(12));
+
+      renderApp(`/creditos?cedula=${CEDULA}&pagina=3`);
+
+      expect(await screen.findByText('Mostrando 11–12 de 12 créditos')).toBeInTheDocument();
+      expect(within(paginacion()).getByRole('button', { name: 'Página 3' })).toHaveAttribute(
+        'aria-current',
+        'page',
+      );
+    });
+
+    it.each([
+      ['99', 'Mostrando 6–7 de 7 créditos'],
+      ['0', 'Mostrando 1–5 de 7 créditos'],
+      ['abc', 'Mostrando 1–5 de 7 créditos'],
+    ])('debe ajustar pagina=%p de la URL al rango válido', async (pagina, resumen) => {
+      creditosQueDevuelve(varios(7));
+
+      renderApp(`/creditos?cedula=${CEDULA}&pagina=${pagina}`);
+
+      expect(await screen.findByText(resumen)).toBeInTheDocument();
+    });
+
+    it('debe volver a la página 1 al hacer una búsqueda nueva', async () => {
+      creditosQueDevuelve(varios(7));
+      const { usuario, router } = renderApp(`/creditos?cedula=${CEDULA}&pagina=2`);
+      await screen.findByText('Mostrando 6–7 de 7 créditos');
+
+      await buscar(usuario, '001-150385-0007K');
+
+      expect(await screen.findByText('Mostrando 1–5 de 7 créditos')).toBeInTheDocument();
+      expect(router.state.location.search).toBe('?cedula=001-150385-0007K');
+    });
+  });
+
   it('debe avisar cuando la cédula no tiene créditos', async () => {
     creditosQueDevuelve([]);
 
