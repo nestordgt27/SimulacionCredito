@@ -60,10 +60,10 @@ export function DictamenForm({ onAprobar, onRechazar, procesando, error }: Dicta
         />
         <div className="flex justify-end gap-3">
           <Boton variante="secundario" disabled={procesando} onClick={rechazar}>
-            Rechazar
+            Rechazar Crédito
           </Boton>
           <Boton cargando={procesando} onClick={aprobar}>
-            Aprobar
+            Aprobar Crédito
           </Boton>
         </div>
       </div>

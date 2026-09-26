@@ -65,7 +65,8 @@ function apiDelComite() {
 }
 
 const observaciones = () => screen.getByLabelText('Observaciones');
-const boton = (nombre: 'Aprobar' | 'Rechazar') => screen.getByRole('button', { name: nombre });
+const boton = (nombre: 'Aprobar Crédito' | 'Rechazar Crédito') =>
+  screen.getByRole('button', { name: nombre });
 
 async function abrirRevision() {
   const renderizado = renderApp('/comite/5');
@@ -91,13 +92,13 @@ describe('RevisionSolicitudPage', () => {
       .getAllByRole('definition')
       .map((valor) => valor.textContent);
     expect(terminos).toEqual([
-      'Cédula',
-      'Nombre',
+      'Cédula / Identificación',
+      'Nombre Completo',
       'Edad',
-      'Cuotas',
-      'Periodicidad',
+      'Cantidad de cuotas',
+      'Periodicidad de Pago',
       'Plazo',
-      'Monto',
+      'Monto solicitado',
     ]);
     expect(valores).toEqual([
       '001-010190-0001A',
@@ -110,6 +111,39 @@ describe('RevisionSolicitudPage', () => {
     ]);
   });
 
+  it('debe agrupar los datos personales y los del crédito', async () => {
+    apiDelComite();
+
+    await abrirRevision();
+
+    const personales = screen.getByRole('group', { name: 'Datos personales' });
+    const credito = screen.getByRole('group', { name: 'Datos del crédito' });
+    const terminos = (grupo: HTMLElement) =>
+      within(grupo)
+        .getAllByRole('term')
+        .map((termino) => termino.textContent);
+    expect(terminos(personales)).toEqual(['Cédula / Identificación', 'Nombre Completo', 'Edad']);
+    expect(terminos(credito)).toEqual([
+      'Cantidad de cuotas',
+      'Periodicidad de Pago',
+      'Plazo',
+      'Monto solicitado',
+    ]);
+  });
+
+  it('debe ser de solo lectura: el único campo editable son las observaciones', async () => {
+    apiDelComite();
+
+    await abrirRevision();
+
+    expect(screen.getAllByRole('textbox')).toEqual([observaciones()]);
+    expect(screen.queryByRole('spinbutton')).not.toBeInTheDocument();
+    expect(screen.queryByRole('combobox')).not.toBeInTheDocument();
+    expect(screen.getAllByRole('button').map((b) => b.textContent)).toEqual(
+      expect.arrayContaining(['Aprobar Crédito', 'Rechazar Crédito']),
+    );
+  });
+
   it('debe mostrar el error cuando la solicitud no existe', async () => {
     server.use(
       http.get('*/api/comite/solicitudes/99', () =>
@@ -120,7 +154,7 @@ describe('RevisionSolicitudPage', () => {
     renderApp('/comite/99');
 
     expect(await screen.findByRole('alert')).toHaveTextContent('No existe la solicitud 99');
-    expect(screen.queryByRole('button', { name: 'Aprobar' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Aprobar Crédito' })).not.toBeInTheDocument();
   });
 
   it('debe volver a la bandeja cuando el id no es válido', () => {
@@ -136,7 +170,7 @@ describe('RevisionSolicitudPage', () => {
       const { aprobaciones } = apiDelComite();
       const { usuario } = await abrirRevision();
 
-      await usuario.click(boton('Aprobar'));
+      await usuario.click(boton('Aprobar Crédito'));
 
       expect(
         await screen.findByText('Las observaciones son obligatorias para aprobar'),
@@ -151,7 +185,7 @@ describe('RevisionSolicitudPage', () => {
       await usuario.click(observaciones());
       await usuario.paste('    ');
 
-      await usuario.click(boton('Aprobar'));
+      await usuario.click(boton('Aprobar Crédito'));
 
       expect(
         await screen.findByText('Las observaciones son obligatorias para aprobar'),
@@ -165,7 +199,7 @@ describe('RevisionSolicitudPage', () => {
       await usuario.click(observaciones());
       await usuario.paste('  Ingresos estables  ');
 
-      await usuario.click(boton('Aprobar'));
+      await usuario.click(boton('Aprobar Crédito'));
 
       const resultado = await screen.findByRole('status');
       expect(resultado).toHaveTextContent('Solicitud #5 aprobada');
@@ -173,7 +207,7 @@ describe('RevisionSolicitudPage', () => {
       expect(screen.getByText('CR-2026-000001')).toBeInTheDocument();
       expect(screen.getByText('C$ 443.21')).toBeInTheDocument();
       expect(aprobaciones).toEqual([{ observaciones: 'Ingresos estables' }]);
-      expect(screen.queryByRole('button', { name: 'Aprobar' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Aprobar Crédito' })).not.toBeInTheDocument();
     });
 
     it('debe mostrar el conflicto del backend cuando la solicitud ya no está pendiente', async () => {
@@ -191,7 +225,7 @@ describe('RevisionSolicitudPage', () => {
       await usuario.click(observaciones());
       await usuario.paste('Cumple');
 
-      await usuario.click(boton('Aprobar'));
+      await usuario.click(boton('Aprobar Crédito'));
 
       expect(await screen.findByRole('alert')).toHaveTextContent(
         'La solicitud está APROBADA y no puede pasar a APROBADA',
@@ -203,7 +237,7 @@ describe('RevisionSolicitudPage', () => {
       const { usuario } = await abrirRevision();
       await usuario.click(observaciones());
       await usuario.paste('Cumple');
-      await usuario.click(boton('Aprobar'));
+      await usuario.click(boton('Aprobar Crédito'));
 
       await usuario.click(await screen.findByRole('link', { name: 'Volver a la bandeja' }));
 
@@ -218,7 +252,7 @@ describe('RevisionSolicitudPage', () => {
       const { rechazos } = apiDelComite();
       const { usuario } = await abrirRevision();
 
-      await usuario.click(boton('Rechazar'));
+      await usuario.click(boton('Rechazar Crédito'));
 
       expect(await screen.findByRole('status')).toHaveTextContent('Solicitud #5 rechazada');
       expect(rechazos).toEqual([{}]);
@@ -230,7 +264,7 @@ describe('RevisionSolicitudPage', () => {
       await usuario.click(observaciones());
       await usuario.paste('Ingresos insuficientes');
 
-      await usuario.click(boton('Rechazar'));
+      await usuario.click(boton('Rechazar Crédito'));
 
       expect(await screen.findByRole('status')).toHaveTextContent(
         'Observaciones: Ingresos insuficientes',
