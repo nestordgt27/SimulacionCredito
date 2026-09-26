@@ -28,7 +28,8 @@ Registro de cada interacción con herramientas de IA durante el desarrollo, seg�
 | `feature/web-comite-paginacion` | Paginación de la bandeja del comité (más de 5) y listado paginado compartido | `develop` | [#18](https://github.com/nestordgt27/SimulacionCredito/pull/18) | Fusionada |
 | `feature/web-comite-revision-requisitos` | Revisión del comité alineada al enunciado y cuota nivelada calculada al otorgar el crédito | `develop` | [#19](https://github.com/nestordgt27/SimulacionCredito/pull/19) | Fusionada |
 | `feature/comite-revision-detallada` | Revisión del comité con información personal, laboral y financiera e indicadores de viabilidad | `develop` | [#20](https://github.com/nestordgt27/SimulacionCredito/pull/20) | Fusionada |
-| `fix/web-layout-movil` | Interfaz responsiva: menú plegable, prioridad de columnas y sin desbordamiento en móvil | `develop` | [#21](https://github.com/nestordgt27/SimulacionCredito/pull/21) | En revisión |
+| `fix/web-layout-movil` | Interfaz responsiva: menú plegable, prioridad de columnas y sin desbordamiento en móvil | `develop` | [#21](https://github.com/nestordgt27/SimulacionCredito/pull/21) | Fusionada |
+| `feature/web-desembolsos-tasa` | Tasa anual en la bandeja de desembolsos y en el resumen de la ejecución, responsiva | `develop` | — | En curso |
 
 ---
 
@@ -780,3 +781,36 @@ Registro de cada interacción con herramientas de IA durante el desarrollo, seg�
   - **Verificación por commit:** no se aislaron los commits con stash (ese paso fue rechazado por permisos en [022]). El commit del menú toca solo `AppLayout` y su prueba, y el de las bandejas solo clases de CSS que jsdom no evalúa. Queda indicado en el PR.
 - **Commits:** `fix(web): plegar la navegación en un menú en pantallas angostas`, `fix(web): ajustar bandejas, tarjetas y encabezados a pantallas angostas`, `docs: documentar el diseño responsivo`, `docs(ai-log): registrar pr del diseño responsivo`
 - **PR:** [#21](https://github.com/nestordgt27/SimulacionCredito/pull/21) → `develop`
+
+### [024] 2026-09-26 — Tasa anual en la bandeja de desembolsos
+
+- **Herramienta:** Claude Code
+- **Rama:** `feature/web-desembolsos-tasa`
+- **Prompt (resumen fiel):** Agregar a la tabla de desembolsos una columna con la tasa del crédito aprobado, igual que en la pantalla de ejecución del desembolso, y renderizarla de forma responsiva.
+- **Resultado:**
+  - **Hallazgo:** la pantalla de ejecución (`ResumenCredito`) tampoco mostraba la tasa. Se interpretó como mostrarla igual en ambas: "Tasa anual" con `formatearPorcentaje`.
+  - **API sin cambios:** `GET /solicitudes?estado=APROBADA` ya devuelve `credito.tasaAnual`; solo se agregó al tipo `SolicitudAprobada` de la web.
+  - **`TablaAprobadas`:**
+    - columna "Tasa anual" después de Monto;
+    - por debajo de `sm`, la tasa se muestra debajo del monto ("Tasa anual: 12 %");
+    - las columnas se escalonan: N.º y Tasa desde `sm`, Cuota y Cuotas desde `md`, Cédula desde `lg`.
+  - **`ResumenCredito`:** agrega "Tasa anual". La grilla pasa a 2, 3 y 6 columnas (móvil, `sm`, `lg`).
+  - **Pruebas web:** 196.
+    - 2 nuevas: tasa en su columna, localizada por el encabezado; tasa debajo del monto para pantallas angostas.
+    - La del resumen se amplió con la tasa.
+    - Los datos de prueba usan 18.5 % para probar los decimales.
+  - **Documentación:** README (bandeja y ejecución) y `docs/ARCHITECTURE.md` (Desembolsos y Diseño responsivo).
+- **Decisiones y ajustes manuales:**
+  - **Tasa visible en todos los anchos:** en móvil no cabía como columna (Cliente, Monto, Tasa y acción sumaban unos 379 px de 343). Por eso se muestra debajo del monto.
+    - Es la única duplicación del texto en el DOM.
+    - En cada ancho solo una copia es visible y accesible (`display: none`).
+    - Las pruebas usan textos distintos ("12 %" frente a "Tasa anual: 12 %") para no ser ambiguas.
+  - **Escalonar las columnas:** con la columna nueva, la tabla volvía a necesitar desplazamiento interno entre 640 y 1023 px (796 px contra 608 y 736). Se midió el ancho de cada columna y se repartieron entre `sm`, `md` y `lg` para que cupiera en cada corte.
+  - **Pruebas primero:** las 3 afectadas fallaron antes de implementar. Prueba de mutación: quitar la tasa de debajo del monto rompe 1. Se restauró.
+  - **Verificación en el navegador,** con los servidores que el usuario ya tenía levantados:
+    - bandeja a 375, 639, 640, 768, 1024 y 1280 px: página sin desplazamiento horizontal, tabla sin desplazamiento interno y tasa visible en todos;
+    - resumen de la ejecución a 375, 640 y 1280 px: 3, 2 y 1 filas;
+    - solo se abrió la pantalla de ejecución, no se desembolsó nada.
+  - **Verificación final:** typecheck, lint, Prettier y build en verde; pruebas web (196), cobertura 99 % de líneas.
+- **Commits:** `feat(desembolsos): mostrar la tasa anual en la bandeja y en el resumen`, `docs: documentar la tasa anual en desembolsos`
+- **PR:** pendiente → `develop`
