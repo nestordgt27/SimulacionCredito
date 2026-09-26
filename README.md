@@ -83,7 +83,10 @@ Pantallas disponibles:
   - **Al registrar**, muestra el número de solicitud y la cuota confirmada por el servidor.
 - **Comité** (`/comite`): bandeja de solicitudes `PENDIENTE`, con cliente, cédula, monto, cuotas y fecha de registro. Cada fila tiene un enlace a su revisión. Con más de 5 solicitudes, la lista se pagina de 5 en 5, con la página en la URL (`?pagina=2`), igual que en la consulta.
 - **Revisión** (`/comite/:id`):
-  - **Ficha de solo lectura** con los 7 campos del enunciado, agrupados en **Datos personales** (Cédula / Identificación, Nombre Completo, Edad) y **Datos del crédito** (Cantidad de cuotas, Periodicidad de Pago, Plazo, Monto solicitado). El único campo editable es Observaciones.
+  - **Ficha de solo lectura** para evaluar la viabilidad, organizada en tres grupos. El único campo editable es Observaciones.
+    - **Información personal:** Cédula / Identificación, Nombre Completo, Edad, fecha de nacimiento, correo y teléfono.
+    - **Información laboral:** tipo de empleo, empresa, antigüedad laboral e ingreso mensual.
+    - **Información financiera:** Monto solicitado, tasa anual, Cantidad de cuotas, Periodicidad de Pago, Plazo, cuota nivelada, cuota mensual equivalente, relación cuota / ingreso, total a pagar y total de intereses.
   - **Dictamen:** **Aprobar Crédito** exige observaciones; **Rechazar Crédito** las deja opcionales.
   - **Resultado:** al aprobar se muestra el número de crédito otorgado y la cuota. Después de cualquier dictamen, la bandeja se actualiza sola.
   - **Conflictos:** si la solicitud ya no estaba pendiente, se muestra el mensaje del backend (`409`).
@@ -208,23 +211,47 @@ Rutas protegidas: requieren access token.
 
 | Método y ruta                               | Cuerpo                             | Respuesta                                       |
 | ------------------------------------------- | ---------------------------------- | ----------------------------------------------- |
-| `GET /api/comite/solicitudes/:id`           | —                                  | `200`: vista reducida de la solicitud           |
+| `GET /api/comite/solicitudes/:id`           | —                                  | `200`: vista para el dictamen                   |
 | `POST /api/comite/solicitudes/:id/aprobar`  | `{ observaciones }` (obligatorias) | `200`: solicitud aprobada y crédito otorgado    |
 | `POST /api/comite/solicitudes/:id/rechazar` | `{ observaciones? }` (opcionales)  | `200`: `{ solicitudId, estado, observaciones }` |
 
-Vista reducida (solo los campos del enunciado):
+Vista para el dictamen (información personal, laboral y financiera):
 
 ```json
 {
-  "cedula": "001-150385-0007K",
-  "nombreCompleto": "Luis Martínez",
-  "edad": 41,
-  "cantidadCuotas": 24,
-  "periodicidad": "QUINCENAL",
-  "plazoMeses": 12,
-  "monto": 50000
+  "personal": {
+    "cedula": "001-150385-0007K",
+    "nombreCompleto": "Luis Martínez",
+    "edad": 41,
+    "fechaNacimiento": "1985-03-15",
+    "correo": "luis@correo.com",
+    "telefono": "88776655"
+  },
+  "laboral": {
+    "tipoEmpleo": "ASALARIADO",
+    "empresa": "Comercial S.A.",
+    "antiguedadLaboralAnios": 8,
+    "ingresoMensual": 30000
+  },
+  "financiero": {
+    "monto": 50000,
+    "tasaAnual": 18.5,
+    "cantidadCuotas": 24,
+    "periodicidad": "QUINCENAL",
+    "plazoMeses": 12,
+    "cuotaNivelada": 2289.98,
+    "cuotaMensualEquivalente": 4579.96,
+    "relacionCuotaIngreso": 15.27,
+    "totalAPagar": 54959.44,
+    "totalIntereses": 4959.44
+  }
 }
 ```
+
+- **Indicadores** (calculados con `calcularIndicadoresFinancieros` de `packages/shared`; son informativos y no bloquean la aprobación):
+  - `cuotaMensualEquivalente`: la cuota llevada a un mes (`cuota · n / 12`), para compararla con el ingreso mensual;
+  - `relacionCuotaIngreso`: porcentaje del ingreso mensual que representa esa cuota; `null` si el ingreso es 0;
+  - `totalAPagar` y `totalIntereses`: suma del plan de pagos completo (la última cuota ya viene ajustada por redondeo).
 
 Respuesta de la aprobación:
 
@@ -417,5 +444,6 @@ Supuestos de negocio (detalle en `CLAUDE.md` §4):
 - **Cliente:** se identifica por cédula única y puede tener varias solicitudes. La información laboral se guarda en cada solicitud como foto del momento. Al registrar una solicitud de una cédula existente, se actualizan los datos del cliente (gana la última captura).
 - **Aprobación:** la fecha de aprobación es el momento del dictamen (UTC) y es la base de los vencimientos. El año del número de crédito es el de esa fecha.
 - **Rechazo:** las observaciones son opcionales.
+- **Vista del comité:** además de los 7 campos del enunciado, muestra la información personal, laboral y financiera con indicadores de viabilidad (cuota mensual equivalente, relación cuota / ingreso, totales). Son informativos: el dictamen lo decide el comité.
 - **Desembolso:** siempre por el monto total del crédito y una sola vez. El número de cuenta acepta solo dígitos (de 6 a 20).
 - **Límites de captura:** hasta 360 cuotas y tasa de 0 a 100 %, con máximo 2 decimales en montos y tasa.

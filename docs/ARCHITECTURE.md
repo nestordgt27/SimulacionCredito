@@ -18,16 +18,17 @@ apps/web  ──┘
 
 - Funciones puras y tipos: cálculos financieros, enums y validaciones.
 
-| Archivo                        | Exporta                                                                                     |
-| ------------------------------ | ------------------------------------------------------------------------------------------- |
-| `periodicidad.ts`              | `Periodicidad` y `PERIODICIDADES`: estrategia por periodicidad `{ n, avanzarFecha }`        |
-| `estado-solicitud.ts`          | `EstadoSolicitud`                                                                           |
-| `banco.ts`, `tipo-empleo.ts`   | `Banco`, `TipoEmpleo`                                                                       |
-| `cuota-nivelada.ts`            | `calcularCuotaNivelada(monto, tasaAnual, cuotas, periodicidad)`                             |
-| `plan-pagos.ts`                | `generarPlanPagos({ monto, tasaAnual, cuotas, periodicidad, fechaInicio })` → `CuotaPlan[]` |
-| `edad.ts`                      | `calcularEdad(fechaNacimiento, fechaReferencia)`                                            |
-| `plazo.ts`                     | `calcularPlazoMeses(cuotas, periodicidad)`                                                  |
-| `fechas.ts`, `validaciones.ts` | Internos (no se exportan en `index.ts`)                                                     |
+| Archivo                        | Exporta                                                                                                                                                                      |
+| ------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `periodicidad.ts`              | `Periodicidad` y `PERIODICIDADES`: estrategia por periodicidad `{ n, avanzarFecha }`                                                                                         |
+| `estado-solicitud.ts`          | `EstadoSolicitud`                                                                                                                                                            |
+| `banco.ts`, `tipo-empleo.ts`   | `Banco`, `TipoEmpleo`                                                                                                                                                        |
+| `cuota-nivelada.ts`            | `calcularCuotaNivelada(monto, tasaAnual, cuotas, periodicidad)`                                                                                                              |
+| `plan-pagos.ts`                | `generarPlanPagos({ monto, tasaAnual, cuotas, periodicidad, fechaInicio })` → `CuotaPlan[]`                                                                                  |
+| `edad.ts`                      | `calcularEdad(fechaNacimiento, fechaReferencia)`                                                                                                                             |
+| `plazo.ts`                     | `calcularPlazoMeses(cuotas, periodicidad)`                                                                                                                                   |
+| `indicadores.ts`               | `calcularIndicadoresFinancieros({ monto, tasaAnual, cuotas, periodicidad, ingresoMensual })` → cuota, cuota mensual equivalente, relación cuota / ingreso y totales del plan |
+| `fechas.ts`, `validaciones.ts` | Internos (no se exportan en `index.ts`)                                                                                                                                      |
 
 - Los enums son objetos `const` con un tipo del mismo nombre, en lugar de `enum` de TypeScript. Se guardan como texto (SQLite no tiene enums), sirven para `z.enum(...)` en la web y cumplen `erasableSyntaxOnly`.
 - Los cálculos usan `decimal.js`. Los montos entran y salen como `number` en unidades monetarias con 2 decimales; la conversión a centavos para persistir es responsabilidad del backend.
@@ -52,7 +53,7 @@ apps/api/
 │   ├── modules/
 │   │   ├── auth/             # Implementado: login, refresh, logout, JwtAuthGuard global
 │   │   ├── solicitudes/      # Implementado: crear y listar solicitudes
-│   │   ├── comite/           # Implementado: vista reducida, aprobar y rechazar
+│   │   ├── comite/           # Implementado: vista para el dictamen, aprobar y rechazar
 │   │   ├── desembolsos/      # Implementado: desembolsar una solicitud aprobada
 │   │   └── creditos/         # Crédito y plan de pagos; consulta por cédula (GET /creditos)
 │   ├── prisma/               # PrismaModule global: PrismaService, UnitOfWork, schema, migraciones, seed
@@ -171,7 +172,7 @@ apps/web/src/
 ├── features/
 │   ├── auth/             # api/ hooks/ components/ pages/ schemas/ (login y logout)
 │   ├── solicitudes/      # formulario de registro con cuota en vivo y bloqueo por edad
-│   ├── comite/           # bandeja de pendientes, revisión (7 campos) y dictamen
+│   ├── comite/           # bandeja de pendientes, revisión (personal, laboral, financiera) y dictamen
 │   ├── desembolsos/      # bandeja de aprobadas, datos bancarios, confirmación y resultado
 │   └── consulta/         # búsqueda por cédula, tarjetas de crédito y plan de pagos
 ├── shared/
@@ -196,10 +197,10 @@ apps/web/src/
 ### Comité
 
 - **Bandeja:** `useSolicitudesPendientes` usa `GET /solicitudes?estado=PENDIENTE` con la clave `['solicitudes', { estado: 'PENDIENTE' }]`, y muestra estados de carga, lista vacía y error.
-- **Revisión:** `useSolicitudComite(id)` usa `GET /comite/solicitudes/:id`. Un id no numérico redirige a la bandeja.
+- **Revisión:** `useSolicitudComite(id)` usa `GET /comite/solicitudes/:id`. Un id no numérico redirige a la bandeja. `FichaSolicitud` muestra tres grupos (`role="group"` con nombre): información personal, laboral y financiera. Los indicadores llegan calculados por el backend (`calcularIndicadoresFinancieros` de `shared`); la web solo los formatea.
 - **Dictamen:** es un solo campo de observaciones con dos acciones de reglas distintas (`aprobacionSchema` exige texto; `rechazoSchema` lo deja opcional y envía `{}` si está vacío). Por eso cada botón valida con su esquema, en lugar de usar un resolver único.
 - **Consistencia:** `useAprobarSolicitud` y `useRechazarSolicitud` invalidan el prefijo `['solicitudes']`, así la bandeja no muestra solicitudes ya evaluadas.
-- **Limitación conocida:** la vista del comité no incluye el estado, porque el enunciado pide solo 7 campos. Si se abre una solicitud ya evaluada, el formulario de dictamen aparece, pero el backend responde `409` y se muestra su mensaje.
+- **Limitación conocida:** la vista del comité no incluye el estado. Si se abre una solicitud ya evaluada, el formulario de dictamen aparece, pero el backend responde `409` y se muestra su mensaje.
 
 ### Desembolsos
 
