@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { FORMATO_CEDULA, LIMITES_SOLICITUD, tieneMaximoDecimales } from './limites';
+import {
+  FORMATO_CEDULA,
+  FORMATO_NUMERO_CUENTA,
+  LIMITES_SOLICITUD,
+  tieneMaximoDecimales,
+} from './limites';
 
 describe('LIMITES_SOLICITUD', () => {
   it('debe fijar el monto máximo en el mayor valor que cabe en un Int de 32 bits en centavos', () => {
@@ -29,6 +34,19 @@ describe('FORMATO_CEDULA', () => {
     'debe rechazar %p',
     (cedula) => {
       expect(FORMATO_CEDULA.test(cedula)).toBe(false);
+    },
+  );
+});
+
+describe('FORMATO_NUMERO_CUENTA', () => {
+  it.each(['000123', '0012345678', '12345678901234567890'])('debe aceptar %p', (cuenta) => {
+    expect(FORMATO_NUMERO_CUENTA.test(cuenta)).toBe(true);
+  });
+
+  it.each(['12345', '123456789012345678901', '12AB5678', '001-234567', ''])(
+    'debe rechazar %p',
+    (cuenta) => {
+      expect(FORMATO_NUMERO_CUENTA.test(cuenta)).toBe(false);
     },
   );
 });
