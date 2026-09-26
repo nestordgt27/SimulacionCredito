@@ -1,3 +1,6 @@
+/** Tamaño de página de los listados (consulta de créditos, bandeja de desembolsos). */
+export const ELEMENTOS_POR_PAGINA = 5;
+
 export interface Pagina<T> {
   elementos: T[];
   /** Página mostrada, ya ajustada al rango válido (1..totalPaginas). */

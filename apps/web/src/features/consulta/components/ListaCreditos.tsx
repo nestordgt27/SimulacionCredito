@@ -1,10 +1,8 @@
 import { useRef } from 'react';
-import { paginar } from '../../../shared/lib/paginacion';
+import { ELEMENTOS_POR_PAGINA, paginar } from '../../../shared/lib/paginacion';
 import { Paginacion } from '../../../shared/ui/Paginacion';
 import type { CreditoConsultado } from '../api/creditos.api';
 import { TarjetaCredito } from './TarjetaCredito';
-
-export const CREDITOS_POR_PAGINA = 5;
 
 interface ListaCreditosProps {
   creditos: CreditoConsultado[];
@@ -20,10 +18,10 @@ function resumen({ desde, hasta, totalElementos, totalPaginas }: ReturnType<type
 }
 
 // Paginación en el cliente: la API devuelve todos los créditos de un solo cliente (pocos).
-// Los controles solo aparecen cuando hay más de CREDITOS_POR_PAGINA.
+// Los controles solo aparecen cuando hay más de ELEMENTOS_POR_PAGINA.
 export function ListaCreditos({ creditos, pagina, onCambiarPagina }: ListaCreditosProps) {
   const inicioResultados = useRef<HTMLElement>(null);
-  const actual = paginar(creditos, pagina, CREDITOS_POR_PAGINA);
+  const actual = paginar(creditos, pagina, ELEMENTOS_POR_PAGINA);
 
   function cambiarPagina(nueva: number) {
     onCambiarPagina(nueva);
