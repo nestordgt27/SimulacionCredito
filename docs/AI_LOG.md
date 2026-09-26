@@ -22,7 +22,8 @@ Registro de cada interacción con herramientas de IA durante el desarrollo, seg�
 | `feature/web-solicitudes-registrar` | Pantalla de registro de solicitudes con cuota en vivo y bloqueo por edad | `develop` | [#12](https://github.com/nestordgt27/SimulacionCredito/pull/12) | Fusionada |
 | `feature/web-comite` | Pantallas del comité: bandeja de pendientes, revisión y dictamen | `develop` | [#13](https://github.com/nestordgt27/SimulacionCredito/pull/13) | Fusionada |
 | `feature/web-desembolsos` | Pantallas de desembolso: bandeja de aprobadas, datos bancarios con confirmación | `develop` | [#14](https://github.com/nestordgt27/SimulacionCredito/pull/14) | Fusionada |
-| `feature/web-consulta-creditos` | Pantalla de consulta de créditos por cédula con plan de pagos | `develop` | [#15](https://github.com/nestordgt27/SimulacionCredito/pull/15) | En revisión |
+| `feature/web-consulta-creditos` | Pantalla de consulta de créditos por cédula con plan de pagos | `develop` | [#15](https://github.com/nestordgt27/SimulacionCredito/pull/15) | Fusionada |
+| `feature/web-consulta-paginacion` | Paginación de la consulta de créditos (más de 5) y ruta protegida con parámetros | `develop` | Pendiente | En curso |
 
 ---
 
@@ -585,3 +586,33 @@ Registro de cada interacción con herramientas de IA durante el desarrollo, seg�
   - **Verificación final:** typecheck, lint, Prettier y build en verde; pruebas de shared (95), api (151) y web (138).
 - **Commits:** `feat(web): sumar montos en centavos enteros`, `feat(consulta): consulta de créditos por cédula con plan de pagos`, `docs: documentar la pantalla de consulta de créditos`, `docs(ai-log): registrar pr de la consulta de créditos`
 - **PR:** [#15](https://github.com/nestordgt27/SimulacionCredito/pull/15) → `develop`
+
+### [018] 2026-09-26 — Paginación de la consulta de créditos
+
+- **Herramienta:** Claude Code
+- **Rama:** `feature/web-consulta-paginacion`
+- **Prompt (resumen fiel):** En la sección de consultas, agregar paginación al listado de créditos cuando la cantidad supere 5.
+- **Resultado:**
+  - **`shared/lib/paginacion.ts`:** `paginar()` (porción de la página, ajuste al rango válido, `desde`/`hasta`) y `leerPagina()` (parámetro de URL).
+  - **`shared/ui/Paginacion.tsx`:** `nav` con nombre, "Anterior", números con `aria-current="page"` y "Siguiente".
+  - **`features/consulta/components/ListaCreditos.tsx`:** 5 por página, resumen "Mostrando X–Y de N créditos" (`aria-live`), controles solo con más de 5 y desplazamiento al inicio de los resultados al cambiar de página.
+  - **`ConsultaCreditosPage`:** la página va en la URL (`&pagina=N`; la 1 no se escribe) y una búsqueda nueva la reinicia.
+  - **Corrección de bug:** `RutaProtegida` recordaba solo `pathname` y perdía los parámetros al pasar por el login. Ahora guarda `pathname + search`.
+  - **Pruebas web:** 164 (26 nuevas).
+    - `paginar` y `leerPagina` (15).
+    - Paginación en la pantalla (10): exactamente 5 sin controles; 7 con los primeros 5 y la página 1 activa; siguiente con la URL y **sin nueva petición**; anterior; volver a la página 1 sin escribirla; URL con `pagina=3`; `pagina` 99, 0 y abc ajustadas; búsqueda nueva que reinicia la página.
+    - Navegación (1): los parámetros se conservan tras el login.
+    - Cobertura de la web: 99 % de líneas; `Paginacion` al 100 %.
+  - **Documentación:** README (paginación y enlaces con parámetros) y `docs/ARCHITECTURE.md` (sección Paginación de la consulta).
+- **Decisiones y ajustes manuales:**
+  - **Paginación en el cliente:** la API devuelve todos los créditos de un solo cliente, que son pocos, así que no se cambió su contrato. Si un cliente pudiera acumular cientos, habría que paginar en el servidor; quedó documentado.
+  - **Página en la URL,** con el mismo criterio que la cédula en [017]: se puede compartir y sobrevive al recargo. Los valores inválidos se ajustan, sin error.
+  - **Bug encontrado al verificar en el navegador:** al abrir `/creditos?cedula=…` sin sesión, el login devolvía a `/creditos` sin la cédula. Primero se escribió una prueba que lo reprodujo (falló) y después se corrigió `RutaProtegida` (pasó).
+  - **Cobertura:** el botón "Anterior" quedaba sin probar (función de `Paginacion` al 83 %); se agregó la prueba.
+  - **Prueba de mutación:** mostrar los controles siempre (`>= 1` en lugar de `> 1`) rompe la prueba "exactamente 5 sin paginación". El componente se restauró.
+  - **Verificación manual en el navegador,** reutilizando el Vite del usuario; la API se levantó para la prueba y se detuvo al terminar:
+    - se crearon **7 créditos de prueba en `dev.db`** para el cliente ficticio "Prueba Paginación" (`001-010101-0099P`, solicitudes #43 a #49, `CR-2026-000005` a `CR-2026-000011`);
+    - la página 1 muestra 5 con los controles al final; la página 2 muestra 2, con la URL actualizada y sin nueva petición a la API;
+    - después del logout, el enlace `…&pagina=2` pasó por el login y llegó directo a la página 2.
+  - **Verificación final:** typecheck, lint, Prettier y build en verde; pruebas de shared (95), api (151) y web (164).
+- **Commits:** `feat(web): agregar paginación reutilizable`, `feat(consulta): paginar el listado de créditos cuando supera 5`, `fix(web): conservar los parámetros de la url al volver del login`, `docs: documentar la paginación de la consulta`

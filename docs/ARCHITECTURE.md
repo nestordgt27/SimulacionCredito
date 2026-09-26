@@ -177,8 +177,8 @@ apps/web/src/
 ├── shared/
 │   ├── api/              # clienteHttp (Axios + interceptores) y mensajeDeError
 │   ├── auth/             # sesionStore y useSesion
-│   ├── lib/              # formatearMonto (C$), formatearMeses, formatearFecha, sumarMontos y etiquetas
-│   └── ui/               # Boton, Campo, AreaTexto, Selector, Seccion, Alerta, Tarjeta (Tailwind)
+│   ├── lib/              # formatearMonto (C$), formatearMeses, formatearFecha, sumarMontos, paginar y etiquetas
+│   └── ui/               # Boton, Campo, AreaTexto, Selector, Seccion, Paginacion, Alerta, Tarjeta (Tailwind)
 └── test/                 # setup, servidor MSW con handlers y renderApp
 ```
 
@@ -214,6 +214,14 @@ apps/web/src/
 - **Estado en la URL:** la cédula buscada vive en `?cedula=` (`useSearchParams`); `cedulaValida` la normaliza con el mismo formato de shared. Una cédula inválida en la URL se ignora y no genera ninguna petición.
 - **Consulta:** `useCreditosPorCedula(cedula)` usa `GET /creditos?cedula=` con la clave `['creditos', cedula]`, solo con una cédula válida (`enabled`). El desembolso invalida `['creditos']`.
 - **Plan de pagos:** usa los mismos nombres que `generarPlanPagos` y se despliega a pedido (`aria-expanded` y `aria-controls`). Los totales se calculan con `sumarMontos`, en centavos enteros, para que el capital sume exactamente el monto.
+
+### Paginación de la consulta
+
+- **En el cliente:** `GET /creditos?cedula=` devuelve todos los créditos de un solo cliente (en la práctica, pocos), así que `ListaCreditos` los pagina sin cambiar el contrato de la API. Si un cliente pudiera acumular cientos de créditos, convendría pasar a paginación en el servidor (`page`/`limit` en la API).
+- **Reglas:** 5 por página (`CREDITOS_POR_PAGINA`), y los controles aparecen solo con más de 5. `paginar()` (`shared/lib`, función pura) ajusta una página fuera de rango a la primera o a la última; `leerPagina()` interpreta el parámetro de URL (`0`, `abc` o `1.5` equivalen a 1).
+- **URL:** `?cedula=…&pagina=N`. La página 1 no se escribe, y una búsqueda nueva la reinicia. Cambiar de página no vuelve a consultar la API (los datos ya están en caché) y desplaza la vista al inicio de los resultados.
+- **Accesibilidad:** `Paginacion` es un `nav` con nombre, la página actual lleva `aria-current="page"`, y el resumen "Mostrando X–Y de N" es `aria-live="polite"`.
+- **Ruta protegida con parámetros:** `RutaProtegida` recuerda `pathname + search`, así un enlace compartido con cédula y página llega a su destino después del login.
 
 ### Sesión e interceptores
 
