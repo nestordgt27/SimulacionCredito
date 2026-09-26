@@ -99,6 +99,8 @@ Pantallas disponibles:
   - **Búsqueda en la URL** (`/creditos?cedula=…`): se puede compartir, sobrevive al recargo y funciona con "atrás".
   - **Una tarjeta por crédito:** número, estado (aprobado o desembolsado), monto, tasa, cuotas, plazo, cuota nivelada, fecha de aprobación y banco y fecha del desembolso.
   - **Plan de pagos desplegable:** número, vencimiento, cuota, capital, interés y saldo, con totales. La suma del capital coincide exactamente con el monto.
+  - **Paginación:** cuando el cliente tiene más de 5 créditos, se muestran 5 por página con controles "Anterior", números y "Siguiente", y el texto "Mostrando 1–5 de 7 créditos". La página también va en la URL (`&pagina=2`), y una búsqueda nueva vuelve a la página 1.
+- **Enlaces con parámetros:** si se abre un enlace protegido sin sesión (por ejemplo, `/creditos?cedula=…&pagina=2`), después del login se vuelve a esa misma URL, con sus parámetros.
 
 **Sesión:**
 

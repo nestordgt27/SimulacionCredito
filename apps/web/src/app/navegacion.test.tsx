@@ -24,6 +24,21 @@ describe('Navegación con sesión', () => {
     expect(router.state.location.pathname).toBe('/');
   });
 
+  it('debe conservar los parámetros de la URL pedida después de iniciar sesión', async () => {
+    server.use(http.get('*/api/creditos', () => HttpResponse.json([])));
+    const { usuario, router } = renderApp('/creditos?cedula=001-010190-0001A&pagina=2');
+
+    await usuario.type(screen.getByLabelText('Usuario'), 'admin');
+    await usuario.type(screen.getByLabelText('Contraseña'), 'Admin123!');
+    await usuario.click(screen.getByRole('button', { name: 'Iniciar sesión' }));
+
+    expect(
+      await screen.findByRole('heading', { name: 'Consulta de créditos' }),
+    ).toBeInTheDocument();
+    expect(router.state.location.pathname).toBe('/creditos');
+    expect(router.state.location.search).toBe('?cedula=001-010190-0001A&pagina=2');
+  });
+
   it('debe mostrar el inicio con el nombre del usuario cuando hay sesión', () => {
     conSesion();
 
