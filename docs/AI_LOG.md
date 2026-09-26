@@ -27,7 +27,7 @@ Registro de cada interacción con herramientas de IA durante el desarrollo, seg�
 | `feature/web-desembolsos-paginacion` | Paginación de la bandeja de desembolsos (más de 5) | `develop` | [#17](https://github.com/nestordgt27/SimulacionCredito/pull/17) | Fusionada |
 | `feature/web-comite-paginacion` | Paginación de la bandeja del comité (más de 5) y listado paginado compartido | `develop` | [#18](https://github.com/nestordgt27/SimulacionCredito/pull/18) | Fusionada |
 | `feature/web-comite-revision-requisitos` | Revisión del comité alineada al enunciado y cuota nivelada calculada al otorgar el crédito | `develop` | [#19](https://github.com/nestordgt27/SimulacionCredito/pull/19) | Fusionada |
-| `feature/comite-revision-detallada` | Revisión del comité con información personal, laboral y financiera e indicadores de viabilidad | `develop` | — | En curso |
+| `feature/comite-revision-detallada` | Revisión del comité con información personal, laboral y financiera e indicadores de viabilidad | `develop` | [#20](https://github.com/nestordgt27/SimulacionCredito/pull/20) | En revisión |
 
 ---
 
@@ -743,5 +743,6 @@ Registro de cada interacción con herramientas de IA durante el desarrollo, seg�
     - no se aprobó ni rechazó la solicitud.
   - **Hallazgo fuera de alcance:** a 375 px de ancho, la barra de navegación del layout provoca desplazamiento horizontal (ya existía; la ficha cabe). Se propuso como tarea aparte.
   - **Verificación final:** typecheck, lint, Prettier y build en verde; pruebas de shared (95 → 103), api (153 + 45 + 84) y web (190).
-- **Commits:** `feat(shared): calcular indicadores financieros para el comité`, `feat(comite): exponer información personal, laboral y financiera en la revisión`, `feat(web): mostrar la revisión del comité por información personal, laboral y financiera`, `docs: documentar la revisión detallada del comité`
-- **PR:** pendiente → `develop`
+  - **Verificación por commit:** solo el commit de `shared` se verificó aislado. Al intentar aislar el de la API, el sistema de permisos rechazó el comando. Por decisión del usuario, los demás commits se verificaron sobre la rama completa. Queda indicado en el PR: entre el commit de la API y el de la web, la web aún espera la forma anterior de la respuesta.
+- **Commits:** `feat(shared): calcular indicadores financieros para el comité`, `feat(comite): exponer información personal, laboral y financiera en la revisión`, `feat(web): mostrar la revisión del comité por información personal, laboral y financiera`, `docs: documentar la revisión detallada del comité`, `docs(ai-log): registrar pr de la revisión detallada del comité`
+- **PR:** [#20](https://github.com/nestordgt27/SimulacionCredito/pull/20) → `develop`
