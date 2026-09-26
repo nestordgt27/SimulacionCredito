@@ -1,7 +1,12 @@
-import { Outlet } from 'react-router';
+import { NavLink, Outlet } from 'react-router';
 import { useCerrarSesion } from '../features/auth/hooks/useCerrarSesion';
 import { useSesion } from '../shared/auth/useSesion';
 import { Boton } from '../shared/ui/Boton';
+
+const ENLACES = [
+  { ruta: '/', texto: 'Inicio' },
+  { ruta: '/solicitudes/nueva', texto: 'Nueva solicitud' },
+] as const;
 
 export function AppLayout() {
   const sesion = useSesion();
@@ -11,7 +16,23 @@ export function AppLayout() {
     <div className="min-h-screen">
       <header className="bg-teal-700 text-white">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
-          <h1 className="text-lg font-semibold">Simulación de Crédito</h1>
+          <div className="flex items-center gap-6">
+            <h1 className="text-lg font-semibold">Simulación de Crédito</h1>
+            <nav aria-label="Principal" className="flex gap-1 text-sm">
+              {ENLACES.map(({ ruta, texto }) => (
+                <NavLink
+                  key={ruta}
+                  to={ruta}
+                  end
+                  className={({ isActive }) =>
+                    `rounded-md px-3 py-1.5 ${isActive ? 'bg-teal-800 font-medium' : 'hover:bg-teal-600'}`
+                  }
+                >
+                  {texto}
+                </NavLink>
+              ))}
+            </nav>
+          </div>
           <div className="flex items-center gap-3 text-sm">
             <span>{sesion?.usuario.nombreCompleto}</span>
             <Boton

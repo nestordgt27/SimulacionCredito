@@ -169,17 +169,26 @@ Secuencia (contador del número de crédito por año)
 apps/web/src/
 ├── app/                  # App, providers, QueryClient, rutas, RutaProtegida, layout
 ├── features/
-│   └── auth/             # api/ hooks/ components/ pages/ schemas/ (login y logout)
+│   ├── auth/             # api/ hooks/ components/ pages/ schemas/ (login y logout)
+│   └── solicitudes/      # formulario de registro con cuota en vivo y bloqueo por edad
 ├── shared/
 │   ├── api/              # clienteHttp (Axios + interceptores) y mensajeDeError
 │   ├── auth/             # sesionStore y useSesion
-│   └── ui/               # Boton, Campo, Alerta, Tarjeta (Tailwind)
+│   ├── lib/              # formatearMonto (C$) y formatearMeses
+│   └── ui/               # Boton, Campo, Selector, Seccion, Alerta, Tarjeta (Tailwind)
 └── test/                 # setup, servidor MSW con handlers y renderApp
 ```
 
 - **Proxy de desarrollo**: Vite redirige `/api` a `API_PROXY_TARGET` (por defecto `http://localhost:3000`). El frontend siempre llama a rutas relativas `/api/...`, igual que detrás de Nginx.
 - **Rutas**: `app/routes.tsx` define las rutas como datos (`RouteObject[]`). Así las pruebas las montan con `createMemoryRouter` sin duplicarlas. `/login` es pública; el resto cuelga de `RutaProtegida`, que redirige al login recordando la ruta pedida (`state.desde`).
 - **Flujo por capas** (`CLAUDE.md` §2.5): componente → hook (`useMutation` / `useQuery`) → `api/` → `clienteHttp`. Las páginas componen, los formularios reciben callbacks y la lógica vive en hooks.
+
+### Registro de solicitudes
+
+- **Esquema Zod** (`crearSolicitudSchema(hoy)`): refleja las reglas del DTO de la API con los mismos límites, formato de cédula y edad máxima de `packages/shared` (`LIMITES_SOLICITUD`, `FORMATO_CEDULA`, `EDAD_MAXIMA`). Así el front y el back no divergen (`CLAUDE.md` §2.5). La fecha de referencia es un parámetro para poder probarlo con una fecha fija.
+- **`useCuotaEstimada`:** valida las condiciones del crédito con el sub-esquema y, si son válidas, calcula la cuota y el plazo con shared. Mientras estén incompletas o sean inválidas devuelve `null` (se muestra "—").
+- **Bloqueo por edad:** el formulario calcula la edad con la fecha de nacimiento observada (`useWatch`). Si supera 80 años, muestra un aviso (`role="alert"`) y deshabilita el envío; el esquema también lo rechaza. La regla real sigue en el backend (422 `EDAD_NO_PERMITIDA`).
+- **Envío:** `useCrearSolicitud` hace el POST con los datos normalizados (cédula en mayúsculas, correo en minúsculas) y sin cuota. Al terminar invalida las consultas `['solicitudes']`.
 
 ### Sesión e interceptores
 
@@ -199,6 +208,7 @@ apps/web/src/
 - **HTTP mockeado con MSW** (`src/test/msw`), nunca los hooks ni Axios (`CLAUDE.md` §6.2). `onUnhandledRequest: 'error'` hace fallar cualquier petición sin handler.
 - **`renderApp(ruta)`** monta la app completa con las rutas reales.
 - **Limpieza:** entre pruebas se borran la sesión y `localStorage`.
+- **Fecha fija en pruebas:** `vi.useFakeTimers({ toFake: ['Date'] })` solo simula `Date`; los timers reales siguen funcionando para user-event y MSW.
 - **Consultas accesibles:** por rol y texto (`getByRole`, `getByLabelText`).
 
 ## Pruebas

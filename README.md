@@ -76,6 +76,11 @@ Pantallas disponibles:
 
 - **Login**, con validación de campos y el mensaje del backend ante credenciales inválidas.
 - **Inicio**, protegido, con el nombre del usuario y un botón para cerrar sesión.
+- **Nueva solicitud** (`/solicitudes/nueva`): formulario en tres secciones.
+  - **Datos personales, información laboral y condiciones del crédito.**
+  - **Cuota nivelada y plazo en vivo**, calculados con `calcularCuotaNivelada` y `calcularPlazoMeses` de `packages/shared` (las mismas funciones que usa el backend). Son informativos: el servidor recalcula la cuota al registrar y el frontend no la envía.
+  - **Bloqueo por edad:** si el cliente tiene más de 80 años, aparece un aviso claro y el botón "Registrar solicitud" queda deshabilitado. Con 80 años exactos se permite.
+  - **Al registrar**, muestra el número de solicitud y la cuota confirmada por el servidor.
 
 **Sesión:**
 
