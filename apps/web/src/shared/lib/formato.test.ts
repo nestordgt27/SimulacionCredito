@@ -1,4 +1,4 @@
-import { formatearMeses, formatearMonto } from './formato';
+import { formatearFecha, formatearMeses, formatearMonto } from './formato';
 
 describe('formatearMonto', () => {
   it.each([
@@ -17,5 +17,11 @@ describe('formatearMeses', () => {
     [1.5, '1.5 meses'],
   ])('debe mostrar %p como %p', (meses, texto) => {
     expect(formatearMeses(meses)).toBe(texto);
+  });
+});
+
+describe('formatearFecha', () => {
+  it('debe mostrar la fecha en UTC como dd/mm/aaaa', () => {
+    expect(formatearFecha('2026-09-25T23:30:00.000Z')).toBe('25/09/2026');
   });
 });

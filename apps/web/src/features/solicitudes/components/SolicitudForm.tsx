@@ -1,7 +1,12 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { EDAD_MAXIMA, Periodicidad, TipoEmpleo } from '@simulacion-credito/shared';
+import { EDAD_MAXIMA, Periodicidad } from '@simulacion-credito/shared';
 import { useMemo } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
+import {
+  ETIQUETAS_PERIODICIDAD,
+  ETIQUETAS_TIPO_EMPLEO,
+  opcionesDe,
+} from '../../../shared/lib/etiquetas';
 import { Alerta } from '../../../shared/ui/Alerta';
 import { Boton } from '../../../shared/ui/Boton';
 import { Campo } from '../../../shared/ui/Campo';
@@ -18,15 +23,9 @@ import { ResumenCuota } from './ResumenCuota';
 
 const OPCIONES_EMPLEO = [
   { valor: '', etiqueta: 'Selecciona…' },
-  { valor: TipoEmpleo.ASALARIADO, etiqueta: 'Asalariado' },
-  { valor: TipoEmpleo.INDEPENDIENTE, etiqueta: 'Independiente' },
-] as const;
-
-const OPCIONES_PERIODICIDAD = [
-  { valor: Periodicidad.MENSUAL, etiqueta: 'Mensual' },
-  { valor: Periodicidad.QUINCENAL, etiqueta: 'Quincenal' },
-  { valor: Periodicidad.ANUAL, etiqueta: 'Anual' },
-] as const;
+  ...opcionesDe(ETIQUETAS_TIPO_EMPLEO),
+];
+const OPCIONES_PERIODICIDAD = opcionesDe(ETIQUETAS_PERIODICIDAD);
 
 const COMO_NUMERO = { valueAsNumber: true } as const;
 

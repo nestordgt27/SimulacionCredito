@@ -6,6 +6,7 @@ import { Boton } from '../shared/ui/Boton';
 const ENLACES = [
   { ruta: '/', texto: 'Inicio' },
   { ruta: '/solicitudes/nueva', texto: 'Nueva solicitud' },
+  { ruta: '/comite', texto: 'Comité' },
 ] as const;
 
 export function AppLayout() {
@@ -23,7 +24,7 @@ export function AppLayout() {
                 <NavLink
                   key={ruta}
                   to={ruta}
-                  end
+                  end={ruta === '/'}
                   className={({ isActive }) =>
                     `rounded-md px-3 py-1.5 ${isActive ? 'bg-teal-800 font-medium' : 'hover:bg-teal-600'}`
                   }

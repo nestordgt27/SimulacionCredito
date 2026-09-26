@@ -1,3 +1,4 @@
+import { ETIQUETAS_PERIODICIDAD } from '../../../shared/lib/etiquetas';
 import { formatearMeses, formatearMonto } from '../../../shared/lib/formato';
 import { Boton } from '../../../shared/ui/Boton';
 import { Tarjeta } from '../../../shared/ui/Tarjeta';
@@ -34,7 +35,7 @@ export function ResultadoSolicitud({ solicitud, onNueva }: ResultadoSolicitudPro
         <div>
           <dt className="text-slate-500">Cuotas</dt>
           <dd className="font-medium">
-            {credito.cantidadCuotas} ({credito.periodicidad.toLowerCase()})
+            {credito.cantidadCuotas} ({ETIQUETAS_PERIODICIDAD[credito.periodicidad].toLowerCase()})
           </dd>
         </div>
         <div>

@@ -1,5 +1,7 @@
 import { Navigate, type RouteObject } from 'react-router';
 import { LoginPage } from '../features/auth/pages/LoginPage';
+import { BandejaComitePage } from '../features/comite/pages/BandejaComitePage';
+import { RevisionSolicitudPage } from '../features/comite/pages/RevisionSolicitudPage';
 import { NuevaSolicitudPage } from '../features/solicitudes/pages/NuevaSolicitudPage';
 import { AppLayout } from './AppLayout';
 import { InicioPage } from './InicioPage';
@@ -16,6 +18,8 @@ export const routes: RouteObject[] = [
         children: [
           { index: true, element: <InicioPage /> },
           { path: 'solicitudes/nueva', element: <NuevaSolicitudPage /> },
+          { path: 'comite', element: <BandejaComitePage /> },
+          { path: 'comite/:id', element: <RevisionSolicitudPage /> },
         ],
       },
     ],
