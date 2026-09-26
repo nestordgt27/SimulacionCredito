@@ -21,7 +21,7 @@ Registro de cada interacción con herramientas de IA durante el desarrollo, seg�
 | `feature/web-auth-login` | Base del frontend (Axios con refresh, sesión, rutas protegidas, UI) y pantalla de login | `develop` | [#11](https://github.com/nestordgt27/SimulacionCredito/pull/11) | Fusionada |
 | `feature/web-solicitudes-registrar` | Pantalla de registro de solicitudes con cuota en vivo y bloqueo por edad | `develop` | [#12](https://github.com/nestordgt27/SimulacionCredito/pull/12) | Fusionada |
 | `feature/web-comite` | Pantallas del comité: bandeja de pendientes, revisión y dictamen | `develop` | [#13](https://github.com/nestordgt27/SimulacionCredito/pull/13) | Fusionada |
-| `feature/web-desembolsos` | Pantallas de desembolso: bandeja de aprobadas, datos bancarios con confirmación | `develop` | Pendiente | En curso |
+| `feature/web-desembolsos` | Pantallas de desembolso: bandeja de aprobadas, datos bancarios con confirmación | `develop` | [#14](https://github.com/nestordgt27/SimulacionCredito/pull/14) | En revisión |
 
 ---
 
@@ -547,4 +547,5 @@ Registro de cada interacción con herramientas de IA durante el desarrollo, seg�
     - la bandeja se actualizó, y al reabrir la #39 se mostró el aviso.
     - La aprobada #38 del usuario no se tocó.
   - **Verificación final:** typecheck, lint, Prettier y build en verde; pruebas de shared (95), api (151) y web (121).
-- **Commits:** `feat(shared): compartir el formato del número de cuenta`, `feat(desembolsos): bandeja de aprobadas y desembolso con confirmación`, `docs: documentar las pantallas de desembolso`
+- **Commits:** `feat(shared): compartir el formato del número de cuenta`, `feat(desembolsos): bandeja de aprobadas y desembolso con confirmación`, `docs: documentar las pantallas de desembolso`, `docs(ai-log): registrar pr de las pantallas de desembolso`
+- **PR:** [#14](https://github.com/nestordgt27/SimulacionCredito/pull/14) → `develop`
