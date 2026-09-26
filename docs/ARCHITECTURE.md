@@ -107,7 +107,7 @@ apps/api/
 | Módulo / capa             | Contenido                                                                                                                                                                                                                                                 |
 | ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `solicitudes/domain`      | `SolicitudStateMachine` (única fuente de transiciones), `Solicitud.aprobar` / `rechazar` (inmutables; devuelven una solicitud nueva) y errores `SolicitudNoEncontradaError` (404), `TransicionInvalidaError` (409) y `ObservacionesRequeridasError` (422) |
-| `creditos/domain`         | `Credito.otorgar` (copia las condiciones aprobadas y genera el plan con `generarPlanPagos`, en centavos), `formatearNumeroCredito`, y puertos `CreditoRepository` y `NumeroCreditoGenerator`                                                              |
+| `creditos/domain`         | `Credito.otorgar` (copia las condiciones aprobadas, calcula la cuota nivelada con `calcularCuotaNivelada` y genera el plan con `generarPlanPagos`, en centavos), `formatearNumeroCredito`, y puertos `CreditoRepository` y `NumeroCreditoGenerator`       |
 | `creditos/infrastructure` | `PrismaCreditoRepository` (crédito + `createMany` de cuotas) y `PrismaNumeroCreditoGenerator` (upsert con incremento atómico en `secuencias`, clave `CREDITO-AAAA`)                                                                                       |
 | `comite/application`      | `ObtenerSolicitudComiteUseCase`, `AprobarSolicitudUseCase` y `RechazarSolicitudUseCase`                                                                                                                                                                   |
 | `comite/presentation`     | `ComiteController` y DTOs de evaluación                                                                                                                                                                                                                   |
@@ -159,7 +159,7 @@ Secuencia (contador del número de crédito por año)
 | Unicidad   | Cédula, número de crédito, un crédito por solicitud, un desembolso por crédito, `(creditoId, numero)` en el plan |
 | Derivados  | Edad y plazo no se guardan; se calculan con `calcularEdad` y `calcularPlazoMeses`                                |
 
-- **Solicitud vs. crédito:** la solicitud es la petición; el crédito es lo pactado. Al aprobar se copian las condiciones al crédito como contrato inmutable.
+- **Solicitud vs. crédito:** la solicitud es la petición; el crédito es lo pactado. Al aprobar se copian las condiciones al crédito como contrato inmutable; la cuota nivelada no se copia, el crédito la calcula al otorgarse, así siempre coincide con su plan de pagos.
 - **`CuotaPlan`** usa los mismos nombres que el `CuotaPlan` de `generarPlanPagos` (`numero`, `cuota`, `capital`, `interes`, `saldo`), con el sufijo `Centavos`.
 - Migraciones en `src/prisma/migrations/`.
 

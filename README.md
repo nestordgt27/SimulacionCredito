@@ -83,8 +83,8 @@ Pantallas disponibles:
   - **Al registrar**, muestra el número de solicitud y la cuota confirmada por el servidor.
 - **Comité** (`/comite`): bandeja de solicitudes `PENDIENTE`, con cliente, cédula, monto, cuotas y fecha de registro. Cada fila tiene un enlace a su revisión. Con más de 5 solicitudes, la lista se pagina de 5 en 5, con la página en la URL (`?pagina=2`), igual que en la consulta.
 - **Revisión** (`/comite/:id`):
-  - **Ficha de solo lectura** con los 7 campos del enunciado: cédula, nombre, edad, cuotas, periodicidad, plazo y monto.
-  - **Dictamen:** **Aprobar** exige observaciones; **Rechazar** las deja opcionales.
+  - **Ficha de solo lectura** con los 7 campos del enunciado, agrupados en **Datos personales** (Cédula / Identificación, Nombre Completo, Edad) y **Datos del crédito** (Cantidad de cuotas, Periodicidad de Pago, Plazo, Monto solicitado). El único campo editable es Observaciones.
+  - **Dictamen:** **Aprobar Crédito** exige observaciones; **Rechazar Crédito** las deja opcionales.
   - **Resultado:** al aprobar se muestra el número de crédito otorgado y la cuota. Después de cualquier dictamen, la bandeja se actualiza sola.
   - **Conflictos:** si la solicitud ya no estaba pendiente, se muestra el mensaje del backend (`409`).
 - **Desembolsos** (`/desembolsos`): créditos aprobados pendientes de desembolso, con monto y cuota. Cada fila tiene un enlace para desembolsar. Con más de 5 créditos, la lista se pagina de 5 en 5, con la página en la URL (`?pagina=2`), igual que en la consulta.
@@ -245,7 +245,7 @@ Respuesta de la aprobación:
 }
 ```
 
-- **Aprobación atómica:** en un solo `prisma.$transaction` se verifica que la solicitud esté `PENDIENTE`, se pasa a `APROBADA` (con el historial), se genera el número `CR-AAAA-NNNNNN` y se crean el crédito y todas sus cuotas con `generarPlanPagos`. Si algo falla, no queda nada a medias; tampoco se consume el número de crédito.
+- **Aprobación atómica:** en un solo `prisma.$transaction` se verifica que la solicitud esté `PENDIENTE`, se pasa a `APROBADA` (con el historial), se genera el número incremental `CR-AAAA-NNNNNN` y se crea el crédito relacionado con la solicitud. Al crearlo se calcula su cuota nivelada con `calcularCuotaNivelada` y se insertan tantas cuotas como indica el plazo (`cantidadCuotas`) con `generarPlanPagos`. Si algo falla, no queda nada a medias; tampoco se consume el número de crédito.
 - **Transiciones:** solo `PENDIENTE → APROBADA`, `PENDIENTE → RECHAZADA` y `APROBADA → DESEMBOLSADA`. Cualquier otra responde `409 TRANSICION_INVALIDA`.
 - **Concurrencia:** el cambio de estado es condicional (`WHERE estado = 'PENDIENTE'`). Si dos personas aprueban a la vez, solo una lo logra y la otra recibe `409`.
 - **Errores:**

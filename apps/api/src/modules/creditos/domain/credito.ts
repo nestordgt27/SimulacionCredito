@@ -1,4 +1,8 @@
-import { generarPlanPagos, type Periodicidad } from '@simulacion-credito/shared';
+import {
+  calcularCuotaNivelada,
+  generarPlanPagos,
+  type Periodicidad,
+} from '@simulacion-credito/shared';
 import { aCentavos, desdeCentavos, desdePuntosBasicos } from '../../../core/domain/dinero';
 
 export interface CuotaPlan {
@@ -23,14 +27,13 @@ export interface DatosCredito {
   cuotas: readonly CuotaPlan[];
 }
 
-/** Condiciones aprobadas que se copian de la solicitud al crédito. */
+/** Condiciones aprobadas que se copian de la solicitud al crédito. La cuota no: se calcula al otorgar. */
 export interface CondicionesAprobadas {
   solicitudId: number;
   montoCentavos: number;
   tasaAnualBps: number;
   periodicidad: Periodicidad;
   cantidadCuotas: number;
-  cuotaNiveladaCentavos: number;
 }
 
 // Contrato inmutable: la solicitud es la petición, el crédito es lo pactado.
@@ -58,17 +61,26 @@ export class Credito {
   }
 
   /**
-   * Crea el crédito de una solicitud aprobada con su plan completo, generado con
-   * generarPlanPagos de packages/shared desde la fecha de aprobación.
+   * Crea el crédito de una solicitud aprobada: calcula la cuota nivelada con
+   * calcularCuotaNivelada y genera el plan completo (una cuota por período del plazo) con
+   * generarPlanPagos, ambas de packages/shared, desde la fecha de aprobación.
    */
   static otorgar(
     condiciones: CondicionesAprobadas,
     numeroCredito: string,
     fechaAprobacion: Date,
   ): Credito {
+    const monto = desdeCentavos(condiciones.montoCentavos);
+    const tasaAnual = desdePuntosBasicos(condiciones.tasaAnualBps);
+    const cuotaNivelada = calcularCuotaNivelada(
+      monto,
+      tasaAnual,
+      condiciones.cantidadCuotas,
+      condiciones.periodicidad,
+    );
     const plan = generarPlanPagos({
-      monto: desdeCentavos(condiciones.montoCentavos),
-      tasaAnual: desdePuntosBasicos(condiciones.tasaAnualBps),
+      monto,
+      tasaAnual,
       cuotas: condiciones.cantidadCuotas,
       periodicidad: condiciones.periodicidad,
       fechaInicio: fechaAprobacion,
@@ -76,6 +88,7 @@ export class Credito {
 
     return new Credito({
       ...condiciones,
+      cuotaNiveladaCentavos: aCentavos(cuotaNivelada),
       numeroCredito,
       fechaAprobacion,
       cuotas: plan.map((fila) => ({

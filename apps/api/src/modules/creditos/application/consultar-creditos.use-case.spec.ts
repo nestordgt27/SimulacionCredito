@@ -14,7 +14,6 @@ function unCreditoDetalle(cambios: Partial<CreditoDetalle> = {}): CreditoDetalle
       tasaAnualBps: 1200,
       periodicidad: Periodicidad.QUINCENAL,
       cantidadCuotas: 24,
-      cuotaNiveladaCentavos: 44_321,
     },
     'CR-2026-000001',
     APROBACION,

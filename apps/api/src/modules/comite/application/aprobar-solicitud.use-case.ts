@@ -40,7 +40,8 @@ export interface ResultadoAprobacion {
 }
 
 // Todo ocurre en una sola transacción (CLAUDE.md §2.3): verificar que esté PENDIENTE,
-// pasarla a APROBADA, generar el número y crear el crédito con todas sus cuotas.
+// pasarla a APROBADA, generar el número y crear el crédito (cuota nivelada calculada al
+// otorgar) con todas sus cuotas.
 // Cualquier error revierte los cuatro pasos, incluido el consumo del número de crédito.
 @Injectable()
 export class AprobarSolicitudUseCase {
@@ -76,7 +77,6 @@ export class AprobarSolicitudUseCase {
           tasaAnualBps: aprobada.condiciones.tasaAnualBps,
           periodicidad: aprobada.condiciones.periodicidad,
           cantidadCuotas: aprobada.condiciones.cantidadCuotas,
-          cuotaNiveladaCentavos: aprobada.cuotaNiveladaCentavos,
         },
         numeroCredito,
         ahora,
