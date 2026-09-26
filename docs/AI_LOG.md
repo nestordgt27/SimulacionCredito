@@ -24,7 +24,8 @@ Registro de cada interacción con herramientas de IA durante el desarrollo, seg�
 | `feature/web-desembolsos` | Pantallas de desembolso: bandeja de aprobadas, datos bancarios con confirmación | `develop` | [#14](https://github.com/nestordgt27/SimulacionCredito/pull/14) | Fusionada |
 | `feature/web-consulta-creditos` | Pantalla de consulta de créditos por cédula con plan de pagos | `develop` | [#15](https://github.com/nestordgt27/SimulacionCredito/pull/15) | Fusionada |
 | `feature/web-consulta-paginacion` | Paginación de la consulta de créditos (más de 5) y ruta protegida con parámetros | `develop` | [#16](https://github.com/nestordgt27/SimulacionCredito/pull/16) | Fusionada |
-| `feature/web-desembolsos-paginacion` | Paginación de la bandeja de desembolsos (más de 5) | `develop` | [#17](https://github.com/nestordgt27/SimulacionCredito/pull/17) | En revisión |
+| `feature/web-desembolsos-paginacion` | Paginación de la bandeja de desembolsos (más de 5) | `develop` | [#17](https://github.com/nestordgt27/SimulacionCredito/pull/17) | Fusionada |
+| `feature/web-comite-paginacion` | Paginación de la bandeja del comité (más de 5) y listado paginado compartido | `develop` | — | En curso |
 
 ---
 
@@ -639,3 +640,27 @@ Registro de cada interacción con herramientas de IA durante el desarrollo, seg�
   - **Verificación final:** typecheck, lint, Prettier y build en verde; pruebas de shared (95), api (151) y web (172).
 - **Commits:** `refactor(web): extraer la página en la url a un hook compartido`, `feat(desembolsos): paginar la bandeja cuando supera 5 créditos`, `docs: documentar la paginación de desembolsos`, `docs(ai-log): registrar pr de la paginación de desembolsos`
 - **PR:** [#17](https://github.com/nestordgt27/SimulacionCredito/pull/17) → `develop`
+
+### [020] 2026-09-26 — Paginación de la bandeja del comité
+
+- **Herramienta:** Claude Code
+- **Rama:** `feature/web-comite-paginacion`
+- **Prompt (resumen fiel):** En la sección del comité, agregar paginación al listado de solicitudes cuando la cantidad supere 5.
+- **Resultado:**
+  - **`shared/ui/ListadoPaginado.tsx`:** componente genérico que pagina en el cliente con la página en la URL. Muestra el resumen "Mostrando X–Y de N {unidad}" (`aria-live`) y `Paginacion` solo con más de 5, y vuelve al inicio del listado al cambiar de página. Recibe los elementos de la página por una función hija; `resumenSinPaginas` es opcional (lo usa la consulta: "N créditos encontrados").
+  - **Refactor de `ListaCreditos` y `BandejaDesembolsosPage`:** usan `ListadoPaginado`. Sin cambio de comportamiento: las 172 pruebas existentes siguen pasando.
+  - **`BandejaComitePage`:** `TablaPendientes` dentro de `ListadoPaginado` (región "Solicitudes pendientes", `nav` "Paginación de solicitudes").
+  - **Pruebas web:** 180 (8 nuevas). Exactamente 5 sin controles ni resumen; 8 con las primeras 5, la página 1 activa y "Anterior" deshabilitado; siguiente con "Mostrando 6–8 de 8 solicitudes", `?pagina=2` y **sin nueva petición**; volver a la página 1 limpia la URL; `pagina` 99, 0 y abc ajustadas; enlace de revisión correcto desde la segunda página. Cobertura de la web: 99 % de líneas.
+  - **Documentación:** README (bandeja del comité) y `docs/ARCHITECTURE.md` (sección "Paginación (consulta, comité y desembolsos)").
+- **Decisiones y ajustes manuales:**
+  - **Componente compartido en lugar de copiar:** con una tercera pantalla, el cálculo de la página, el resumen, el desplazamiento y los controles se repetían idénticos (duplicación real, `CLAUDE.md` §3.1). El refactor va en un commit propio y se verificó con las pruebas existentes antes de tocar el comité.
+  - **Mismas reglas que en [018] y [019]:** paginación en el cliente (la bandeja de pendientes es acotada), página en la URL y valores inválidos ajustados sin error.
+  - **Prueba de mutación:** mostrar los controles siempre (`>= 1`) en `ListadoPaginado` rompe las pruebas "exactamente 5" de las tres pantallas. Se restauró.
+  - **Verificación manual en el navegador** (servidores levantados para la prueba y detenidos al terminar):
+    - como solo había 1 pendiente (la #51, del usuario), se crearon **6 solicitudes de prueba** (#52 a #57) para el cliente ficticio "Prueba Paginación" (`001-010101-0099P`);
+    - la página 1 muestra 5 ("Mostrando 1–5 de 7 solicitudes") y la página 2 muestra 2, con `?pagina=2` y sin nueva petición;
+    - desembolsos (`?pagina=2`, 6–9 de 9) y consulta (`?cedula=…&pagina=2`, 6–7 de 7) siguen paginando igual tras el refactor;
+    - al terminar, las 6 solicitudes de prueba se **rechazaron** vía API ("Datos de prueba de paginación del comité"); la bandeja quedó solo con la #51.
+  - **Verificación final:** typecheck, lint, Prettier y build en verde; pruebas de shared (95), api (151) y web (180).
+- **Commits:** `refactor(web): extraer el listado paginado a un componente compartido`, `feat(comite): paginar la bandeja cuando supera 5 solicitudes`, `docs: documentar la paginación del comité`
+- **PR:** pendiente → `develop`

@@ -81,7 +81,7 @@ Pantallas disponibles:
   - **Cuota nivelada y plazo en vivo**, calculados con `calcularCuotaNivelada` y `calcularPlazoMeses` de `packages/shared` (las mismas funciones que usa el backend). Son informativos: el servidor recalcula la cuota al registrar y el frontend no la envía.
   - **Bloqueo por edad:** si el cliente tiene más de 80 años, aparece un aviso claro y el botón "Registrar solicitud" queda deshabilitado. Con 80 años exactos se permite.
   - **Al registrar**, muestra el número de solicitud y la cuota confirmada por el servidor.
-- **Comité** (`/comite`): bandeja de solicitudes `PENDIENTE`, con cliente, cédula, monto, cuotas y fecha de registro. Cada fila tiene un enlace a su revisión.
+- **Comité** (`/comite`): bandeja de solicitudes `PENDIENTE`, con cliente, cédula, monto, cuotas y fecha de registro. Cada fila tiene un enlace a su revisión. Con más de 5 solicitudes, la lista se pagina de 5 en 5, con la página en la URL (`?pagina=2`), igual que en la consulta.
 - **Revisión** (`/comite/:id`):
   - **Ficha de solo lectura** con los 7 campos del enunciado: cédula, nombre, edad, cuotas, periodicidad, plazo y monto.
   - **Dictamen:** **Aprobar** exige observaciones; **Rechazar** las deja opcionales.

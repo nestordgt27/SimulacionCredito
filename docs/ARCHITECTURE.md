@@ -215,10 +215,10 @@ apps/web/src/
 - **Consulta:** `useCreditosPorCedula(cedula)` usa `GET /creditos?cedula=` con la clave `['creditos', cedula]`, solo con una cédula válida (`enabled`). El desembolso invalida `['creditos']`.
 - **Plan de pagos:** usa los mismos nombres que `generarPlanPagos` y se despliega a pedido (`aria-expanded` y `aria-controls`). Los totales se calculan con `sumarMontos`, en centavos enteros, para que el capital sume exactamente el monto.
 
-### Paginación (consulta y desembolsos)
+### Paginación (consulta, comité y desembolsos)
 
 - **En el cliente:** `GET /creditos?cedula=` devuelve todos los créditos de un solo cliente (en la práctica, pocos), así que `ListaCreditos` los pagina sin cambiar el contrato de la API. Si un cliente pudiera acumular cientos de créditos, convendría pasar a paginación en el servidor (`page`/`limit` en la API).
-- **Dónde se usa:** en la consulta de créditos (`ListaCreditos`) y en la bandeja de desembolsos (`BandejaDesembolsosPage`). Las dos comparten `paginar`, `ELEMENTOS_POR_PAGINA`, `Paginacion` y `usePaginaEnUrl`.
+- **Dónde se usa:** en la consulta de créditos (`ListaCreditos`), en la bandeja del comité (`BandejaComitePage`) y en la de desembolsos (`BandejaDesembolsosPage`). Las tres usan `ListadoPaginado` (`shared/ui`), que reúne `paginar`, `ELEMENTOS_POR_PAGINA`, `usePaginaEnUrl`, el resumen y `Paginacion`; cada pantalla solo decide cómo se muestran los elementos de la página (tabla o tarjetas) mediante una función hija.
 - **Reglas:** 5 por página (`ELEMENTOS_POR_PAGINA`), y los controles aparecen solo con más de 5. `paginar()` (`shared/lib`, función pura) ajusta una página fuera de rango a la primera o a la última; `leerPagina()` interpreta el parámetro de URL (`0`, `abc` o `1.5` equivalen a 1).
 - **URL:** `usePaginaEnUrl` lee y escribe `?pagina=N` conservando los demás parámetros (por ejemplo, `?cedula=…&pagina=N` en la consulta). La página 1 no se escribe, y en la consulta una búsqueda nueva la reinicia. Cambiar de página no vuelve a consultar la API (los datos ya están en caché) y desplaza la vista al inicio de los resultados.
 - **Accesibilidad:** `Paginacion` es un `nav` con nombre, la página actual lleva `aria-current="page"`, y el resumen "Mostrando X–Y de N" es `aria-live="polite"`.
