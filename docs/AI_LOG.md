@@ -23,7 +23,7 @@ Registro de cada interacción con herramientas de IA durante el desarrollo, seg�
 | `feature/web-comite` | Pantallas del comité: bandeja de pendientes, revisión y dictamen | `develop` | [#13](https://github.com/nestordgt27/SimulacionCredito/pull/13) | Fusionada |
 | `feature/web-desembolsos` | Pantallas de desembolso: bandeja de aprobadas, datos bancarios con confirmación | `develop` | [#14](https://github.com/nestordgt27/SimulacionCredito/pull/14) | Fusionada |
 | `feature/web-consulta-creditos` | Pantalla de consulta de créditos por cédula con plan de pagos | `develop` | [#15](https://github.com/nestordgt27/SimulacionCredito/pull/15) | Fusionada |
-| `feature/web-consulta-paginacion` | Paginación de la consulta de créditos (más de 5) y ruta protegida con parámetros | `develop` | Pendiente | En curso |
+| `feature/web-consulta-paginacion` | Paginación de la consulta de créditos (más de 5) y ruta protegida con parámetros | `develop` | [#16](https://github.com/nestordgt27/SimulacionCredito/pull/16) | En revisión |
 
 ---
 
@@ -615,4 +615,5 @@ Registro de cada interacción con herramientas de IA durante el desarrollo, seg�
     - la página 1 muestra 5 con los controles al final; la página 2 muestra 2, con la URL actualizada y sin nueva petición a la API;
     - después del logout, el enlace `…&pagina=2` pasó por el login y llegó directo a la página 2.
   - **Verificación final:** typecheck, lint, Prettier y build en verde; pruebas de shared (95), api (151) y web (164).
-- **Commits:** `feat(web): agregar paginación reutilizable`, `feat(consulta): paginar el listado de créditos cuando supera 5`, `fix(web): conservar los parámetros de la url al volver del login`, `docs: documentar la paginación de la consulta`
+- **Commits:** `feat(web): agregar paginación reutilizable`, `feat(consulta): paginar el listado de créditos cuando supera 5`, `fix(web): conservar los parámetros de la url al volver del login`, `docs: documentar la paginación de la consulta`, `docs(ai-log): registrar pr de la paginación de la consulta`
+- **PR:** [#16](https://github.com/nestordgt27/SimulacionCredito/pull/16) → `develop`
