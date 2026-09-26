@@ -2,6 +2,7 @@ import { Navigate, type RouteObject } from 'react-router';
 import { LoginPage } from '../features/auth/pages/LoginPage';
 import { BandejaComitePage } from '../features/comite/pages/BandejaComitePage';
 import { RevisionSolicitudPage } from '../features/comite/pages/RevisionSolicitudPage';
+import { ConsultaCreditosPage } from '../features/consulta/pages/ConsultaCreditosPage';
 import { BandejaDesembolsosPage } from '../features/desembolsos/pages/BandejaDesembolsosPage';
 import { DesembolsarPage } from '../features/desembolsos/pages/DesembolsarPage';
 import { NuevaSolicitudPage } from '../features/solicitudes/pages/NuevaSolicitudPage';
@@ -24,6 +25,7 @@ export const routes: RouteObject[] = [
           { path: 'comite/:id', element: <RevisionSolicitudPage /> },
           { path: 'desembolsos', element: <BandejaDesembolsosPage /> },
           { path: 'desembolsos/:solicitudId', element: <DesembolsarPage /> },
+          { path: 'creditos', element: <ConsultaCreditosPage /> },
         ],
       },
     ],

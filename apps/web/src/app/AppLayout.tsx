@@ -8,6 +8,7 @@ const ENLACES = [
   { ruta: '/solicitudes/nueva', texto: 'Nueva solicitud' },
   { ruta: '/comite', texto: 'Comité' },
   { ruta: '/desembolsos', texto: 'Desembolsos' },
+  { ruta: '/creditos', texto: 'Consulta' },
 ] as const;
 
 export function AppLayout() {
