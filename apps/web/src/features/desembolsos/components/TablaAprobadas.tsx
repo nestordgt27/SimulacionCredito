@@ -10,25 +10,28 @@ export function TablaAprobadas({ solicitudes }: { solicitudes: SolicitudAprobada
         <caption className="sr-only">Solicitudes aprobadas pendientes de desembolso</caption>
         <thead className="bg-slate-50 text-slate-600">
           <tr>
-            <th scope="col" className="px-4 py-3 font-medium">
+            <th scope="col" className="hidden sm:table-cell px-3 py-3 sm:px-4 font-medium">
               N.º
             </th>
-            <th scope="col" className="px-4 py-3 font-medium">
+            <th scope="col" className="px-3 py-3 sm:px-4 font-medium">
               Cliente
             </th>
-            <th scope="col" className="px-4 py-3 font-medium">
+            <th scope="col" className="hidden sm:table-cell px-3 py-3 sm:px-4 font-medium">
               Cédula
             </th>
-            <th scope="col" className="px-4 py-3 text-right font-medium">
+            <th scope="col" className="px-3 py-3 sm:px-4 text-right font-medium">
               Monto
             </th>
-            <th scope="col" className="px-4 py-3 text-right font-medium">
+            <th
+              scope="col"
+              className="hidden sm:table-cell px-3 py-3 sm:px-4 text-right font-medium"
+            >
               Cuota
             </th>
-            <th scope="col" className="px-4 py-3 font-medium">
+            <th scope="col" className="hidden sm:table-cell px-3 py-3 sm:px-4 font-medium">
               Cuotas
             </th>
-            <th scope="col" className="px-4 py-3">
+            <th scope="col" className="px-3 py-3 sm:px-4">
               <span className="sr-only">Acciones</span>
             </th>
           </tr>
@@ -36,16 +39,22 @@ export function TablaAprobadas({ solicitudes }: { solicitudes: SolicitudAprobada
         <tbody className="divide-y divide-slate-100">
           {solicitudes.map(({ id, cliente, credito }) => (
             <tr key={id}>
-              <td className="px-4 py-3 text-slate-500">{id}</td>
-              <td className="px-4 py-3 font-medium text-slate-900">{cliente.nombreCompleto}</td>
-              <td className="px-4 py-3">{cliente.cedula}</td>
-              <td className="px-4 py-3 text-right">{formatearMonto(credito.monto)}</td>
-              <td className="px-4 py-3 text-right">{formatearMonto(credito.cuotaNivelada)}</td>
-              <td className="px-4 py-3">
+              <td className="hidden sm:table-cell px-3 py-3 sm:px-4 text-slate-500">{id}</td>
+              <td className="px-3 py-3 sm:px-4 font-medium text-slate-900">
+                {cliente.nombreCompleto}
+              </td>
+              <td className="hidden sm:table-cell px-3 py-3 sm:px-4">{cliente.cedula}</td>
+              <td className="px-3 py-3 sm:px-4 text-right whitespace-nowrap">
+                {formatearMonto(credito.monto)}
+              </td>
+              <td className="hidden sm:table-cell px-3 py-3 sm:px-4 text-right whitespace-nowrap">
+                {formatearMonto(credito.cuotaNivelada)}
+              </td>
+              <td className="hidden sm:table-cell px-3 py-3 sm:px-4">
                 {credito.cantidadCuotas} (
                 {ETIQUETAS_PERIODICIDAD[credito.periodicidad].toLowerCase()})
               </td>
-              <td className="px-4 py-3 text-right">
+              <td className="px-3 py-3 sm:px-4 text-right">
                 <Link
                   to={`/desembolsos/${id}`}
                   aria-label={`Desembolsar la solicitud ${id} de ${cliente.nombreCompleto}`}
