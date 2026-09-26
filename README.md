@@ -72,6 +72,8 @@ Aplicación React + Vite en `http://localhost:5173` (`npm run dev`). Inicia sesi
 | Axios                 | Cliente HTTP con interceptores (token y refresh) |
 | Tailwind CSS v4       | Estilos                                          |
 
+La interfaz es responsiva: se usa sin desplazamiento horizontal desde 375 px de ancho (teléfono) hasta escritorio. Por debajo de 1024 px, la navegación se pliega en un botón **Menú**.
+
 Pantallas disponibles:
 
 - **Login**, con validación de campos y el mensaje del backend ante credenciales inválidas.
