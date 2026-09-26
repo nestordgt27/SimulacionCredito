@@ -1,6 +1,6 @@
 import { useSearchParams } from 'react-router';
 import { mensajeDeError } from '../../../shared/api/errores';
-import { leerPagina } from '../../../shared/lib/paginacion';
+import { usePaginaEnUrl } from '../../../shared/lib/usePaginaEnUrl';
 import { Alerta } from '../../../shared/ui/Alerta';
 import { Tarjeta } from '../../../shared/ui/Tarjeta';
 import { BuscadorCedula } from '../components/BuscadorCedula';
@@ -13,15 +13,8 @@ export function ConsultaCreditosPage() {
   // compartir y sobrevive al recargo.
   const [parametros, setParametros] = useSearchParams();
   const cedula = cedulaValida(parametros.get('cedula'));
-  const pagina = leerPagina(parametros.get('pagina'));
+  const [pagina, irAPagina] = usePaginaEnUrl();
   const creditos = useCreditosPorCedula(cedula);
-
-  function irAPagina(nueva: number) {
-    // La página 1 no se escribe en la URL para mantenerla limpia.
-    setParametros(
-      nueva > 1 ? { cedula: cedula ?? '', pagina: String(nueva) } : { cedula: cedula ?? '' },
-    );
-  }
 
   return (
     <div className="flex flex-col gap-6">
