@@ -2,6 +2,8 @@ import { Navigate, type RouteObject } from 'react-router';
 import { LoginPage } from '../features/auth/pages/LoginPage';
 import { BandejaComitePage } from '../features/comite/pages/BandejaComitePage';
 import { RevisionSolicitudPage } from '../features/comite/pages/RevisionSolicitudPage';
+import { BandejaDesembolsosPage } from '../features/desembolsos/pages/BandejaDesembolsosPage';
+import { DesembolsarPage } from '../features/desembolsos/pages/DesembolsarPage';
 import { NuevaSolicitudPage } from '../features/solicitudes/pages/NuevaSolicitudPage';
 import { AppLayout } from './AppLayout';
 import { InicioPage } from './InicioPage';
@@ -20,6 +22,8 @@ export const routes: RouteObject[] = [
           { path: 'solicitudes/nueva', element: <NuevaSolicitudPage /> },
           { path: 'comite', element: <BandejaComitePage /> },
           { path: 'comite/:id', element: <RevisionSolicitudPage /> },
+          { path: 'desembolsos', element: <BandejaDesembolsosPage /> },
+          { path: 'desembolsos/:solicitudId', element: <DesembolsarPage /> },
         ],
       },
     ],

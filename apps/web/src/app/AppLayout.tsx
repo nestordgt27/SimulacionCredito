@@ -7,6 +7,7 @@ const ENLACES = [
   { ruta: '/', texto: 'Inicio' },
   { ruta: '/solicitudes/nueva', texto: 'Nueva solicitud' },
   { ruta: '/comite', texto: 'Comité' },
+  { ruta: '/desembolsos', texto: 'Desembolsos' },
 ] as const;
 
 export function AppLayout() {
