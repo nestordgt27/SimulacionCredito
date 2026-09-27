@@ -32,7 +32,7 @@ Registro de cada interacción con herramientas de IA durante el desarrollo, seg�
 | `feature/web-desembolsos-tasa` | Tasa anual en la bandeja de desembolsos y en el resumen de la ejecución, responsiva | `develop` | [#22](https://github.com/nestordgt27/SimulacionCredito/pull/22) | Fusionada |
 | `fix/web-desembolso-campos` | Pantalla de desembolso con únicamente los campos del enunciado | `develop` | [#23](https://github.com/nestordgt27/SimulacionCredito/pull/23) | Fusionada |
 | `chore/docker` | Dockerfile por app, docker-compose con Nginx como proxy de /api y SQLite en volumen | `develop` | [#24](https://github.com/nestordgt27/SimulacionCredito/pull/24) | Fusionada |
-| `docs/ai-log-entrega` | Registrar el PR de entrega develop → main en la bitácora | `develop` | — | En curso |
+| `docs/ai-log-entrega` | Registrar el PR de entrega develop → main en la bitácora | `develop` | [#26](https://github.com/nestordgt27/SimulacionCredito/pull/26) | En revisión |
 | `develop` → `main` | PR de entrega: resume la arquitectura y enlaza la bitácora completa | — | [#25](https://github.com/nestordgt27/SimulacionCredito/pull/25) | En revisión |
 
 ---
@@ -899,5 +899,5 @@ Registro de cada interacción con herramientas de IA durante el desarrollo, seg�
   - **Pendiente declarado en el PR de entrega:** `docker compose up` no se ha ejecutado con Docker real (ver [026]).
   - **Enlaces absolutos** a `docs/ARCHITECTURE.md`, `docs/AI_LOG.md`, `CLAUDE.md` y el README en la descripción del PR: los enlaces relativos no se resuelven de forma fiable en la descripción de un PR.
   - **Sin cambios de código.** La validación final previa a la dockerización no se registra aquí, por indicación del usuario.
-- **Commits:** `docs(ai-log): registrar el pr de entrega develop → main`
-- **PR:** pendiente → `develop`
+- **Commits:** `docs(ai-log): registrar el pr de entrega develop → main`, `docs(ai-log): enlazar el pr de la bitácora de entrega`
+- **PR:** [#26](https://github.com/nestordgt27/SimulacionCredito/pull/26) → `develop`
