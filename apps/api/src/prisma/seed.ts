@@ -1,15 +1,19 @@
 import { Logger } from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
 import { Argon2PasswordHasher } from '../modules/auth/infrastructure/argon2-password-hasher';
+import { sembradoPermitido } from './seed/sembrado-permitido';
 import { sembrarUsuarioAdmin } from './seed/usuario-admin.seed';
 
 // Punto de entrada de `prisma db seed` (configurado en prisma.config.ts).
-// Prisma carga DATABASE_URL desde .env antes de ejecutarlo.
+// Prisma carga DATABASE_URL desde .env antes de ejecutarlo. En Docker se ejecuta compilado
+// (node dist/prisma/seed.js) con las variables del contenedor.
 const logger = new Logger('Seed');
 
 async function main(): Promise<void> {
-  if (process.env.NODE_ENV === 'production') {
-    throw new Error('El seed de desarrollo no se ejecuta con NODE_ENV=production');
+  if (!sembradoPermitido(process.env)) {
+    throw new Error(
+      'El seed de desarrollo no se ejecuta con NODE_ENV=production salvo con SEMBRAR_USUARIO_PRUEBA=true',
+    );
   }
 
   const prisma = new PrismaClient();
