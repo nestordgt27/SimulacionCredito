@@ -1,0 +1,47 @@
+# Solución completa con un solo comando:  docker compose up --build
+# Web (Nginx) en http://localhost:8080; la API queda en la red interna y se usa vía /api.
+# La base de datos es un archivo SQLite dentro del volumen datos-sqlite.
+#
+# Valores por defecto pensados para una demo local. Se pueden cambiar con variables de entorno
+# o con un archivo .env en la raíz (no versionado), por ejemplo:
+#   JWT_ACCESS_SECRET=<secreto propio de 32+ caracteres>
+#   WEB_PORT=8081
+#   SEMBRAR_USUARIO_PRUEBA=false
+
+name: simulacion-credito
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      DATABASE_URL: file:/app/data/credito.db
+      # Mismo origen que la web: el navegador llega a la API a través de Nginx.
+      CORS_ORIGIN: http://localhost:${WEB_PORT:-8080}
+      # Secreto SOLO para la demo local: definir uno propio fuera de esta máquina.
+      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET:-demo-local-cambiar-este-secreto-de-al-menos-32-caracteres}
+      JWT_ACCESS_TTL_SEGUNDOS: 900
+      REFRESH_TOKEN_TTL_DIAS: 7
+      # Crea (o restablece) el usuario de prueba admin / Admin123! al arrancar.
+      SEMBRAR_USUARIO_PRUEBA: ${SEMBRAR_USUARIO_PRUEBA:-true}
+    volumes:
+      - datos-sqlite:/app/data
+    restart: unless-stopped
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    ports:
+      - '${WEB_PORT:-8080}:80'
+    depends_on:
+      # Nginx resuelve "api" al arrancar: se espera a que la API responda /api/health.
+      api:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  datos-sqlite:
