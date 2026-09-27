@@ -66,9 +66,17 @@ web_modules/
 .yarn-integrity
 
 # dotenv environment variable files
+# Solo se versionan las plantillas (.env.example) y la configuración de pruebas (.env.test)
 .env
 .env.*
 !.env.example
+!.env.test
+
+# Base de datos SQLite local (desarrollo y pruebas, mientras no se dockeriza)
+apps/api/data/*
+!apps/api/data/.gitkeep
+*.db
+*.db-journal
 
 # parcel-bundler cache (https://parceljs.org/)
 .cache

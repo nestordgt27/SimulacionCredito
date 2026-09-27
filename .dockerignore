@@ -1,0 +1,23 @@
+# El contexto de build es la raíz del monorepo (las imágenes necesitan packages/shared).
+# Se excluye todo lo que se genera dentro de la imagen o no debe salir de la máquina local.
+**/node_modules
+**/dist
+**/coverage
+**/*.tsbuildinfo
+**/.vite
+**/.vite-temp
+
+# Bases de datos y variables de entorno locales (nunca dentro de una imagen)
+apps/api/data
+**/*.db
+**/*.db-journal
+**/.env
+**/.env.*
+!**/.env.example
+
+.git
+.github
+.vscode
+.idea
+*.log
+docs
