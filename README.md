@@ -17,14 +17,49 @@ docs/         Arquitectura y bitácora de IA
 
 Más detalle en [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
 
-## Requisitos
+## Ejecutar con Docker (un solo comando)
+
+Requisito: Docker con Compose v2 (Docker Desktop en Windows y macOS).
+
+```bash
+docker compose up --build
+```
+
+- **Web:** http://localhost:8080. Inicia sesión con el [usuario de prueba](#usuario-de-prueba), que se crea al arrancar.
+- **API:** no se publica en un puerto propio; se usa a través de la web en `http://localhost:8080/api` (Nginx hace de proxy), por ejemplo `http://localhost:8080/api/health`.
+- **Base de datos:** archivo SQLite `/app/data/credito.db` dentro del volumen `datos-sqlite`. Los datos sobreviven a `docker compose down` y a los reinicios.
+
+| Servicio | Imagen                               | Qué hace                                                                                                |
+| -------- | ------------------------------------ | ------------------------------------------------------------------------------------------------------- |
+| `api`    | `apps/api/Dockerfile` (Node 22 slim) | Al arrancar aplica las migraciones, siembra el usuario de prueba y levanta NestJS (puerto 3000 interno) |
+| `web`    | `apps/web/Dockerfile` (Nginx)        | Sirve el build de Vite y redirige `/api` al servicio `api`; espera a que la API esté sana               |
+
+Comandos útiles:
+
+```bash
+docker compose up --build -d          # en segundo plano
+docker compose logs -f api            # ver los logs de la API
+docker compose down                   # detener (conserva los datos)
+docker compose down -v                # detener y borrar la base de datos (volumen)
+docker compose cp api:/app/data/credito.db ./credito.db   # copiar el archivo SQLite a la máquina
+```
+
+Configuración opcional (variables de entorno o un archivo `.env` en la raíz, no versionado):
+
+| Variable                 | Por defecto                             | Descripción                                                                  |
+| ------------------------ | --------------------------------------- | ---------------------------------------------------------------------------- |
+| `WEB_PORT`               | `8080`                                  | Puerto de la web en la máquina                                               |
+| `JWT_ACCESS_SECRET`      | Secreto de demo en `docker-compose.yml` | **Definir uno propio** (32+ caracteres) fuera de una demo local              |
+| `SEMBRAR_USUARIO_PRUEBA` | `true`                                  | Crea o restablece `admin` / `Admin123!` al arrancar; `false` para no crearlo |
+
+## Requisitos para desarrollo local
 
 - Node.js **22.12 o superior** (ver `.nvmrc`)
 - npm 10 o superior
 
 ## Puesta en marcha (desarrollo local)
 
-> Mientras los proyectos no estén dockerizados, la base de datos es un archivo SQLite local en `apps/api/data/`.
+> En desarrollo, sin Docker, la base de datos es un archivo SQLite local en `apps/api/data/`.
 
 ```bash
 # 1. Instalar dependencias (también compila packages/shared)
@@ -54,7 +89,7 @@ El seed crea un usuario para iniciar sesión en desarrollo:
 | ------- | ----------- | ------- |
 | `admin` | `Admin123!` | `ADMIN` |
 
-- **Solo para desarrollo:** el seed se niega a ejecutarse con `NODE_ENV=production`. No uses estas credenciales fuera de tu máquina.
+- **Solo para desarrollo y la demo en Docker:** con `NODE_ENV=production` el seed se niega a ejecutarse, salvo que se pida explícitamente con `SEMBRAR_USUARIO_PRUEBA=true` (lo que hace `docker-compose.yml` por defecto). No uses estas credenciales fuera de tu máquina.
 - **Idempotente:** se puede ejecutar las veces que haga falta. Si el usuario ya existe, restablece la contraseña documentada y lo reactiva.
 - **Contraseña:** se guarda como hash **Argon2id**, nunca en texto plano. Es el mismo algoritmo que usará el login (puerto `PasswordHasher`).
 - **Ejecución automática:** `prisma migrate dev` ejecuta el seed cuando crea o reinicia la base de datos. Para una base existente, usa `npm run prisma:seed -w @simulacion-credito/api`.
@@ -429,7 +464,7 @@ Base de datos (`-w @simulacion-credito/api`):
 Supuestos técnicos del entorno. Los supuestos de negocio se agregan a medida que se implementan (ver `CLAUDE.md` §4).
 
 - **Versiones fijadas por compatibilidad con Node 22.13:** NestJS 11 (el CLI 12 falla en esta versión de Node), Prisma 6 (Prisma 8 exige Node ≥ 22.18), React Router 7 (la 8 exige Node ≥ 22.22) y TypeScript 5.9 (`ts-jest` aún no soporta TypeScript 7).
-- **SQLite local en `apps/api/data/`** solo para desarrollo, mientras no se dockeriza. La carpeta está en `.gitignore` (salvo `.gitkeep`).
+- **SQLite:** en desarrollo, archivo local en `apps/api/data/` (en `.gitignore`, salvo `.gitkeep`); en Docker, archivo en el volumen `datos-sqlite`. SQLite no necesita un servicio aparte: la "base de datos local" de `docker compose` es ese archivo en el volumen.
 - **Sesión en el frontend:** el access token solo vive en memoria. El refresh token se guarda en `localStorage` para sobrevivir al recargo; es un compromiso frente a una cookie HttpOnly, que requeriría cambiar el backend (ver `CLAUDE.md` §4).
 - **Linter:** ESLint con reglas de tipos en la api; oxlint en la web (el que genera la plantilla de Vite).
 

@@ -14,6 +14,29 @@ apps/api  ──┐
 apps/web  ──┘
 ```
 
+## Infraestructura (Docker)
+
+```
+navegador ──> web (Nginx :80, publicado en :8080) ──/api──> api (NestJS :3000) ──> /app/data/credito.db
+                 └─ estáticos del build de Vite                                   (volumen datos-sqlite)
+```
+
+- **Un solo comando:** `docker compose up --build` en la raíz. El contexto de build de ambas imágenes es la raíz del monorepo, porque las dos dependen del workspace `packages/shared`. `.dockerignore` deja fuera `node_modules`, `dist`, las bases de datos y los `.env`.
+- **`apps/api/Dockerfile`** (multi-etapa, `node:22-bookworm-slim` + `openssl`):
+  - **build:** `npm ci` filtrado a `shared` y `api` (el `postinstall` compila `shared`), `prisma generate`, `nest build` y `npm prune --omit=dev` acotado a esos workspaces (sin `-w`, `prune` agregaría las dependencias de la web);
+  - **runtime:** solo `node_modules` de ejecución, `dist`, el esquema y las migraciones. Corre como usuario `node`, con healthcheck sobre `GET /api/health`;
+  - **al arrancar:** `prisma migrate deploy` (idempotente), el seed compilado si `SEMBRAR_USUARIO_PRUEBA=true` y `exec node dist/main.js` (Node recibe las señales de parada);
+  - `prisma` y `dotenv` pasan a `dependencies` de la API: se usan en ejecución para migrar (`prisma.config.ts` importa `dotenv/config`).
+- **`apps/web/Dockerfile`** (multi-etapa): build de Vite con `npm ci` filtrado a `shared` y `web`; runtime `nginx:1.27-alpine`.
+- **`apps/web/nginx.conf`:**
+  - `/api/` va a `http://api:3000` conservando el prefijo; el navegador usa un solo origen, como con el proxy de Vite en desarrollo;
+  - fallback del SPA a `index.html` (rutas como `/comite/5`);
+  - caché larga para `/assets/` (nombres con hash) y sin caché para el HTML;
+  - encabezados de seguridad (`nosniff`, `X-Frame-Options`, `Referrer-Policy`). La caché usa `expires` y no `add_header`, porque un `add_header` en una `location` anula los heredados del `server`.
+- **Orden de arranque:** `web` depende de `api` con `condition: service_healthy`. Nginx resuelve el nombre `api` al iniciar y fallaría si la API aún no existe.
+- **SQLite en un volumen con nombre** (`datos-sqlite`), no en una carpeta de la máquina: Docker inicializa el volumen con el dueño de `/app/data` en la imagen (`node`). Con una carpeta montada, en Linux el archivo quedaría de `root` y la API, que no corre como root, no podría escribirlo. Para obtener el archivo: `docker compose cp`.
+- **Seed en producción, solo explícito:** `sembradoPermitido` (`src/prisma/seed/`) permite el seed con `NODE_ENV=production` únicamente si `SEMBRAR_USUARIO_PRUEBA=true`. Así la demo queda lista con un comando, sin sembrar la contraseña pública por accidente.
+
 ## `packages/shared`
 
 - Funciones puras y tipos: cálculos financieros, enums y validaciones.

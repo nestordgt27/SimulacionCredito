@@ -30,7 +30,8 @@ Registro de cada interacción con herramientas de IA durante el desarrollo, seg�
 | `feature/comite-revision-detallada` | Revisión del comité con información personal, laboral y financiera e indicadores de viabilidad | `develop` | [#20](https://github.com/nestordgt27/SimulacionCredito/pull/20) | Fusionada |
 | `fix/web-layout-movil` | Interfaz responsiva: menú plegable, prioridad de columnas y sin desbordamiento en móvil | `develop` | [#21](https://github.com/nestordgt27/SimulacionCredito/pull/21) | Fusionada |
 | `feature/web-desembolsos-tasa` | Tasa anual en la bandeja de desembolsos y en el resumen de la ejecución, responsiva | `develop` | [#22](https://github.com/nestordgt27/SimulacionCredito/pull/22) | Fusionada |
-| `fix/web-desembolso-campos` | Pantalla de desembolso con únicamente los campos del enunciado | `develop` | [#23](https://github.com/nestordgt27/SimulacionCredito/pull/23) | En revisión |
+| `fix/web-desembolso-campos` | Pantalla de desembolso con únicamente los campos del enunciado | `develop` | [#23](https://github.com/nestordgt27/SimulacionCredito/pull/23) | Fusionada |
+| `chore/docker` | Dockerfile por app, docker-compose con Nginx como proxy de /api y SQLite en volumen | `develop` | — | En curso |
 
 ---
 
@@ -842,3 +843,39 @@ Registro de cada interacción con herramientas de IA durante el desarrollo, seg�
   - **Verificación final:** typecheck, lint, Prettier y build en verde; pruebas web (196), cobertura 99 % de líneas.
 - **Commits:** `fix(desembolsos): mostrar solo los campos del enunciado en el resumen`, `docs: documentar los campos de la pantalla de desembolso`, `docs(ai-log): registrar pr de los campos del desembolso`
 - **PR:** [#23](https://github.com/nestordgt27/SimulacionCredito/pull/23) → `develop`
+
+### [026] 2026-09-26 — Dockerización
+
+- **Herramienta:** Claude Code
+- **Rama:** `chore/docker`
+- **Prompt (resumen fiel):** Realizar la dockerización.
+- **Resultado:**
+  - **`docker-compose.yml`** (raíz): servicios `api` y `web`, volumen `datos-sqlite` para el archivo SQLite. Levanta todo con `docker compose up --build`; la web queda en `http://localhost:8080`.
+  - **`apps/api/Dockerfile`** (multi-etapa, `node:22-bookworm-slim` + `openssl`):
+    - build: `npm ci` filtrado a `shared` y `api`, `prisma generate`, `nest build` y `npm prune --omit=dev` acotado;
+    - runtime: usuario `node`, healthcheck sobre `/api/health`;
+    - al arrancar: `prisma migrate deploy`, seed opcional y `exec node dist/main.js`.
+  - **`apps/web/Dockerfile`** (build de Vite y `nginx:1.27-alpine`) y **`apps/web/nginx.conf`**: proxy de `/api` a `api:3000`, fallback del SPA, caché de `/assets` y encabezados de seguridad.
+  - **`.dockerignore`:** deja fuera `node_modules`, `dist`, las bases de datos y los `.env`.
+  - **Seed:** `sembradoPermitido` (nuevo, con 7 pruebas) permite sembrar con `NODE_ENV=production` solo si `SEMBRAR_USUARIO_PRUEBA=true`; `docker-compose.yml` lo activa por defecto para que la demo quede lista.
+  - **`apps/api/package.json`:** `prisma` y `dotenv` pasan a `dependencies` (se usan en ejecución para migrar). El lockfile solo cambió en las marcas `dev`.
+  - **Documentación:** README (sección "Ejecutar con Docker", usuario de prueba y supuestos) y `docs/ARCHITECTURE.md` (nueva sección "Infraestructura (Docker)").
+- **Decisiones y ajustes manuales:**
+  - **Contexto de build en la raíz:** las dos imágenes dependen del workspace `packages/shared`.
+  - **Solo la web publica un puerto:** la API se usa a través de Nginx en `/api`, con un solo origen como en desarrollo.
+  - **Volumen con nombre, no carpeta montada:** con una carpeta de la máquina, en Linux el archivo quedaría de `root` y la API, que corre como `node`, no podría escribirlo. El archivo se obtiene con `docker compose cp`.
+  - **Secreto JWT de demo** con valor por defecto en `docker-compose.yml`, para cumplir "un solo comando". Está documentado que hay que definir uno propio fuera de la demo local.
+  - **Errores corregidos al revisar:**
+    - un comentario dentro de un `ENV` continuado (inválido en un Dockerfile);
+    - `npx prisma` podía intentar descargar Prisma; se usa la ruta explícita del binario;
+    - en Nginx, un `add_header` dentro de una `location` anulaba los encabezados de seguridad; la caché pasó a `expires`.
+  - **Docker no está instalado en la máquina** (ni en Windows ni en WSL), así que **no se pudo ejecutar `docker compose`**. Se simuló cada imagen fuera de Docker, siguiendo sus instrucciones:
+    - **api:** mismos archivos copiados (respetando `.dockerignore`), `npm ci` filtrado, generación, build y `prune`; luego se redujo al conjunto de archivos de la etapa final y se arrancó con las variables del contenedor;
+    - resultado: migraciones (también en un segundo arranque), seed rechazado sin la bandera y aceptado con ella (idempotente), healthcheck en 0 y el flujo completo (login, solicitud, desembolso rechazado con `409` antes de aprobar, aprobación `CR-2026-000001`, desembolso y consulta con 12 cuotas y saldo final 0);
+    - **hallazgo en la simulación:** `npm prune --omit=dev` sin `-w` agregaba 30 paquetes de la web (React, Axios); acotado a los workspaces de la API ya no;
+    - **web:** `npm ci` filtrado y build de Vite correctos;
+    - **no verificado:** Nginx y la red de `docker compose`;
+    - el lockfile incluye los binarios nativos de Linux (x64 y ARM64) de argon2, rolldown, Tailwind y lightningcss, que `npm ci` necesita dentro del contenedor.
+  - **Verificación final:** typecheck, lint, Prettier y build en verde; pruebas de shared (103), api (160 + 45 + 84) y web (196).
+- **Commits:** `feat(api): permitir sembrar el usuario de prueba en producción solo de forma explícita`, `chore(docker): agregar dockerfiles, nginx y docker-compose`, `docs: documentar la ejecución con docker`
+- **PR:** pendiente → `develop`
