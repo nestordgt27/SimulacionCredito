@@ -31,7 +31,7 @@ Registro de cada interacción con herramientas de IA durante el desarrollo, seg�
 | `fix/web-layout-movil` | Interfaz responsiva: menú plegable, prioridad de columnas y sin desbordamiento en móvil | `develop` | [#21](https://github.com/nestordgt27/SimulacionCredito/pull/21) | Fusionada |
 | `feature/web-desembolsos-tasa` | Tasa anual en la bandeja de desembolsos y en el resumen de la ejecución, responsiva | `develop` | [#22](https://github.com/nestordgt27/SimulacionCredito/pull/22) | Fusionada |
 | `fix/web-desembolso-campos` | Pantalla de desembolso con únicamente los campos del enunciado | `develop` | [#23](https://github.com/nestordgt27/SimulacionCredito/pull/23) | Fusionada |
-| `chore/docker` | Dockerfile por app, docker-compose con Nginx como proxy de /api y SQLite en volumen | `develop` | — | En curso |
+| `chore/docker` | Dockerfile por app, docker-compose con Nginx como proxy de /api y SQLite en volumen | `develop` | [#24](https://github.com/nestordgt27/SimulacionCredito/pull/24) | En revisión |
 
 ---
 
@@ -877,5 +877,5 @@ Registro de cada interacción con herramientas de IA durante el desarrollo, seg�
     - **no verificado:** Nginx y la red de `docker compose`;
     - el lockfile incluye los binarios nativos de Linux (x64 y ARM64) de argon2, rolldown, Tailwind y lightningcss, que `npm ci` necesita dentro del contenedor.
   - **Verificación final:** typecheck, lint, Prettier y build en verde; pruebas de shared (103), api (160 + 45 + 84) y web (196).
-- **Commits:** `feat(api): permitir sembrar el usuario de prueba en producción solo de forma explícita`, `chore(docker): agregar dockerfiles, nginx y docker-compose`, `docs: documentar la ejecución con docker`
-- **PR:** pendiente → `develop`
+- **Commits:** `feat(api): permitir sembrar el usuario de prueba en producción solo de forma explícita`, `chore(docker): agregar dockerfiles, nginx y docker-compose`, `docs: documentar la ejecución con docker`, `docs(ai-log): registrar pr de la dockerización`
+- **PR:** [#24](https://github.com/nestordgt27/SimulacionCredito/pull/24) → `develop` (indica que falta probar `docker compose` con Docker real)
