@@ -31,7 +31,9 @@ Registro de cada interacción con herramientas de IA durante el desarrollo, seg�
 | `fix/web-layout-movil` | Interfaz responsiva: menú plegable, prioridad de columnas y sin desbordamiento en móvil | `develop` | [#21](https://github.com/nestordgt27/SimulacionCredito/pull/21) | Fusionada |
 | `feature/web-desembolsos-tasa` | Tasa anual en la bandeja de desembolsos y en el resumen de la ejecución, responsiva | `develop` | [#22](https://github.com/nestordgt27/SimulacionCredito/pull/22) | Fusionada |
 | `fix/web-desembolso-campos` | Pantalla de desembolso con únicamente los campos del enunciado | `develop` | [#23](https://github.com/nestordgt27/SimulacionCredito/pull/23) | Fusionada |
-| `chore/docker` | Dockerfile por app, docker-compose con Nginx como proxy de /api y SQLite en volumen | `develop` | [#24](https://github.com/nestordgt27/SimulacionCredito/pull/24) | En revisión |
+| `chore/docker` | Dockerfile por app, docker-compose con Nginx como proxy de /api y SQLite en volumen | `develop` | [#24](https://github.com/nestordgt27/SimulacionCredito/pull/24) | Fusionada |
+| `docs/ai-log-entrega` | Registrar el PR de entrega develop → main en la bitácora | `develop` | — | En curso |
+| `develop` → `main` | PR de entrega: resume la arquitectura y enlaza la bitácora completa | — | [#25](https://github.com/nestordgt27/SimulacionCredito/pull/25) | En revisión |
 
 ---
 
@@ -879,3 +881,23 @@ Registro de cada interacción con herramientas de IA durante el desarrollo, seg�
   - **Verificación final:** typecheck, lint, Prettier y build en verde; pruebas de shared (103), api (160 + 45 + 84) y web (196).
 - **Commits:** `feat(api): permitir sembrar el usuario de prueba en producción solo de forma explícita`, `chore(docker): agregar dockerfiles, nginx y docker-compose`, `docs: documentar la ejecución con docker`, `docs(ai-log): registrar pr de la dockerización`
 - **PR:** [#24](https://github.com/nestordgt27/SimulacionCredito/pull/24) → `develop` (indica que falta probar `docker compose` con Docker real)
+
+### [027] 2026-09-26 — PR de entrega develop → main
+
+- **Herramienta:** Claude Code
+- **Rama:** `docs/ai-log-entrega` (el PR de entrega usa `develop` como origen)
+- **Prompt (resumen fiel):** Abrir el PR de develop a main.
+- **Resultado:**
+  - **PR de entrega [#25](https://github.com/nestordgt27/SimulacionCredito/pull/25)** (`develop` → `main`, 127 commits de los PRs #1 a #24), con la descripción que pide `CLAUDE.md` §7.3. Incluye:
+    - una tabla que relaciona cada punto del enunciado con su implementación;
+    - el resumen de la arquitectura (monorepo, `shared`, backend hexagonal, frontend por features y Docker);
+    - las pruebas por paquete;
+    - el uso de IA, con el enlace a esta bitácora;
+    - el pendiente conocido y la lista de PRs incluidos.
+  - **Esta entrada y la tabla de ramas** (#24 fusionada, rama `docs/ai-log-entrega` y PR #25) van en un PR aparte hacia `develop`: no se trabaja directo sobre `develop`. Al fusionarlo, el PR de entrega lo incluye automáticamente.
+- **Decisiones y ajustes manuales:**
+  - **Pendiente declarado en el PR de entrega:** `docker compose up` no se ha ejecutado con Docker real (ver [026]).
+  - **Enlaces absolutos** a `docs/ARCHITECTURE.md`, `docs/AI_LOG.md`, `CLAUDE.md` y el README en la descripción del PR: los enlaces relativos no se resuelven de forma fiable en la descripción de un PR.
+  - **Sin cambios de código.** La validación final previa a la dockerización no se registra aquí, por indicación del usuario.
+- **Commits:** `docs(ai-log): registrar el pr de entrega develop → main`
+- **PR:** pendiente → `develop`
